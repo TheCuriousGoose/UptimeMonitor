@@ -20,8 +20,8 @@ class MonitorController extends Controller
 
         $monitors = Monitor::query()
             ->where('created_by', Auth::id())
-            ->with(['createdBy', 'monitorCheck' => function($query) {
-                $query->latest()->limit(1);
+            ->with(['createdBy', 'monitorChecks' => function($query) {
+                $query->latest('checked_at')->limit(1);
             }])
             ->paginate(15);
 
