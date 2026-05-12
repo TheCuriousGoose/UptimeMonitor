@@ -50,7 +50,7 @@ const table = computed(() => useVueTable({
     getCoreRowModel: getCoreRowModel(),
     getRowId: props.rowId,
     manualPagination: true,
-    rowCount: props.pagination.total,
+    rowCount: props.pagination.meta.total,
     state: { columnVisibility: columnVisibility.value },
     onColumnVisibilityChange: (updater) => {
         const current = columnVisibility.value ?? {};
@@ -100,19 +100,19 @@ function navigate(url: string | null) {
         <div class="flex items-center justify-between text-sm text-muted-foreground">
             <span>
                 {{ $t('pagination.showing', {
-                    from: String(pagination.from ?? 0),
-                    to: String(pagination.to ?? 0),
-                    total: String(pagination.total),
+                    from: String(pagination.meta.from ?? 0),
+                    to: String(pagination.meta.to ?? 0),
+                    total: String(pagination.meta.total),
                     type: itemLabel,
                 }) }}
             </span>
             <div class="flex gap-2">
-                <Button variant="outline" size="sm" :disabled="!pagination.prev_page_url"
-                    @click="navigate(pagination.prev_page_url)">
+                <Button variant="outline" size="sm" :disabled="!pagination.links.prev"
+                    @click="navigate(pagination.links.prev)">
                     {{ $t('pagination.previous') }}
                 </Button>
-                <Button variant="outline" size="sm" :disabled="!pagination.next_page_url"
-                    @click="navigate(pagination.next_page_url)">
+                <Button variant="outline" size="sm" :disabled="!pagination.links.next"
+                    @click="navigate(pagination.links.next)">
                     {{ $t('pagination.next') }}
                 </Button>
             </div>

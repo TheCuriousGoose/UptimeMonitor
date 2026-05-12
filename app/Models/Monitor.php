@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Override;
 
 #[Fillable(['name', 'url', 'created_by', 'timeout', 'check_interval'])]
 class Monitor extends Model
@@ -30,6 +31,6 @@ class Monitor extends Model
 
     public function isUp(): bool
     {
-        return $this->monitorChecks()->latest()->first()->is_up;
+        return $this->monitorChecks()->latest('checked_at')->first()->is_up;
     }
 }

@@ -4,6 +4,8 @@ interface Monitor {
     uuid: string;
     name: string;
     url: string;
+    monitor_check: MonitorCheck;
+    is_up: boolean;
     created_by: User;
     timeout: string;
     check_interval: string;
