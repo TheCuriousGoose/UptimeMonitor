@@ -15,9 +15,9 @@ class MonitorController extends Controller
     public function index(IndexRequest $request)
     {
         $monitors = Monitor::query()
-            ->withLatestStatus()
             ->forUser(Auth::user())
             ->search($request->search())
+            ->with(['createdBy'])
             ->orderBy('latest_is_up', 'asc')
             ->paginate(15);
 

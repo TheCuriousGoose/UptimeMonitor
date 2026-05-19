@@ -14,6 +14,19 @@ class MonitorCheck extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::saved(function (self $check) {
+            Monitor::where('id', $check->monitor_id)
+                ->whereNotExists(function ($q) use ($check) {
+                    $q->from('monitor_checks')
+                        ->where('monitor_id', $check->monitor_id)
+                        ->where('checked_at', '>', $check->checked_at);
+                })
+                ->update(['latest_is_up' => $check->is_up]);
+        });
+    }
+
     public function monitors(): BelongsToMany
     {
         return $this->belongsToMany(Monitor::class);

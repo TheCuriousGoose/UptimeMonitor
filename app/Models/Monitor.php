@@ -55,13 +55,4 @@ class Monitor extends Model
         });
     }
 
-    public function scopeWithLatestStatus(Builder $query): Builder
-    {
-        return $query->addSelect([
-            'latest_is_up' => MonitorCheck::select('is_up')
-                ->whereColumn('monitor_id', 'monitors.id')
-                ->latest('checked_at')
-                ->limit(1),
-        ]);
-    }
 }
