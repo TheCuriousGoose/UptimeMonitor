@@ -30,7 +30,7 @@ class MonitorController extends Controller
     {
         $this->authorize('view', $monitor);
 
-        $monitor->loadMissing('monitorCheck');
+        $monitor->loadMissing('monitorChecks');
 
         return Inertia::render('monitors/Show', [
             'monitor' => $monitor

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['name', 'url', 'created_by', 'timeout', 'check_interval'])]
 class Monitor extends Model
 {
-    use HasUuids;
+    use HasUuids, HasFactory;
 
     public function getRouteKeyName()
     {
@@ -36,7 +37,7 @@ class Monitor extends Model
 
     public function isUp(): bool
     {
-        return $this->monitorChecks()->latest('checked_at')->first()->is_up;
+        return (bool) $this->monitorChecks()->latest('checked_at')->value('is_up');
     }
 
     public function scopeForUser(Builder $query, User $user): Builder
