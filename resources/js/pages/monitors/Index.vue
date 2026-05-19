@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { PlusIcon } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 import MonitorsTable from '@/components/tables/monitors/MonitorsTable.vue';
@@ -32,7 +33,7 @@ defineOptions({
     layout: {
         breadcrumbs: [
             {
-                title: 'Monitors',
+                title: trans('monitors.breadcrumbs.index'),
                 href: monitorsRoute.index(),
             },
         ],

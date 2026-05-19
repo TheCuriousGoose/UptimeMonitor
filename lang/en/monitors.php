@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'title' => 'monitors',
+    'title' => 'Monitors',
     'table' => [
         'header' => 'Your monitors',
         'columns' => [
@@ -21,5 +21,9 @@ return [
     ],
     'is_up' => 'Up',
     'is_down' => 'Down',
-    'create' => 'New Monitor'
+    'create' => 'New Monitor',
+    'breadcrumbs' => [
+        'index' => 'Monitors',
+        'create' => 'Create' 
+    ]
 ];

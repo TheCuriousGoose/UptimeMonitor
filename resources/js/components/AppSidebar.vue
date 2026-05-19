@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { LayoutGrid, Monitor } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -20,12 +21,12 @@ import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
+        title: trans('dashboards.title'),
         href: dashboard(),
         icon: LayoutGrid,
     },
     {
-        title: 'Monitors',
+        title: trans('monitors.title'),
         href: monitors.index(),
         icon: Monitor
     }
