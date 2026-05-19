@@ -14,6 +14,11 @@ class Monitor extends Model
 {
     use HasUuids;
 
+    public function getRouteKeyName()
+    {
+        return 'uuid';
+    }
+
     public function uniqueIds(): array
     {
         return ['uuid'];

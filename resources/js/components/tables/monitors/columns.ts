@@ -1,10 +1,11 @@
+import { Link } from '@inertiajs/vue3';
 import type { ColumnDef } from '@tanstack/vue-table';
 import { trans } from 'laravel-vue-i18n';
 import { EyeIcon } from 'lucide-vue-next';
 import { h } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import monitors from '@/routes/monitors';
+import * as monitorsRoute from '@/routes/monitors';
 import type { Monitor } from '@/types/monitors';
 
 export const columns: ColumnDef<Monitor>[] = [
@@ -18,8 +19,11 @@ export const columns: ColumnDef<Monitor>[] = [
         cell: ({ row }) =>
             h(
                 Badge,
-                { variant: row.original.is_up ?  'success' : 'destructive' },
-                () => row.original.is_up ? trans('monitors.is_up') : trans('monitors.is_down'),
+                { variant: row.original.is_up ? 'success' : 'destructive' },
+                () =>
+                    row.original.is_up
+                        ? trans('monitors.is_up')
+                        : trans('monitors.is_down'),
             ),
     },
     {
@@ -60,9 +64,10 @@ export const columns: ColumnDef<Monitor>[] = [
             h(
                 Button,
                 {
+                    as: Link,
                     variant: 'ghost',
                     size: 'sm',
-                    onClick: () => monitors.show(row.original.uuid),
+                    href: monitorsRoute.show(row.original).url,
                 },
                 () => h(EyeIcon),
             ),

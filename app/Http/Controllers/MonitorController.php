@@ -39,7 +39,7 @@ class MonitorController extends Controller
 
     public function create()
     {
-        $this->authorize('create');
+        $this->authorize('create', Monitor::class);
 
         return Inertia::render('monitors/Create');
     }
