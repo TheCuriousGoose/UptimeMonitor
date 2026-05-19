@@ -2,46 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\MonitorResource;
+use App\Http\Requests\Monitors\IndexRequest;
 use App\Models\Monitor;
-use App\Models\MonitorCheck;
 use App\Policies\MonitorPolicy;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 #[UsePolicy(MonitorPolicy::class)]
 class MonitorController extends Controller
 {
-    public function index(Request $request)
+    public function index(IndexRequest $request)
     {
-        if ($request->user()->cannot('viewAny', Monitor::class)) {
-            abort(403);
-        }
-
-        $search = $request->filled('search')
-            ? str_replace(['%', '_'], ['\%', '\_'], trim($request->search))
-            : null;
-
         $monitors = Monitor::query()
-            ->addSelect([
-                'latest_is_up' => MonitorCheck::select('is_up')
-                    ->whereColumn('monitor_id', 'monitors.id')
-                    ->latest('checked_at')
-                    ->limit(1)
-            ])
-            ->where('created_by', Auth::id())
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'LIKE', "%$search%")
-                        ->orWhere('url', 'LIKE', "%$search%");
-                });
-            })
+            ->withLatestStatus()
+            ->forUser(Auth::user())
+            ->search($request->search())
             ->orderBy('latest_is_up', 'asc')
-            ->with(['createdBy', 'monitorChecks' => function ($query) {
-                $query->latest('checked_at')->limit(1);
-            }])
             ->paginate(15);
 
         return Inertia::render('monitors/Index', [
@@ -49,16 +26,21 @@ class MonitorController extends Controller
         ]);
     }
 
-    public function show(Request $request, Monitor $monitor)
+    public function show(Monitor $monitor)
     {
-        if ($request->user()->cannot('view', $monitor)) {
-            abort(403);
-        }
+        $this->authorize('view', $monitor);
 
         $monitor->loadMissing('monitorCheck');
 
         return Inertia::render('monitors/Show', [
             'monitor' => $monitor
         ]);
+    }
+
+    public function create()
+    {
+        $this->authorize('create');
+
+        return Inertia::render('monitors/Create');
     }
 }

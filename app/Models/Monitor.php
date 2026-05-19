@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Override;
 
 #[Fillable(['name', 'url', 'created_by', 'timeout', 'check_interval'])]
 class Monitor extends Model
@@ -32,5 +32,30 @@ class Monitor extends Model
     public function isUp(): bool
     {
         return $this->monitorChecks()->latest('checked_at')->first()->is_up;
+    }
+
+    public function scopeForUser(Builder $query, User $user): Builder
+    {
+        return $query->where('created_by', $user->id);
+    }
+
+    public function scopeSearch(Builder $query, ?string $search): Builder
+    {
+        if (!$search) return $query;
+
+        return $query->where(function (Builder $q) use ($search) {
+            $q->where('name', 'LIKE', "%{$search}%")
+                ->orWhere('url', 'LIKE', "%{$search}%");
+        });
+    }
+
+    public function scopeWithLatestStatus(Builder $query): Builder
+    {
+        return $query->addSelect([
+            'latest_is_up' => MonitorCheck::select('is_up')
+                ->whereColumn('monitor_id', 'monitors.id')
+                ->latest('checked_at')
+                ->limit(1),
+        ]);
     }
 }
