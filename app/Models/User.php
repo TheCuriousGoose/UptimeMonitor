@@ -36,6 +36,6 @@ class User extends Authenticatable
 
     public function monitors(): HasMany
     {
-        return $this->hasMany(Monitor::class);
+        return $this->hasMany(Monitor::class, 'created_by');
     }
 }

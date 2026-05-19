@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Monitors\IndexRequest;
+use App\Http\Requests\Monitors\StoreRequest;
 use App\Models\Monitor;
 use App\Policies\MonitorPolicy;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
@@ -42,5 +43,13 @@ class MonitorController extends Controller
         $this->authorize('create', Monitor::class);
 
         return Inertia::render('monitors/Create');
+    }
+
+    public function store(StoreRequest $request) 
+    {
+        $user = $request->user();
+        $monitor = $user->monitors()->create($request->validated());
+
+        return to_route('monitors.show', $monitor)->with('success', __('monitors.messages.created.success'));
     }
 }

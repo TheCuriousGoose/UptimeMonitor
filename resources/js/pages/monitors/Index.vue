@@ -54,7 +54,7 @@ defineOptions({
         <template #actions>
             <Button :as="Link" :href="monitorsRoute.create()">
                 <PlusIcon />
-                {{ $t('monitors.create') }}
+                {{ $t('monitors.create.label') }}
             </Button>
             <TableColumnFilter table="monitors" column-translations="monitors.table.columns" />
         </template>

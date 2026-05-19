@@ -19,13 +19,12 @@ class MonitorResource extends JsonResource
             'uuid' => $this->uuid,
             'name' => $this->name,
             'url' => $this->url,
+            'is_active' => $this->is_active,
             'timeout' => $this->timeout,
             'check_interval' => $this->check_interval,
             'created_by' => $this->whenLoaded('createdBy'),
             'monitor_checks' => $this->whenLoaded('monitorChecks'),
             'is_up' => $this->latest_is_up,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
         ];
     }
 }
