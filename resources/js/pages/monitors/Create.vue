@@ -16,11 +16,25 @@
                 </Field>
 
                 <Field>
-                    <FieldLabel for="url">{{ $t('monitors.form.url.title') }}</FieldLabel>
-                    <Input id="url" name="url" autocomplete="off" type="url" />
-                    <FieldError>{{ errors.url }}</FieldError>
-                    <FieldDescription>{{ $t('monitors.form.url.description') }}</FieldDescription>
+                    <FieldLabel for="type">{{ $t('monitors.form.type.title') }}</FieldLabel>
+                    <Select v-model="typeOption">
+                        <SelectTrigger id="type">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem v-for="t in types" :key="t" :value="t">
+                                {{ $t(`monitors.form.type.options.${t}`) }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <input type="hidden" name="type" :value="typeOption" />
+                    <FieldError>{{ errors.type }}</FieldError>
+                    <FieldDescription>{{ $t('monitors.form.type.description') }}</FieldDescription>
                 </Field>
+
+                <FieldSeparator />
+
+                <component :is="activeCheckerForm" :errors="errors" />
 
                 <FieldSeparator />
 
@@ -110,6 +124,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Spinner } from '@/components/ui/spinner';
 import { trans } from '@/lib/i18n';
 import * as monitorsRoute from '@/routes/monitors';
+import type { MonitorType } from '@/types/monitors';
+import HttpCheckerFields from './partials/HttpCheckerFields.vue';
+
+const checkerForms: Record<MonitorType, unknown> = {
+    http: HttpCheckerFields,
+};
+
+const props = defineProps<{
+    types: MonitorType[];
+}>();
 
 defineOptions({
     layout: {
@@ -124,6 +148,9 @@ defineOptions({
         ],
     },
 });
+
+const typeOption = ref<MonitorType>(props.types[0]);
+const activeCheckerForm = computed(() => checkerForms[typeOption.value]);
 
 const timeoutOption = ref('30');
 const timeoutCustom = ref('');

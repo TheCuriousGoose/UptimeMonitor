@@ -39,6 +39,13 @@ return [
             'title' => 'URL',
             'description' => 'The full URL to monitor, including https://.',
         ],
+        'type' => [
+            'title' => 'Check type',
+            'description' => 'The kind of check this monitor will perform.',
+            'options' => [
+                'http' => 'HTTP / HTTPS',
+            ],
+        ],
         'timeout' => [
             'title' => 'Timeout',
             'description' => 'How long to wait before marking the check as failed.',

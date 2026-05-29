@@ -1,9 +1,12 @@
 import type { User } from "./auth";
 
+type MonitorType = 'http';
+
 interface Monitor {
     uuid: string;
     name: string;
     url: string;
+    type: MonitorType;
     monitor_check: MonitorCheck;
     is_up: boolean;
     created_by: User;
@@ -19,4 +22,4 @@ type MonitorCheck = {
     | { is_up: false; error: string }
 );
 
-export type { Monitor, MonitorCheck }
+export type { Monitor, MonitorCheck, MonitorType }

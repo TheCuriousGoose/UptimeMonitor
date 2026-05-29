@@ -1,4 +1,6 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use App\Console\Commands\DispatchDueChecks;
+use Illuminate\Support\Facades\Schedule;
+
+Schedule::command(DispatchDueChecks::class)->everyMinute()->withoutOverlapping();

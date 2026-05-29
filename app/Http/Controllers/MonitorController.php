@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\MonitorType;
 use App\Http\Requests\Monitors\IndexRequest;
 use App\Http\Requests\Monitors\StoreRequest;
 use App\Models\Monitor;
@@ -42,7 +43,9 @@ class MonitorController extends Controller
     {
         $this->authorize('create', Monitor::class);
 
-        return Inertia::render('monitors/Create');
+        return Inertia::render('monitors/Create', [
+            'types' => array_column(MonitorType::cases(), 'value'),
+        ]);
     }
 
     public function store(StoreRequest $request) 
