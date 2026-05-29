@@ -4,14 +4,13 @@ import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
-import i18n from 'laravel-vue-i18n/vite';
 import { defineConfig } from 'vite';
+import lang from './vite/plugins/lang';
 
 export default defineConfig({
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
-            ssr: 'resources/js/ssr.ts',
             refresh: true,
             fonts: [
                 bunny('Instrument Sans', {
@@ -32,6 +31,6 @@ export default defineConfig({
         wayfinder({
             formVariants: true,
         }),
-        i18n(),
+        lang(),
     ],
 });

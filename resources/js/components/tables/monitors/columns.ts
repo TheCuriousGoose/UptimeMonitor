@@ -1,10 +1,10 @@
 import { Link } from '@inertiajs/vue3';
 import type { ColumnDef } from '@tanstack/vue-table';
-import { trans } from 'laravel-vue-i18n';
 import { EyeIcon } from 'lucide-vue-next';
 import { h } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { trans } from '@/lib/i18n';
 import * as monitorsRoute from '@/routes/monitors';
 import type { Monitor } from '@/types/monitors';
 

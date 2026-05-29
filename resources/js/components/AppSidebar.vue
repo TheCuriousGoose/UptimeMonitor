@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { trans } from 'laravel-vue-i18n';
 import { LayoutGrid, Monitor } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -15,6 +14,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import {trans } from '@/lib/i18n';
 import { dashboard } from '@/routes';
 import monitors from '@/routes/monitors';
 import type { NavItem } from '@/types';

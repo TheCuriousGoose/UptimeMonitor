@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { trans } from 'laravel-vue-i18n';
 import { PlusIcon } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 import MonitorsTable from '@/components/tables/monitors/MonitorsTable.vue';
@@ -8,6 +7,7 @@ import TableColumnFilter from '@/components/tables/TableColumnFilter.vue';
 import TableFilterBar from '@/components/tables/TableFilterBar.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { trans } from '@/lib/i18n';
 import * as monitorsRoute from '@/routes/monitors';
 import type { Monitor } from '@/types/monitors';
 import type { Pagination } from '@/types/pagination';

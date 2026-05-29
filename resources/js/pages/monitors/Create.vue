@@ -40,13 +40,8 @@
                                 <SelectItem value="custom">{{ $t('monitors.form.custom') }}</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Input
-                            v-if="timeoutOption === 'custom'"
-                            v-model="timeoutCustom"
-                            type="number"
-                            min="1"
-                            :placeholder="$t('monitors.form.timeout.custom_placeholder')"
-                        />
+                        <Input v-if="timeoutOption === 'custom'" v-model="timeoutCustom" type="number" min="1"
+                            :placeholder="$t('monitors.form.timeout.custom_placeholder')" />
                         <input type="hidden" name="timeout" :value="timeoutValue" />
                         <FieldError>{{ errors.timeout }}</FieldError>
                         <FieldDescription>{{ $t('monitors.form.timeout.description') }}</FieldDescription>
@@ -59,20 +54,23 @@
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="* * * * *">{{ $t('monitors.form.check_interval.options.every_minute') }}</SelectItem>
-                                <SelectItem value="*/5 * * * *">{{ $t('monitors.form.check_interval.options.every_5_minutes') }}</SelectItem>
-                                <SelectItem value="*/10 * * * *">{{ $t('monitors.form.check_interval.options.every_10_minutes') }}</SelectItem>
-                                <SelectItem value="*/15 * * * *">{{ $t('monitors.form.check_interval.options.every_15_minutes') }}</SelectItem>
-                                <SelectItem value="*/30 * * * *">{{ $t('monitors.form.check_interval.options.every_30_minutes') }}</SelectItem>
-                                <SelectItem value="0 * * * *">{{ $t('monitors.form.check_interval.options.every_hour') }}</SelectItem>
+                                <SelectItem value="* * * * *">{{ $t('monitors.form.check_interval.options.every_minute')
+                                    }}</SelectItem>
+                                <SelectItem value="*/5 * * * *">{{
+                                    $t('monitors.form.check_interval.options.every_5_minutes') }}</SelectItem>
+                                <SelectItem value="*/10 * * * *">{{
+                                    $t('monitors.form.check_interval.options.every_10_minutes') }}</SelectItem>
+                                <SelectItem value="*/15 * * * *">{{
+                                    $t('monitors.form.check_interval.options.every_15_minutes') }}</SelectItem>
+                                <SelectItem value="*/30 * * * *">{{
+                                    $t('monitors.form.check_interval.options.every_30_minutes') }}</SelectItem>
+                                <SelectItem value="0 * * * *">{{ $t('monitors.form.check_interval.options.every_hour')
+                                    }}</SelectItem>
                                 <SelectItem value="custom">{{ $t('monitors.form.custom') }}</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Input
-                            v-if="intervalOption === 'custom'"
-                            v-model="intervalCustom"
-                            :placeholder="$t('monitors.form.check_interval.custom_placeholder')"
-                        />
+                        <Input v-if="intervalOption === 'custom'" v-model="intervalCustom"
+                            :placeholder="$t('monitors.form.check_interval.custom_placeholder')" />
                         <input type="hidden" name="check_interval" :value="intervalValue" />
                         <FieldError>{{ errors.check_interval }}</FieldError>
                         <FieldDescription>{{ $t('monitors.form.check_interval.description') }}</FieldDescription>
@@ -102,15 +100,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
 import { Form, Head } from '@inertiajs/vue3';
-import { trans } from 'laravel-vue-i18n';
+import { computed, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Field, FieldContent, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSeparator, FieldSet } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { trans } from '@/lib/i18n';
 import * as monitorsRoute from '@/routes/monitors';
 
 defineOptions({
