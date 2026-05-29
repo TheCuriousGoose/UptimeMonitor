@@ -35,7 +35,7 @@ class MonitorController extends Controller
         $monitor->loadMissing('monitorChecks');
 
         return Inertia::render('monitors/Show', [
-            'monitor' => $monitor
+            'monitor' => $monitor,
         ]);
     }
 
@@ -48,7 +48,7 @@ class MonitorController extends Controller
         ]);
     }
 
-    public function store(StoreRequest $request) 
+    public function store(StoreRequest $request)
     {
         $user = $request->user();
         $monitor = $user->monitors()->create($request->validated());

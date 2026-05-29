@@ -2,7 +2,7 @@
 
     <Head :title="$t('monitors.create.label')" />
 
-    <Form v-bind="monitorsRoute.store.form()" v-slot="{ errors, processing }">
+    <Form v-bind="monitorsRoute.store.form()" v-slot="{ errors, processing }" class="max-w-2xl">
         <FieldSet>
             <FieldLegend>{{ $t('monitors.create.form.title') }}</FieldLegend>
             <FieldDescription>{{ $t('monitors.create.form.subtitle') }}</FieldDescription>

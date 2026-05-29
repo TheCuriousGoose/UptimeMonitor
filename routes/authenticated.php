@@ -7,4 +7,4 @@ Route::inertia('dashboard', 'Dashboard')->name('dashboard');
 
 Route::resource('monitors', MonitorController::class);
 
-include __DIR__ . '/settings.php';
+include __DIR__.'/settings.php';

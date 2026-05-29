@@ -11,14 +11,14 @@ return [
             'url' => 'URL',
             'interval' => 'Interval',
             'timeout' => 'Timeout',
-            'actions' => 'Actions'
+            'actions' => 'Actions',
         ],
         'filters' => [
             'search' => [
-                'placeholder' => 'Search monitors...'
-            ]
+                'placeholder' => 'Search monitors...',
+            ],
         ],
-        'empty' => 'No monitors found'
+        'empty' => 'No monitors found',
     ],
     'is_up' => 'Up',
     'is_down' => 'Down',
@@ -54,9 +54,9 @@ return [
             'options' => [
                 '10s' => '10 seconds',
                 '30s' => '30 seconds',
-                '1m'  => '1 minute',
-                '2m'  => '2 minutes',
-                '5m'  => '5 minutes',
+                '1m' => '1 minute',
+                '2m' => '2 minutes',
+                '5m' => '5 minutes',
             ],
         ],
         'check_interval' => [
@@ -64,12 +64,12 @@ return [
             'description' => 'How often the monitor should run.',
             'custom_placeholder' => 'Cron expression, e.g. */45 * * * *',
             'options' => [
-                'every_minute'     => 'Every minute',
-                'every_5_minutes'  => 'Every 5 minutes',
+                'every_minute' => 'Every minute',
+                'every_5_minutes' => 'Every 5 minutes',
                 'every_10_minutes' => 'Every 10 minutes',
                 'every_15_minutes' => 'Every 15 minutes',
                 'every_30_minutes' => 'Every 30 minutes',
-                'every_hour'       => 'Every hour',
+                'every_hour' => 'Every hour',
             ],
         ],
         'is_active' => [
@@ -79,7 +79,7 @@ return [
     ],
     'breadcrumbs' => [
         'index' => 'Monitors',
-        'create' => 'Create' 
+        'create' => 'Create',
     ],
     'messages' => [
         'created' => [

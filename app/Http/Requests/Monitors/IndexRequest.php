@@ -3,7 +3,7 @@
 namespace App\Http\Requests\Monitors;
 
 use App\Models\Monitor;
-use Illuminate\Foundation\Http\FormRequest;;
+use Illuminate\Foundation\Http\FormRequest;
 
 class IndexRequest extends FormRequest
 {
@@ -24,7 +24,9 @@ class IndexRequest extends FormRequest
 
     public function search(): ?string
     {
-        if (!$this->filled('search')) return null;
+        if (! $this->filled('search')) {
+            return null;
+        }
 
         return str_replace(['%', '_'], ['\%', '\_'], trim($this->str('search')));
     }

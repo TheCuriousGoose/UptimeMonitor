@@ -27,11 +27,11 @@ class StoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'           => ['required', 'string', 'max:255'],
-            'url'            => ['required', 'url', 'string', 'max:255'],
-            'type'           => ['required', 'string', new Enum(MonitorType::class)],
-            'is_active'      => ['boolean'],
-            'timeout'        => ['required', 'integer', 'min:1', 'max:300'],
+            'name' => ['required', 'string', 'max:255'],
+            'url' => ['required', 'url', 'string', 'max:255'],
+            'type' => ['required', 'string', new Enum(MonitorType::class)],
+            'is_active' => ['boolean'],
+            'timeout' => ['required', 'integer', 'min:1', 'max:300'],
             'check_interval' => ['required', 'string', new Cron],
         ];
     }

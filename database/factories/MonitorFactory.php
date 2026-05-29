@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class MonitorFactory extends Factory
 {
-    
     private User $user;
 
     public function forUser(User $user): static

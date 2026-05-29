@@ -20,11 +20,11 @@ class MonitorSeeder extends Seeder
 
         for ($i = 0; $i < $amountOfMonitors; $i++) {
             $monitor = Monitor::create([
-                'name' => ucfirst(fake()->word()) . ' ' . fake()->randomElement(['API', 'Service', 'Gateway', 'Server', 'Dashboard', 'Platform', 'Worker', 'Queue']),
+                'name' => ucfirst(fake()->word()).' '.fake()->randomElement(['API', 'Service', 'Gateway', 'Server', 'Dashboard', 'Platform', 'Worker', 'Queue']),
                 'url' => fake()->url(),
                 'created_by' => $user->id,
                 'timeout' => 5,
-                'check_interval' => '* * * * *'
+                'check_interval' => '* * * * *',
             ]);
 
             // Create fake monitor checks for each monitor
@@ -39,11 +39,11 @@ class MonitorSeeder extends Seeder
                     'response_ms' => $isUp ? fake()->randomElement(array_merge(array_fill(0, 70, fake()->numberBetween(50, 300)), array_fill(0, 30, fake()->numberBetween(300, 2000)))) : 5001,
                     'is_up' => $isUp,
                     'error' => $isUp ? null : fake()->randomElement([
-                        "Connection timeout after 5 seconds",
-                        "Service unavailable",
-                        "Internal server error",
-                        "Gateway timeout",
-                        "Service temporarily down"
+                        'Connection timeout after 5 seconds',
+                        'Service unavailable',
+                        'Internal server error',
+                        'Gateway timeout',
+                        'Service temporarily down',
                     ]),
                 ]);
             }

@@ -1,5 +1,5 @@
 <?php
 
 return [
-    'visible_columns' => 'Visible columns'
+    'visible_columns' => 'Visible columns',
 ];

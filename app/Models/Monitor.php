@@ -15,15 +15,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['name', 'url', 'created_by', 'timeout', 'check_interval', 'type', 'next_check_at', 'is_active'])]
 class Monitor extends Model
 {
-    use HasUuids, HasFactory;
+    use HasFactory, HasUuids;
 
     protected function casts(): array
     {
         return [
-            'type'          => MonitorType::class,
+            'type' => MonitorType::class,
             'next_check_at' => 'immutable_datetime',
-            'is_active'     => 'boolean',
-            'latest_is_up'  => 'boolean',
+            'is_active' => 'boolean',
+            'latest_is_up' => 'boolean',
         ];
     }
 
@@ -69,12 +69,13 @@ class Monitor extends Model
 
     public function scopeSearch(Builder $query, ?string $search): Builder
     {
-        if (!$search) return $query;
+        if (! $search) {
+            return $query;
+        }
 
         return $query->where(function (Builder $q) use ($search) {
             $q->where('name', 'LIKE', "%{$search}%")
                 ->orWhere('url', 'LIKE', "%{$search}%");
         });
     }
-
 }

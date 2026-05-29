@@ -20,6 +20,7 @@ class DispatchDueChecks extends Command
 
         if (! $lock->get()) {
             $this->warn('Another dispatch is already running. Skipping.');
+
             return;
         }
 

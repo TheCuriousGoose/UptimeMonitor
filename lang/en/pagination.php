@@ -15,5 +15,5 @@ return [
 
     'previous' => 'Previous',
     'next' => 'Next',
-    'showing' => 'Showing :from-:to of :total :type'
+    'showing' => 'Showing :from-:to of :total :type',
 ];

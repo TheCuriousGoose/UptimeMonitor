@@ -17,10 +17,11 @@ class MonitorCheck extends Model
     protected function casts(): array
     {
         return [
-            'meta'    => 'array',
-            'is_up'   => 'boolean',
+            'meta' => 'array',
+            'is_up' => 'boolean',
         ];
     }
+
     public function monitor(): BelongsTo
     {
         return $this->belongsTo(Monitor::class);

@@ -77,7 +77,6 @@ class MonitorPolicyTest extends TestCase
         $response->assertOk();
     }
 
-
     public function test_authenticated_user_cannot_see_monitor_details_of_other_users(): void
     {
         $user = User::factory()->create();
