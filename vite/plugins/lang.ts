@@ -31,6 +31,14 @@ export default function lang(options: Options = {}): Plugin {
     const outDir = resolve(root, options.outDir ?? 'lang');
     const php = options.php ?? 'php';
 
+    const emitLocaleUpdate = (devServer: ViteDevServer, locale: string): void => {
+        devServer.ws.send({
+            type: 'custom',
+            event: 'lang:updated',
+            data: { locale },
+        });
+    };
+
     const compileLocale = (locale: string): void => {
         const dir = join(langDir, locale);
 
@@ -84,8 +92,8 @@ export default function lang(options: Options = {}): Plugin {
         buildStart() {
             compileAll();
         },
-        configureServer(server: ViteDevServer) {
-            server.watcher.add(join(langDir, '**/*.php'));
+        configureServer(devServer: ViteDevServer) {
+            devServer.watcher.add(join(langDir, '**/*.php'));
 
             const handle = (path: string) => {
                 if (!path.endsWith('.php') || !path.startsWith(langDir)) {
@@ -103,17 +111,17 @@ export default function lang(options: Options = {}): Plugin {
 
                 try {
                     compileLocale(locale);
-                    server.ws.send({ type: 'full-reload' });
+                    emitLocaleUpdate(devServer, locale);
                 } catch (error) {
-                    server.config.logger.error(
+                    devServer.config.logger.error(
                         `[lang] failed to compile "${locale}": ${(error as Error).message}`,
                     );
                 }
             };
 
-            server.watcher.on('add', handle);
-            server.watcher.on('change', handle);
-            server.watcher.on('unlink', handle);
+            devServer.watcher.on('add', handle);
+            devServer.watcher.on('change', handle);
+            devServer.watcher.on('unlink', handle);
         },
     };
 }
