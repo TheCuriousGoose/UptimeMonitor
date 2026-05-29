@@ -7,6 +7,7 @@ return [
         'columns' => [
             'name' => 'Name',
             'is_up' => 'Is Up',
+            'type' => 'Type',
             'url' => 'URL',
             'interval' => 'Interval',
             'timeout' => 'Timeout',

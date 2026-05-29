@@ -19,6 +19,7 @@ class MonitorResource extends JsonResource
             'uuid' => $this->uuid,
             'name' => $this->name,
             'url' => $this->url,
+            'type' => $this->type,
             'is_active' => $this->is_active,
             'timeout' => $this->timeout,
             'check_interval' => $this->check_interval,

@@ -43,6 +43,10 @@ export const columns: ColumnDef<Monitor>[] = [
             ),
     },
     {
+        accessorKey: 'type',
+        header: () => trans('monitors.table.columns.type'),
+    },
+    {
         accessorKey: 'interval',
         header: () => trans('monitors.table.columns.interval'),
         cell: ({ row }) =>
