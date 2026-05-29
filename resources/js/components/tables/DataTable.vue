@@ -1,9 +1,72 @@
+<template>
+    <div class="flex flex-col gap-4">
+        <div class="rounded-md border">
+            <Table>
+                <TableHeader>
+                    <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
+                        <TableHead v-for="header in headerGroup.headers" :key="header.id">
+                            <FlexRender v-if="!header.isPlaceholder" :render="header.column.columnDef.header"
+                                :props="header.getContext()" />
+                        </TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    <template v-if="table.getRowModel().rows.length">
+                        <TableRow v-for="row in table.getRowModel().rows" :key="row.id">
+                            <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
+                                <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
+                            </TableCell>
+                        </TableRow>
+                    </template>
+                    <TableEmpty v-else :colspan="columns.length">
+                        {{ emptyText }}
+                    </TableEmpty>
+                </TableBody>
+            </Table>
+        </div>
+
+        <div class="flex items-center justify-between text-sm text-muted-foreground">
+            <p>
+                {{ $t('pagination.showing', {
+                    from: String(pagination.meta.from ?? 0),
+                    to: String(pagination.meta.to ?? 0),
+                    total: String(pagination.meta.total),
+                    type: itemLabel,
+                }) }}
+            </p>
+            <Pagination
+                v-slot="{ page }"
+                :total="pagination.meta.total"
+                :items-per-page="pagination.meta.per_page"
+                :page="pagination.meta.current_page"
+                :sibling-count="1"
+                show-edges
+                @update:page="navigateTo"
+            >
+                <PaginationContent v-slot="{ items }">
+                    <PaginationPrevious />
+                    <template v-for="(item, index) in items" :key="index">
+                        <PaginationItem
+                            v-if="item.type === 'page'"
+                            :value="item.value"
+                            :is-active="item.value === page"
+                        >
+                            {{ item.value }}
+                        </PaginationItem>
+                        <PaginationEllipsis v-else :index="index" />
+                    </template>
+                    <PaginationNext />
+                </PaginationContent>
+            </Pagination>
+        </div>
+    </div>
+</template>
+
 <script setup lang="ts" generic="T">
 import { router } from "@inertiajs/vue3";
 import { useVueTable, getCoreRowModel, FlexRender } from "@tanstack/vue-table";
 import type { ColumnDef } from "@tanstack/vue-table";
 import { computed, onMounted } from "vue";
-import { Button } from "@/components/ui/button";
 import {
     Table,
     TableBody,
@@ -14,11 +77,19 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { useColumnPreferences } from "@/composables/useColumnPreferences";
-import type { Pagination } from "@/types/pagination";
+import type { Pagination as PaginationData } from "@/types/pagination";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationNext,
+    PaginationPrevious,
+} from "../ui/pagination";
 
 const props = defineProps<{
     columns: ColumnDef<T>[];
-    pagination: Pagination<any>;
+    pagination: PaginationData<any>;
     tableKey: string;
     defaultVisibility?: Record<string, boolean>;
     rowId: (row: T) => string;
@@ -63,59 +134,9 @@ const table = computed(() => useVueTable({
     },
 }));
 
-function navigate(url: string | null) {
-    if (url) {
-        router.visit(url, { preserveScroll: true });
-    }
+function navigateTo(page: number) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', String(page));
+    router.visit(url.toString(), { preserveScroll: true });
 }
 </script>
-
-<template>
-    <div class="flex flex-col gap-4">
-        <div class="rounded-md border">
-            <Table>
-                <TableHeader>
-                    <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
-                        <TableHead v-for="header in headerGroup.headers" :key="header.id">
-                            <FlexRender v-if="!header.isPlaceholder" :render="header.column.columnDef.header"
-                                :props="header.getContext()" />
-                        </TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    <template v-if="table.getRowModel().rows.length">
-                        <TableRow v-for="row in table.getRowModel().rows" :key="row.id">
-                            <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
-                                <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
-                            </TableCell>
-                        </TableRow>
-                    </template>
-                    <TableEmpty v-else :colspan="columns.length">
-                        {{ emptyText }}
-                    </TableEmpty>
-                </TableBody>
-            </Table>
-        </div>
-
-        <div class="flex items-center justify-between text-sm text-muted-foreground">
-            <span>
-                {{ $t('pagination.showing', {
-                    from: String(pagination.meta.from ?? 0),
-                    to: String(pagination.meta.to ?? 0),
-                    total: String(pagination.meta.total),
-                    type: itemLabel,
-                }) }}
-            </span>
-            <div class="flex gap-2">
-                <Button variant="outline" size="sm" :disabled="!pagination.links.prev"
-                    @click="navigate(pagination.links.prev)">
-                    {{ $t('pagination.previous') }}
-                </Button>
-                <Button variant="outline" size="sm" :disabled="!pagination.links.next"
-                    @click="navigate(pagination.links.next)">
-                    {{ $t('pagination.next') }}
-                </Button>
-            </div>
-        </div>
-    </div>
-</template>
