@@ -48,7 +48,7 @@ class MonitorController extends Controller
         $this->authorize('create', Monitor::class);
 
         return Inertia::render('monitors/Create', [
-            'types' => array_column(MonitorType::cases(), 'value'),
+            'types' => $this->getMonitorTypes()
         ]);
     }
 
@@ -58,5 +58,19 @@ class MonitorController extends Controller
         $monitor = $user->monitors()->create($request->validated());
 
         return to_route('monitors.show', $monitor)->with('success', __('monitors.messages.created.success'));
+    }
+
+    public function edit(Monitor $monitor) {
+        $this->authorize('update', $monitor);
+
+        return Inertia::render('monitors/Edit', [
+            'monitor' => $monitor,
+            'types' => $this->getMonitorTypes()
+        ]);
+    }
+
+    private function getMonitorTypes(): array
+    {
+        return array_column(MonitorType::cases(), 'value');
     }
 }

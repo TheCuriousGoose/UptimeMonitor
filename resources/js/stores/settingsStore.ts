@@ -18,8 +18,12 @@ export const useSettingsStore = defineStore('settings', () => {
         // Search all sections for the key
         for (const section of Object.values(settings.value)) {
             const setting = section.find((s) => s.key === key);
-            if (setting) return setting.value;
+
+            if (setting) {
+return setting.value;
+}
         }
+
         return defaultValue;
     };
 

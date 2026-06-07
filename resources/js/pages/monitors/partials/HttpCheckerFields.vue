@@ -1,7 +1,13 @@
 <template>
     <Field>
         <FieldLabel for="url">{{ $t('monitors.form.url.title') }}</FieldLabel>
-        <Input id="url" name="url" autocomplete="off" type="url" />
+        <Input
+            id="url"
+            name="url"
+            autocomplete="off"
+            type="url"
+            :default-value="url"
+        />
         <FieldError>{{ errors?.url }}</FieldError>
         <FieldDescription>{{ $t('monitors.form.url.description') }}</FieldDescription>
     </Field>
@@ -13,5 +19,6 @@ import { Input } from '@/components/ui/input';
 
 defineProps<{
     errors?: Record<string, string>;
+    url?: string;
 }>();
 </script>

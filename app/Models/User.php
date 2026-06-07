@@ -23,7 +23,7 @@ class User extends Authenticatable
     /**
      * Get the attributes that should be cast.
      *
-     * @return array<string, string>
+    * @return array<string, string>
      */
     protected function casts(): array
     {
@@ -38,5 +38,14 @@ class User extends Authenticatable
     public function monitors(): HasMany
     {
         return $this->hasMany(Monitor::class, 'created_by');
+    }
+
+    public function can($ability, $arguments = []): bool
+    {
+        if ($this->hasRole('Super Admin')) {
+            return true;
+        }
+
+        return parent::can($ability, $arguments);
     }
 }
