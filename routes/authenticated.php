@@ -9,3 +9,4 @@ Route::resource('monitors', MonitorController::class);
 
 include __DIR__.'/settings.php';
 include __DIR__.'/admin.php';
+
