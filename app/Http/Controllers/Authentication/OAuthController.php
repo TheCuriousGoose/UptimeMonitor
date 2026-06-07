@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Authentication;
 
 use App\Http\Controllers\Controller;
+use App\Models\OAuthConnection;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -39,17 +40,18 @@ class OAuthController extends Controller
             return to_route('login')->withErrors(['email' => __('auth.oauth_no_email')]);
         }
 
-        $user = User::firstOrNew(['email' => $email]);
+        $user = User::firstOrCreate(
+            ['email' => $email],
+            [
+                'name' => $socialiteUser->getName() ?? $socialiteUser->getNickname() ?? '',
+                'email_verified_at' => now(),
+            ],
+        );
 
-        $user->oauth_provider = $provider;
-        $user->oauth_id = $socialiteUser->getId();
-
-        if (! $user->exists) {
-            $user->name = $socialiteUser->getName() ?? $socialiteUser->getNickname() ?? '';
-            $user->email_verified_at = now();
-        }
-
-        $user->save();
+        OAuthConnection::updateOrCreate(
+            ['provider' => $provider, 'provider_id' => $socialiteUser->getId()],
+            ['user_id' => $user->id],
+        );
 
         Auth::login($user, remember: true);
 
