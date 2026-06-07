@@ -1,6 +1,5 @@
-import { Link } from '@inertiajs/vue3';
 import type { ColumnDef } from '@tanstack/vue-table';
-import { ClockIcon, EyeIcon } from 'lucide-vue-next';
+import { ClockIcon } from 'lucide-vue-next';
 import { h } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { trans } from '@/lib/i18n';

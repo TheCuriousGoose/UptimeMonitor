@@ -136,9 +136,9 @@ import { Field, FieldContent, FieldDescription, FieldError, FieldGroup, FieldLab
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import HttpCheckerFields from '@/pages/monitors/partials/HttpCheckerFields.vue';
 import * as monitorsRoute from '@/routes/monitors';
 import type { MonitorType } from '@/types/monitors';
-import HttpCheckerFields from '@/pages/monitors/partials/HttpCheckerFields.vue';
 
 const checkerForms: Record<MonitorType, unknown> = {
     http: HttpCheckerFields,
