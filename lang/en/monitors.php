@@ -22,6 +22,31 @@ return [
     ],
     'is_up' => 'Up',
     'is_down' => 'Down',
+    'no_data' => 'No data',
+    'wizard' => [
+        'back' => 'Back',
+        'next' => 'Continue',
+        'step1' => [
+            'label' => 'Basics',
+            'title' => 'Name your monitor',
+            'description' => 'Give your monitor a name and choose the type of check to perform.',
+        ],
+        'step2' => [
+            'label' => 'Target',
+            'title' => 'Configure the target',
+            'description' => 'Provide the details the checker needs to run.',
+        ],
+        'step3' => [
+            'label' => 'Schedule',
+            'title' => 'Set the schedule',
+            'description' => 'Control how often the monitor runs and how long to wait for a response.',
+        ],
+        'step4' => [
+            'label' => 'Review',
+            'title' => 'Review & create',
+            'description' => 'Confirm the details below, then create your monitor.',
+        ],
+    ],
     'create' => [
         'label' => 'New Monitor',
         'form' => [
