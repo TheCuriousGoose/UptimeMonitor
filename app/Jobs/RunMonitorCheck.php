@@ -15,7 +15,11 @@ class RunMonitorCheck implements ShouldQueue
 
     public int $tries = 1;
 
-    public function __construct(public readonly Monitor $monitor) {}
+    public function __construct(public readonly Monitor $monitor)
+    {
+        $checker = app(CheckerRegistry::class)->resolve($this->monitor->type->value);
+        $this->onQueue($checker->queue());
+    }
 
     public function handle(CheckerRegistry $registry): void
     {

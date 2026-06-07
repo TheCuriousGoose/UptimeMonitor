@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import OauthButtons from '@/components/auth/OAuthButtons.vue';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
@@ -14,6 +15,7 @@ import { trans } from '@/lib/i18n';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
+import { Shield, User } from 'lucide-vue-next';
 
 defineOptions({
     layout: {
@@ -26,7 +28,23 @@ defineProps<{
     status?: string;
     canResetPassword: boolean;
     canRegister: boolean;
+    isLocal: boolean;
 }>();
+
+const devLoginLoading = ref<'admin' | 'user' | null>(null);
+
+const devLoginAdminForm = useForm({});
+const devLoginUserForm = useForm({});
+
+const loginAsAdmin = () => {
+    devLoginLoading.value = 'admin';
+    devLoginAdminForm.post('/dev-login/admin');
+};
+
+const loginAsUser = () => {
+    devLoginLoading.value = 'user';
+    devLoginUserForm.post('/dev-login/user');
+};
 </script>
 
 <template>
@@ -39,7 +57,27 @@ defineProps<{
 
     <Form v-bind="store.form()" :reset-on-success="['password']" v-slot="{ errors, processing }"
         class="flex flex-col gap-6">
-        <OauthButtons  />
+
+        <!-- Dev Quick Login Buttons -->
+        <div v-if="isLocal" class="grid grid-cols-2 gap-2">
+            <Button type="button" variant="outline" class="text-xs" @click="loginAsAdmin"
+                :disabled="devLoginLoading !== null">
+                <Spinner v-if="devLoginLoading === 'admin'" class="mr-1" />
+                <span v-else class="flex gap-2">
+                    <Shield />
+                    Admin
+                </span>
+            </Button>
+            <Button type="button" variant="outline" class="text-xs" @click="loginAsUser"
+                :disabled="devLoginLoading !== null">
+                <Spinner v-if="devLoginLoading === 'user'" class="mr-1" />
+                <span v-else class="flex gap-2">
+                    <User />
+                    User</span>
+            </Button>
+        </div>
+
+        <OauthButtons />
 
         <div class="grid gap-6">
             <div class="relative">
