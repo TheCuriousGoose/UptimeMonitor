@@ -11,6 +11,8 @@ import { registerPermissionDirectives } from './directives/permissions';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
+const pinia = createPinia();
+
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
@@ -32,8 +34,6 @@ createInertiaApp({
         const locale = (props.initialPage.props.locale as string) ?? 'en';
 
         setLocale(locale);
-
-        const pinia = createPinia();
 
         const app = createApp({ render: () => h(App, props) })
             .use(plugin)

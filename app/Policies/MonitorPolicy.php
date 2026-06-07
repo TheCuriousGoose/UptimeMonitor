@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\Permission;
 use App\Models\Monitor;
 use App\Models\User;
 
@@ -20,7 +21,8 @@ class MonitorPolicy
      */
     public function view(User $user, Monitor $monitor): bool
     {
-        return $monitor->created_by === $user->id;
+        return $monitor->created_by === $user->id
+            && $user->can(Permission::MonitorsView->value);
     }
 
     /**
@@ -28,7 +30,7 @@ class MonitorPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('monitors.create');
+        return $user->can(Permission::MonitorsCreate->value);
     }
 
     /**
@@ -36,7 +38,8 @@ class MonitorPolicy
      */
     public function update(User $user, Monitor $monitor): bool
     {
-        return $monitor->created_by === $user->id;
+        return $monitor->created_by === $user->id
+            && $user->can(Permission::MonitorsEdit->value);
     }
 
     /**
@@ -44,7 +47,8 @@ class MonitorPolicy
      */
     public function delete(User $user, Monitor $monitor): bool
     {
-        return $monitor->created_by === $user->id;
+        return $monitor->created_by === $user->id
+            && $user->can(Permission::MonitorsDelete->value);
     }
 
     /**
@@ -52,6 +56,7 @@ class MonitorPolicy
      */
     public function restore(User $user, Monitor $monitor): bool
     {
-        return $monitor->created_by === $user->id;
+        return $monitor->created_by === $user->id
+            && $user->can(Permission::MonitorsDelete->value);
     }
 }
