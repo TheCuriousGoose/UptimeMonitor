@@ -6,8 +6,6 @@ use App\Models\Monitor;
 use App\Models\MonitorCheck;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class MonitorPolicyTest extends TestCase
@@ -18,13 +16,7 @@ class MonitorPolicyTest extends TestCase
     {
         parent::setUp();
 
-        // Create roles
-        Role::create(['name' => 'Super Admin']);
-        Role::create(['name' => 'Admin']);
-        Role::create(['name' => 'User']);
-
-        // Create permission for monitor creation
-        Permission::create(['name' => 'monitors.create']);
+        $this->seed();
     }
 
     public function test_gets_redirected_when_not_logged_in(): void
@@ -38,11 +30,9 @@ class MonitorPolicyTest extends TestCase
     {
         $user = User::factory()->create();
         $user->assignRole('User');
-        $user->givePermissionTo('monitors.create');
 
         $otherUser = User::factory()->create();
         $otherUser->assignRole('User');
-        $otherUser->givePermissionTo('monitors.create');
 
         $ownMonitor = Monitor::factory()->forUser($user)->create();
         $otherMonitor = Monitor::factory()->forUser($otherUser)->create();
@@ -58,7 +48,6 @@ class MonitorPolicyTest extends TestCase
     {
         $user = User::factory()->create();
         $user->assignRole('User');
-        $user->givePermissionTo('monitors.create');
 
         $monitorWithChecks = Monitor::factory()->forUser($user)->create();
         $monitorWithoutChecks = Monitor::factory()->forUser($user)->create();
@@ -78,7 +67,6 @@ class MonitorPolicyTest extends TestCase
     {
         $user = User::factory()->create();
         $user->assignRole('User');
-        $user->givePermissionTo('monitors.create');
 
         $response = $this->actingAs($user)->get(route('monitors.create'));
 
@@ -88,8 +76,6 @@ class MonitorPolicyTest extends TestCase
     public function test_user_without_create_permission_cannot_create_monitor(): void
     {
         $user = User::factory()->create();
-        $user->assignRole('User');
-        // No permission to create
 
         $response = $this->actingAs($user)->get(route('monitors.create'));
 
@@ -100,7 +86,6 @@ class MonitorPolicyTest extends TestCase
     {
         $user = User::factory()->create();
         $user->assignRole('User');
-        $user->givePermissionTo('monitors.create');
 
         $monitor = Monitor::factory()->forUser($user)->create();
 
