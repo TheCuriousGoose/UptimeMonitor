@@ -3,10 +3,9 @@ import type { ColumnDef } from '@tanstack/vue-table';
 import { ClockIcon, EyeIcon } from 'lucide-vue-next';
 import { h } from 'vue';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { trans } from '@/lib/i18n';
-import * as monitorsRoute from '@/routes/monitors';
 import type { Monitor } from '@/types/monitors';
+import TableRowActions from './TableRowActions.vue';
 
 export const columns: ColumnDef<Monitor>[] = [
     {
@@ -54,16 +53,6 @@ export const columns: ColumnDef<Monitor>[] = [
     {
         accessorKey: 'actions',
         header: () => trans('monitors.table.columns.actions'),
-        cell: ({ row }) =>
-            h(
-                Button,
-                {
-                    as: Link,
-                    variant: 'ghost',
-                    size: 'sm',
-                    href: monitorsRoute.show(row.original).url,
-                },
-                () => h(EyeIcon),
-            ),
+        cell: ({ row }) => h(TableRowActions, { monitor: row.original }),
     },
 ];

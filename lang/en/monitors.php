@@ -112,6 +112,7 @@ return [
         '24h' => 'Last 24 hours',
         '7d' => 'Last 7 days',
         '30d' => 'Last 30 days',
+        'edit' => 'Edit :name',
     ],
     'messages' => [
         'created' => [
