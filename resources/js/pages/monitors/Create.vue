@@ -114,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, setLayoutProps } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -135,8 +135,7 @@ const props = defineProps<{
     types: MonitorType[];
 }>();
 
-defineOptions({
-    layout: {
+setLayoutProps({
         breadcrumbs: [
             {
                 title: trans('monitors.breadcrumbs.index'),
@@ -146,7 +145,6 @@ defineOptions({
                 title: trans('monitors.breadcrumbs.create'),
             },
         ],
-    },
 });
 
 const typeOption = ref<MonitorType>(props.types[0]);

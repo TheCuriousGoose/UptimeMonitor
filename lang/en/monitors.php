@@ -80,6 +80,13 @@ return [
     'breadcrumbs' => [
         'index' => 'Monitors',
         'create' => 'Create',
+        'show' => ':name',
+    ],
+    'periods' => [
+        '1h' => 'Last 1 hour',
+        '24h' => 'Last 24 hours',
+        '7d' => 'Last 7 days',
+        '30d' => 'Last 30 days',
     ],
     'messages' => [
         'created' => [
@@ -87,4 +94,5 @@ return [
             'error' => 'Something went wrong while creating your monitor',
         ],
     ],
+    'uptime_timeline_for' => 'Uptime timeline for :name',
 ];

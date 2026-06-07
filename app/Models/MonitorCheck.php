@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[WithoutTimestamps]
-#[Fillable(['monitor_id', 'status_code', 'response_ms', 'is_up', 'error', 'checked_at', 'meta'])]
+#[Fillable(['monitor_id', 'response_ms', 'is_up', 'error', 'checked_at', 'meta'])]
 class MonitorCheck extends Model
 {
     use HasFactory;
@@ -19,6 +19,7 @@ class MonitorCheck extends Model
         return [
             'meta' => 'array',
             'is_up' => 'boolean',
+            'checked_at' => 'immutable_datetime',
         ];
     }
 

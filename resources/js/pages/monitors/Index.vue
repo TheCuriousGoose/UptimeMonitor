@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, setLayoutProps } from '@inertiajs/vue3';
 import { PlusIcon } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 import MonitorsTable from '@/components/tables/monitors/MonitorsTable.vue';
@@ -29,15 +29,13 @@ watch(search, debounce((value: string) => {
     });
 }, 300));
 
-defineOptions({
-    layout: {
-        breadcrumbs: [
-            {
-                title: trans('monitors.breadcrumbs.index'),
-                href: monitorsRoute.index(),
-            },
-        ],
-    },
+setLayoutProps({
+    breadcrumbs: [
+        {
+            title: trans('monitors.breadcrumbs.index'),
+            href: monitorsRoute.index(),
+        },
+    ],
 });
 </script>
 
