@@ -1,5 +1,5 @@
 <template>
-    <Button as="a" v-if="get('oauth.' + provider, 0) == 1" variant="outline" :href="oauth.redirect(provider)">
+    <Button as="a" v-if="get('oauth.' + provider, 0) == 1" variant="outline" :href="oauth.redirect(provider).url">
         <span class="gap-2 flex">
             <Icon :icon="'simple-icons:' + provider" class="size-5" />
             {{ $t('auth.oauth.' + provider) }}
