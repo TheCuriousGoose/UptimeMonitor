@@ -80,6 +80,7 @@ return [
     'breadcrumbs' => [
         'index' => 'Monitors',
         'create' => 'Create',
+        'edit' => 'Edit :name',
     ],
     'messages' => [
         'created' => [

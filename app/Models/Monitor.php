@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'url', 'created_by', 'timeout', 'check_interval', 'type', 'next_check_at', 'is_active'])]
+#[Fillable(['name', 'url', 'created_by', 'timeout', 'check_interval', 'type', 'next_check_at', 'last_is_up', 'is_active'])]
 class Monitor extends Model
 {
     use HasFactory, HasUuids;

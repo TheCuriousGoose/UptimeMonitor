@@ -9,6 +9,7 @@ interface Monitor {
     type: MonitorType;
     monitor_check: MonitorCheck;
     is_up: boolean;
+    is_active: boolean;
     created_by: User;
     timeout: string;
     check_interval: string;
