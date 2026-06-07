@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ImpersonateRoleController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,6 +14,9 @@ Route::middleware('role:Super Admin')->prefix('admin')->name('admin.')->group(fu
 
     Route::get('users', [UserController::class, 'index'])->name('users.index');
     Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+
+    Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
+    Route::put('settings/{key}', [SettingController::class, 'update'])->name('settings.update');
 
     Route::post('impersonate/{role}', [ImpersonateRoleController::class, 'store'])->name('impersonate.store');
 });

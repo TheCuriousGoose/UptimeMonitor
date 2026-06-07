@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, Monitor, ShieldCheck, Users } from 'lucide-vue-next';
+import { LayoutGrid, Monitor, Settings2, ShieldCheck, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -18,6 +18,7 @@ import {
 import {trans } from '@/lib/i18n';
 import { dashboard } from '@/routes';
 import adminRoles from '@/routes/admin/roles';
+import adminSettings from '@/routes/admin/settings';
 import adminUsers from '@/routes/admin/users';
 import monitors from '@/routes/monitors';
 import type { Auth } from '@/types';
@@ -50,6 +51,11 @@ const adminNavItems: NavItem[] = [
         title: 'Roles',
         href: adminRoles.index(),
         icon: ShieldCheck,
+    },
+    {
+        title: 'Settings',
+        href: adminSettings.index(),
+        icon: Settings2,
     },
 ];
 

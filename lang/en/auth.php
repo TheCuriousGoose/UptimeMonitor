@@ -16,6 +16,43 @@ return [
     'failed' => 'These credentials do not match our records.',
     'password' => 'The provided password is incorrect.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
-    'success' => 'You\'ve succesfully been authenticated'
+    'successful' => 'You\'ve succesfully been authenticated',
 
+    'login' => [
+        'title' => 'Log in to your account',
+        'description' => 'Enter your email and password below to log in',
+        'page_title' => 'Log in',
+        'email_label' => 'Email address',
+        'email_placeholder' => 'email{\'@\'}example.com',
+        'password_label' => 'Password',
+        'password_placeholder' => 'Password',
+        'remember_me' => 'Remember me',
+        'forgot_password' => 'Forgot password?',
+        'submit' => 'Log in',
+        'no_account' => 'Don\'t have an account?',
+        'sign_up' => 'Sign up',
+        'or' => 'Or',
+    ],
+
+    'register' => [
+        'title' => 'Create an account',
+        'description' => 'Enter your details below to create your account',
+        'page_title' => 'Register',
+        'name_label' => 'Name',
+        'name_placeholder' => 'Full name',
+        'email_label' => 'Email address',
+        'email_placeholder' => 'email{\'@\'}example.com',
+        'password_label' => 'Password',
+        'password_placeholder' => 'Password',
+        'password_confirmation_label' => 'Confirm password',
+        'password_confirmation_placeholder' => 'Confirm password',
+        'submit' => 'Create account',
+        'have_account' => 'Already have an account?',
+        'log_in' => 'Log in',
+    ],
+
+    'oauth' => [
+        'google' => 'Continue with Google',
+        'github' => 'Continue with Github'
+    ]
 ];

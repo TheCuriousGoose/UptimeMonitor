@@ -1,4 +1,5 @@
 import { createInertiaApp } from '@inertiajs/vue3';
+import { createPinia } from 'pinia';
 import { createApp, h } from 'vue';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -6,6 +7,7 @@ import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
 import { i18n, setLocale } from '@/lib/i18n';
+import { registerPermissionDirectives } from './directives/permissions';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -31,10 +33,16 @@ createInertiaApp({
 
         setLocale(locale);
 
-        createApp({ render: () => h(App, props) })
+        const pinia = createPinia();
+
+        const app = createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(i18n)
-            .mount(el as Element);
+            .use(pinia);
+            
+        registerPermissionDirectives(app);
+
+        app.mount(el!);
     },
 });
 

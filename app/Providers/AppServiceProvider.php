@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Checkers\CheckerRegistry;
 use App\Checkers\HttpChecker;
+use App\Settings\SettingRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(CheckerRegistry::class, fn () => new CheckerRegistry([
             'http' => HttpChecker::class,
         ]));
+
+        $this->app->singleton(SettingRepository::class);
     }
 
     /**
