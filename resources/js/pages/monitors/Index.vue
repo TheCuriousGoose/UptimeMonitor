@@ -1,51 +1,61 @@
-<template>
-    <Head title="Monitors" />
-
-    <Card>
-        <CardHeader>{{ $t('monitors.table.header') }}</CardHeader>
-        <CardContent>
-            <TableFilterBar>
-                <template #filters>
-                    <Input name="search" type="search" class="w-64" :placeholder="$t('monitors.table.filters.search.placeholder')" />
-                </template>
-                <template #actions>
-                    <Button as="a">
-                        <PlusIcon />
-                        {{ $t('monitors.create') }}
-                    </Button>
-                    <TableColumnFilter table="monitors" column-translations="monitors.table.columns" />
-                </template>
-            </TableFilterBar>
-            <MonitorsTable :monitors="monitors" />
-        </CardContent>
-    </Card>
-</template>
-
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link, router, setLayoutProps } from '@inertiajs/vue3';
 import { PlusIcon } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
 import MonitorsTable from '@/components/tables/monitors/MonitorsTable.vue';
 import TableColumnFilter from '@/components/tables/TableColumnFilter.vue';
 import TableFilterBar from '@/components/tables/TableFilterBar.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { trans } from '@/lib/i18n';
 import * as monitorsRoute from '@/routes/monitors';
 import type { Monitor } from '@/types/monitors';
 import type { Pagination } from '@/types/pagination';
+import debounce from '@/util/debounce';
 
 defineProps<{
     monitors: Pagination<Monitor>;
 }>()
 
-defineOptions({
-    layout: {
-        breadcrumbs: [
-            {
-                title: 'Monitors',
-                href: monitorsRoute.index(),
-            },
-        ],
-    },
+const search = ref<string>('');
+
+watch(search, debounce((value: string) => {
+    const query = value.trim();
+
+    router.get(monitorsRoute.index(), { search: query || undefined }, {
+        preserveState: true,
+        replace: true,
+        only: ['monitors'],
+    });
+}, 300));
+
+setLayoutProps({
+    breadcrumbs: [
+        {
+            title: trans('monitors.breadcrumbs.index'),
+            href: monitorsRoute.index(),
+        },
+    ],
 });
 </script>
+
+
+<template>
+
+    <Head :title="$t('monitors.table.header')" />
+
+    <TableFilterBar>
+        <template #filters>
+            <Input name="search" type="search" class="w-64" v-model="search"
+                :placeholder="$t('monitors.table.filters.search.placeholder')" />
+        </template>
+        <template #actions>
+            <Button :as="Link" :href="monitorsRoute.create()">
+                <PlusIcon />
+                {{ $t('monitors.create.label') }}
+            </Button>
+            <TableColumnFilter table="monitors" column-translations="monitors.table.columns" />
+        </template>
+    </TableFilterBar>
+    <MonitorsTable :monitors="monitors" />
+</template>

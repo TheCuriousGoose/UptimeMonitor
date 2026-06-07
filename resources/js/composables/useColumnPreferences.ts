@@ -4,7 +4,6 @@ import type { Ref } from 'vue';
 type ColumnVisibility = Record<string, boolean>;
 type Cache = Record<string, ColumnVisibility>;
 
-// Module-level — one ref per tableKey, shared across all instances
 const store = new Map<string, Ref<ColumnVisibility>>();
 
 function getOrCreate(tableKey: string, defaultColumns: ColumnVisibility) {
@@ -37,9 +36,7 @@ function readLocalStorage(tableKey: string): ColumnVisibility | null {
 function writeLocalStorage(tableKey: string, value: ColumnVisibility) {
     try {
         localStorage.setItem(localStorageKey(tableKey), JSON.stringify(value));
-    } catch {
-        // Storage quota exceeded — silently ignore
-    }
+    } catch {}
 }
 
 export function useColumnPreferences(
@@ -59,15 +56,14 @@ export function useColumnPreferences(
             }
 
             const prefs = (await response.json()) as { columns?: Cache };
-            const tablePrefs = prefs.columns?.[tableKey] ?? {
+            const tablePrefs = {
                 ...defaultColumns,
+                ...(prefs.columns?.[tableKey] ?? {}),
             };
 
             columns.value = tablePrefs;
             writeLocalStorage(tableKey, tablePrefs);
-        } catch {
-            // Network failure — keep localStorage/default values
-        }
+        } catch {}
     }
 
     function toggle(col: string) {
@@ -85,9 +81,7 @@ export function useColumnPreferences(
                 body: JSON.stringify({
                     columns: { [tableKey]: columns.value },
                 }),
-            }).catch(() => {
-                // Best-effort save — local state is already updated
-            });
+            }).catch(() => {});
         }, 500);
     }
 

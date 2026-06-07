@@ -22,7 +22,7 @@ class CreateUser extends Command
 
         $emailAlreadyExists = User::where('email', $email)->exists();
 
-        if($emailAlreadyExists) {
+        if ($emailAlreadyExists) {
             $this->error('User with that email already exists!');
         }
 
@@ -43,11 +43,11 @@ class CreateUser extends Command
 
         $this->info('User created successfully.');
         $this->table([
-            'Type', 'Value'
+            'Type', 'Value',
         ], [
             ['ID', $user->id],
-            ['Name', $name ],
-            ['Email', $email]
+            ['Name', $name],
+            ['Email', $email],
         ]);
     }
 }

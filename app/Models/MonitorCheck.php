@@ -4,15 +4,27 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[WithoutTimestamps]
-#[Fillable('monitor_id', 'status_code', 'response_ms', 'is_up', 'error')]
+#[Fillable(['monitor_id', 'response_ms', 'is_up', 'error', 'checked_at', 'meta'])]
 class MonitorCheck extends Model
 {
-    public function monitors(): BelongsToMany
+    use HasFactory;
+
+    protected function casts(): array
     {
-        return $this->belongsToMany(Monitor::class);
+        return [
+            'meta' => 'array',
+            'is_up' => 'boolean',
+            'checked_at' => 'immutable_datetime',
+        ];
+    }
+
+    public function monitor(): BelongsTo
+    {
+        return $this->belongsTo(Monitor::class);
     }
 }

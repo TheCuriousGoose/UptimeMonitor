@@ -2,44 +2,61 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\MonitorType;
+use App\Http\Requests\Monitors\IndexRequest;
+use App\Http\Requests\Monitors\ShowRequest;
+use App\Http\Requests\Monitors\StoreRequest;
 use App\Models\Monitor;
 use App\Policies\MonitorPolicy;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 #[UsePolicy(MonitorPolicy::class)]
 class MonitorController extends Controller
 {
-    public function index(Request $request)
+    public function index(IndexRequest $request)
     {
-        if($request->user()->cannot('viewAny', Monitor::class)) {
-            abort(403);
-        }
-
         $monitors = Monitor::query()
-            ->where('created_by', Auth::id())
-            ->with(['createdBy', 'monitorCheck' => function($query) {
-                $query->latest()->limit(1);
-            }])
+            ->forUser(Auth::user())
+            ->search($request->search())
+            ->with(['createdBy'])
+            ->orderBy('latest_is_up', 'asc')
             ->paginate(15);
 
         return Inertia::render('monitors/Index', [
-            'monitors' => $monitors,
+            'monitors' => $monitors->toResourceCollection(),
         ]);
     }
 
-    public function show(Request $request, Monitor $monitor) 
+    public function show(ShowRequest $request, Monitor $monitor)
     {
-        if ($request->user()->cannot('view', $monitor)) {
-            abort(403);
-        }
-
-        $monitor->loadMissing('monitorCheck');
+        $monitor->load(['checks' => function ($query) use ($request) {
+            $query->where('checked_at', '>=', $request->from())
+                ->orderBy('checked_at', 'asc');
+        }]);
 
         return Inertia::render('monitors/Show', [
-            'monitor' => $monitor
+            'monitor' => $monitor,
+            'period' => $request->period(),
+            'periods' => ['1h', '24h', '7d', '30d'],
         ]);
+    }
+
+    public function create()
+    {
+        $this->authorize('create', Monitor::class);
+
+        return Inertia::render('monitors/Create', [
+            'types' => array_column(MonitorType::cases(), 'value'),
+        ]);
+    }
+
+    public function store(StoreRequest $request)
+    {
+        $user = $request->user();
+        $monitor = $user->monitors()->create($request->validated());
+
+        return to_route('monitors.show', $monitor)->with('success', __('monitors.messages.created.success'));
     }
 }

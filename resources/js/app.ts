@@ -1,18 +1,15 @@
 import { createInertiaApp } from '@inertiajs/vue3';
-import { i18nVue } from 'laravel-vue-i18n';
+import { createPinia } from 'pinia';
 import { createApp, h } from 'vue';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
+import { i18n, setLocale } from '@/lib/i18n';
+import { registerPermissionDirectives } from './directives/permissions';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
-
-const langFiles = {
-    ...import.meta.glob('../../lang/*.json', { eager: true }),
-    ...import.meta.glob('../../lang/php_*.json', { eager: true }),
-} as Record<string, { default?: Record<string, string> }>;
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -34,16 +31,18 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         const locale = (props.initialPage.props.locale as string) ?? 'en';
 
-        createApp({ render: () => h(App, props) })
+        setLocale(locale);
+
+        const pinia = createPinia();
+
+        const app = createApp({ render: () => h(App, props) })
             .use(plugin)
-            .use(i18nVue, {
-                lang: locale,
-                resolve: (lang: string) =>
-                    langFiles[`../../lang/php_${lang}.json`]?.default ??
-                    langFiles[`../../lang/${lang}.json`]?.default ??
-                    {},
-            })
-            .mount(el as Element);
+            .use(i18n)
+            .use(pinia);
+            
+        registerPermissionDirectives(app);
+
+        app.mount(el!);
     },
 });
 

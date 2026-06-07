@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Monitor;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class MonitorPolicy
 {
@@ -22,6 +21,14 @@ class MonitorPolicy
     public function view(User $user, Monitor $monitor): bool
     {
         return $monitor->created_by === $user->id;
+    }
+
+    /**
+     * Determine whether the user can create the model
+     */
+    public function create(User $user): bool
+    {
+        return true;
     }
 
     /**
