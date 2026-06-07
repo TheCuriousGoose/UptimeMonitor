@@ -16,9 +16,15 @@ class HttpChecker implements Checker
             $response = Http::timeout($monitor->timeout)->get($monitor->url);
             $ms = (int) ((hrtime(true) - $start) / 1_000_000);
 
-            return $response->successful()
-                ? CheckResult::up($ms, ['status_code' => $response->status()])
-                : CheckResult::down("HTTP {$response->status()}", $ms, ['status_code' => $response->status()]);
+            
+            $monitorResult = null;
+            if($response->successful()){
+                $monitorResult = CheckResult::up($ms, ['status_code' => $response->status()]);
+            } else {
+                $monitorResult = CheckResult::down("HTTP {$response->status()}", $ms, ['status_code' => $response->status()]);
+            }
+
+            return $monitorResult;
         } catch (Throwable $e) {
             $ms = (int) ((hrtime(true) - $start) / 1_000_000);
 

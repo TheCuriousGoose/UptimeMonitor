@@ -21,10 +21,13 @@ class MonitorCheckFactory extends Factory
         return [
             'monitor_id' => Monitor::factory(),
             'checked_at' => now(),
-            'status_code' => 200,
             'response_ms' => $this->faker->numberBetween(50, 1200),
             'is_up' => true,
             'error' => null,
+            'meta' => [
+                'status_code' => 200,
+                'checker' => 'http',
+            ],
         ];
     }
 
@@ -32,7 +35,10 @@ class MonitorCheckFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'is_up' => false,
-            'status_code' => 503,
+            'meta' => [
+                'status_code' => 503,
+                'checker' => 'http',
+            ],
             'error' => 'Service unavailable',
         ]);
     }

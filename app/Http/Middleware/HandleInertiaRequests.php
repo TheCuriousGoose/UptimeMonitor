@@ -2,8 +2,12 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Setting;
+use App\Settings\SettingRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Middleware;
+use Spatie\Permission\Models\Role;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -15,6 +19,7 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
+    private ?SettingRepository $settingRepository = null;
 
     /**
      * Determines the current asset version.
@@ -35,12 +40,22 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $this->settingRepository = new SettingRepository();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'locale' => app()->getLocale(),
             'auth' => [
                 'user' => $request->user(),
+                'roles' => $request->user()?->getRoleNames() ?? [],
+                'permissions' => $this->getUserPermissions($request),
+                'impersonating_role' => $request->session()->has('impersonating_role_id')
+                    ? Role::find($request->session()->get('impersonating_role_id'))?->name
+                    : null,
+            ],
+            'settings' => [
+                'authentication' => $this->settingRepository->group('authentication')
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => [
@@ -48,5 +63,10 @@ class HandleInertiaRequests extends Middleware
                 'error' => $request->session()->get('error'),
             ],
         ];
+    }
+
+    private function getUserPermissions(Request $request): Collection
+    {
+        return once(fn() => $request->user()?->getAllPermissions()->pluck('name') ?? collect());
     }
 }

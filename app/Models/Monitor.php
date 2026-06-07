@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'url', 'created_by', 'timeout', 'check_interval', 'type', 'next_check_at', 'last_is_up', 'is_active'])]
+#[Fillable(['name', 'url', 'created_by', 'timeout', 'check_interval', 'type', 'next_check_at', 'latest_is_up', 'is_active'])]
 class Monitor extends Model
 {
     use HasFactory, HasUuids;
@@ -47,7 +47,7 @@ class Monitor extends Model
         return ['uuid'];
     }
 
-    public function monitorChecks(): HasMany
+    public function checks(): HasMany
     {
         return $this->hasMany(MonitorCheck::class);
     }
@@ -59,7 +59,7 @@ class Monitor extends Model
 
     public function isUp(): bool
     {
-        return (bool) $this->monitorChecks()->latest('checked_at')->value('is_up');
+        return (bool) $this->checks()->latest('checked_at')->value('is_up');
     }
 
     public function scopeForUser(Builder $query, User $user): Builder

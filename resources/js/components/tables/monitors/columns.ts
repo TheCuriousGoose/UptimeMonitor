@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/vue3';
 import type { ColumnDef } from '@tanstack/vue-table';
+import { ClockIcon, EyeIcon } from 'lucide-vue-next';
 import { h } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { trans } from '@/lib/i18n';
@@ -10,54 +11,44 @@ export const columns: ColumnDef<Monitor>[] = [
     {
         accessorKey: 'name',
         header: () => trans('monitors.table.columns.name'),
-    },
-    {
-        accessorKey: 'is_up',
-        header: () => trans('monitors.table.columns.is_up'),
         cell: ({ row }) =>
-            h(
-                Badge,
-                { variant: row.original.is_up ? 'success' : 'destructive' },
-                () =>
-                    row.original.is_up
-                        ? trans('monitors.is_up')
-                        : trans('monitors.is_down'),
-            ),
-    },
-    {
-        accessorKey: 'url',
-        header: () => trans('monitors.table.columns.url'),
-        cell: ({ row }) =>
-            h(
-                'a',
-                {
-                    href: row.original.url,
-                    target: '_blank',
-                    rel: 'noopener noreferrer',
-                    class: 'underline underline-offset-4 hover:no-underline',
-                },
-                row.original.url.substring(0, 50) +
-                    (row.original.url.length >= 50 ? '...' : ''),
-            ),
-    },
-    {
-        accessorKey: 'type',
-        header: () => trans('monitors.table.columns.type'),
+            h('div', { class: 'flex items-center gap-3' }, [
+                h('span', {
+                    class: [
+                        'size-2 rounded-full shrink-0',
+                        row.original.is_up ? 'bg-emerald-500' : 'bg-red-500',
+                    ],
+                }),
+                h('div', { class: 'flex flex-col min-w-0' }, [
+                    h('span', { class: 'font-medium leading-tight' }, row.original.name),
+                    h('div', { class: 'flex items-center gap-1.5 mt-0.5' }, [
+                        h(
+                            Badge,
+                            { variant: 'secondary', class: 'h-4 px-1.5 text-[10px] rounded' },
+                            () => (row.original.type as string).toUpperCase(),
+                        ),
+                        h(
+                            'span',
+                            {
+                                class: [
+                                    'text-xs',
+                                    row.original.is_up ? 'text-emerald-500' : 'text-destructive',
+                                ],
+                            },
+                            row.original.is_up ? trans('monitors.is_up') : trans('monitors.is_down'),
+                        ),
+                    ]),
+                ]),
+            ]),
     },
     {
         accessorKey: 'interval',
         header: () => trans('monitors.table.columns.interval'),
         cell: ({ row }) =>
-            h(
-                Badge,
-                { variant: 'secondary' },
-                () => row.original.check_interval,
-            ),
-    },
-    {
-        accessorKey: 'timeout',
-        header: () => trans('monitors.table.columns.timeout'),
-        cell: ({ row }) => `${row.original.timeout}s`,
+            h('div', { class: 'flex items-center gap-1.5 text-muted-foreground' }, [
+                h(ClockIcon, { class: 'size-3.5 shrink-0' }),
+                h('span', { class: 'text-sm' }, row.original.check_interval),
+            ]),
     },
     {
         accessorKey: 'actions',

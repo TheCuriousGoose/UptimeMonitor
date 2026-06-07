@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\MonitorType;
 use App\Http\Requests\Monitors\IndexRequest;
+use App\Http\Requests\Monitors\ShowRequest;
 use App\Http\Requests\Monitors\StoreRequest;
 use App\Models\Monitor;
 use App\Policies\MonitorPolicy;
@@ -28,14 +29,17 @@ class MonitorController extends Controller
         ]);
     }
 
-    public function show(Monitor $monitor)
+    public function show(ShowRequest $request, Monitor $monitor)
     {
-        $this->authorize('view', $monitor);
-
-        $monitor->loadMissing('monitorChecks');
+        $monitor->load(['checks' => function ($query) use ($request) {
+            $query->where('checked_at', '>=', $request->from())
+                ->orderBy('checked_at', 'asc');
+        }]);
 
         return Inertia::render('monitors/Show', [
             'monitor' => $monitor,
+            'period' => $request->period(),
+            'periods' => ['1h', '24h', '7d', '30d'],
         ]);
     }
 

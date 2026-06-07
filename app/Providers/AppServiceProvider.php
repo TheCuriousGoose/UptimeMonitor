@@ -4,9 +4,11 @@ namespace App\Providers;
 
 use App\Checkers\CheckerRegistry;
 use App\Checkers\HttpChecker;
+use App\Settings\SettingRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -20,6 +22,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(CheckerRegistry::class, fn () => new CheckerRegistry([
             'http' => HttpChecker::class,
         ]));
+
+        $this->app->singleton(SettingRepository::class);
     }
 
     /**
@@ -28,6 +32,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        Gate::before(function ($user, $ability) {
+            return $user->hasRole('Super Admin') ? true : null;
+        });
     }
 
     /**

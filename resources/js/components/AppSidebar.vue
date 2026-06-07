@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { LayoutGrid, Monitor } from 'lucide-vue-next';
+import { Link, usePage } from '@inertiajs/vue3';
+import { LayoutGrid, Monitor, Settings2, ShieldCheck, Users } from 'lucide-vue-next';
+import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -16,8 +17,16 @@ import {
 } from '@/components/ui/sidebar';
 import {trans } from '@/lib/i18n';
 import { dashboard } from '@/routes';
+import adminRoles from '@/routes/admin/roles';
+import adminSettings from '@/routes/admin/settings';
+import adminUsers from '@/routes/admin/users';
 import monitors from '@/routes/monitors';
+import type { Auth } from '@/types';
 import type { NavItem } from '@/types';
+
+const page = usePage();
+const auth = computed(() => page.props.auth as Auth);
+const isSuperAdmin = computed(() => auth.value.roles?.includes('Super Admin') ?? false);
 
 const mainNavItems: NavItem[] = [
     {
@@ -29,7 +38,25 @@ const mainNavItems: NavItem[] = [
         title: trans('monitors.title'),
         href: monitors.index(),
         icon: Monitor
-    }
+    },
+];
+
+const adminNavItems: NavItem[] = [
+    {
+        title: 'Users',
+        href: adminUsers.index(),
+        icon: Users,
+    },
+    {
+        title: 'Roles',
+        href: adminRoles.index(),
+        icon: ShieldCheck,
+    },
+    {
+        title: 'Settings',
+        href: adminSettings.index(),
+        icon: Settings2,
+    },
 ];
 
 const footerNavItems: NavItem[] = [];
@@ -51,6 +78,7 @@ const footerNavItems: NavItem[] = [];
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
+            <NavMain v-if="isSuperAdmin" :items="adminNavItems" label="Admin" />
         </SidebarContent>
 
         <SidebarFooter>

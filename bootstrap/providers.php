@@ -7,5 +7,5 @@ use App\Providers\TelescopeServiceProvider;
 return [
     AppServiceProvider::class,
     FortifyServiceProvider::class,
-    TelescopeServiceProvider::class,
+    ...in_array(config('app.env'), ['local', 'development']) ? [TelescopeServiceProvider::class] : [],
 ];

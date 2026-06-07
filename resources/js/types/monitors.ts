@@ -7,7 +7,7 @@ interface Monitor {
     name: string;
     url: string;
     type: MonitorType;
-    monitor_check: MonitorCheck;
+    checks?: MonitorCheck[];
     is_up: boolean;
     is_active: boolean;
     created_by: User;
@@ -16,8 +16,10 @@ interface Monitor {
 }
 
 type MonitorCheck = {
-    status_code: number;
+    id: number;
     response_ms: number;
+    checked_at: string;
+    meta: { status_code: number; checker: string } | null;
 } & (
     | { is_up: true; error?: never }
     | { is_up: false; error: string }

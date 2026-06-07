@@ -31,7 +31,7 @@ class MonitorFactory extends Factory
             'name' => $this->faker->sentence(3),
             'url' => $this->faker->url(),
             'timeout' => $this->faker->numberBetween(1, 10),
-            'check_interval' => $this->faker->numberBetween(1, 60),
+            'check_interval' => '*/15 * * * *', // Every 15 minutes
             'created_by' => $this->user->id,
         ];
     }
