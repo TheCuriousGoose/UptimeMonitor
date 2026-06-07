@@ -221,7 +221,6 @@ import type { MonitorType } from '@/types/monitors';
 import HttpCheckerFields from './partials/HttpCheckerFields.vue';
 import {
     Stepper,
-    StepperDescription,
     StepperItem,
     StepperSeparator,
     StepperTitle,

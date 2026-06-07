@@ -28,7 +28,7 @@ class MonitorPolicy
      */
     public function create(User $user): bool
     {
-        return true;
+        return $user->can('monitors.create');
     }
 
     /**
