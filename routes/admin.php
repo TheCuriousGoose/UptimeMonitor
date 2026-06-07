@@ -14,6 +14,8 @@ Route::middleware('role:Super Admin')->prefix('admin')->name('admin.')->group(fu
 
     Route::get('users', [UserController::class, 'index'])->name('users.index');
     Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::put('users/{user}/password', [UserController::class, 'resetPassword'])->name('users.password.update');
+    Route::post('users/{user}/password-reset-link', [UserController::class, 'sendPasswordResetLink'])->name('users.password-reset-link.store');
 
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::put('settings/{key}', [SettingController::class, 'update'])->name('settings.update');

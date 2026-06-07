@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
 import OAuthButtons from '@/components/auth/OAuthButtons.vue';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
@@ -11,13 +12,19 @@ import Separator from '@/components/ui/separator/Separator.vue';
 import { Spinner } from '@/components/ui/spinner';
 import { trans } from '@/lib/i18n';
 import { login } from '@/routes';
-import { store } from '@/routes/register';
 
 defineOptions({
     layout: {
         title: trans('auth.register.title'),
         description: trans('auth.register.description'),
     },
+});
+
+const form = useForm({
+    name: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
 });
 </script>
 
@@ -38,7 +45,7 @@ defineOptions({
         </div>
     </div>
 
-    <Form v-bind="store.form()" :reset-on-success="['password', 'password_confirmation']"
+    <Form :data="form" :reset-on-success="['password', 'password_confirmation']"
         v-slot="{ errors, processing }" class="flex flex-col gap-6">
         <div class="grid gap-6">
             <div class="grid gap-2">

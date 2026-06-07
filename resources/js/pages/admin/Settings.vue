@@ -1,5 +1,4 @@
 <template>
-
     <Head :title="$t('settings.title')" />
 
     <div class="flex items-center justify-between mb-6">
@@ -21,8 +20,9 @@
                 <TableRow v-for="setting in items" :key="setting.key">
                     <TableCell>
                         <div class="font-medium text-sm">{{ setting.label }}</div>
-                        <div v-if="setting.description" class="text-xs text-muted-foreground mt-0.5">{{
-                            setting.description }}</div>
+                        <div v-if="setting.description" class="text-xs text-muted-foreground mt-0.5">
+                            {{ setting.description }}
+                        </div>
                     </TableCell>
                     <TableCell>
                         <Badge variant="outline" class="text-xs mt-1 font-mono">{{ setting.key }}</Badge>
@@ -49,7 +49,6 @@
         </Table>
     </div>
 
-    <!-- Edit dialog -->
     <Dialog v-model:open="editOpen">
         <DialogContent class="sm:max-w-md">
             <DialogHeader>
@@ -59,19 +58,23 @@
                 </DialogDescription>
             </DialogHeader>
 
-            <div v-if="editSetting" class="space-y-4 py-2">
-                <!-- Boolean -->
+            <div v-if="editSetting" :key="editSetting.key" class="space-y-4 py-2">
                 <div v-if="editSetting.type === 'boolean'" class="flex items-center justify-between">
-                    <Label>Enabled</Label>
-                    <Switch :checked="editValue === '1'" @update:checked="(v) => (editValue = v ? '1' : '0')" />
+                    <Label for="setting-switch">Enabled</Label>
+                    <Switch 
+                        id="setting-switch" 
+                        v-model:checked="editBooleanValue" 
+                    />
                 </div>
 
-                <!-- Numeric / string -->
                 <div v-else class="grid gap-1.5">
-                    <Label :for="`setting-value`">Value</Label>
-                    <Input id="setting-value" v-model="editValue"
+                    <Label for="setting-value">Value</Label>
+                    <Input 
+                        id="setting-value" 
+                        v-model="editValue"
                         :type="editSetting.type === 'integer' || editSetting.type === 'float' ? 'number' : 'text'"
-                        :step="editSetting.type === 'float' ? 'any' : undefined" />
+                        :step="editSetting.type === 'float' ? 'any' : undefined" 
+                    />
                 </div>
 
                 <p v-if="editSetting.description" class="text-xs text-muted-foreground">
@@ -90,7 +93,7 @@
 <script setup lang="ts">
 import { Head, router, setLayoutProps } from '@inertiajs/vue3';
 import { PencilIcon } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -108,6 +111,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import * as adminSettings from '@/routes/admin/settings';
 import type { AppSetting } from '@/types/admin';
 
+defineOptions({
+    inheritAttrs: false,
+});
+
 const props = defineProps<{
     settings: AppSetting[];
 }>();
@@ -119,11 +126,18 @@ setLayoutProps({
 const editOpen = ref(false);
 const editSetting = ref<AppSetting | null>(null);
 const editValue = ref<string>('');
+const editBooleanValue = ref(false);
 
 function openEdit(setting: AppSetting) {
     editSetting.value = setting;
     editValue.value = setting.value ?? '';
-    editOpen.value = true;
+    
+    // Explicitly parse string boolean representations cleanly
+    editBooleanValue.value = setting.value === '1' || setting.value === 'true' || setting.value === true;
+    
+    nextTick(() => {
+        editOpen.value = true;
+    });
 }
 
 function submitEdit() {
@@ -133,7 +147,7 @@ function submitEdit() {
 
     const payload =
         editSetting.value.type === 'boolean'
-            ? { value: editValue.value === '1' || editValue.value === 'true' }
+            ? { value: editBooleanValue.value ? '1' : '0' }
             : editSetting.value.type === 'integer'
                 ? { value: parseInt(editValue.value, 10) }
                 : editSetting.value.type === 'float'
@@ -155,16 +169,18 @@ function displayValue(setting: AppSetting): string {
     return setting.value ?? '—';
 }
 
-const groupedSettings = props.settings.reduce(
-    (acc, s) => {
-        if (!acc[s.group]) {
-            acc[s.group] = [];
-        }
+const groupedSettings = computed(() => {
+    return props.settings.reduce(
+        (acc, s) => {
+            if (!acc[s.group]) {
+                acc[s.group] = [];
+            }
 
-        acc[s.group].push(s);
+            acc[s.group].push(s);
 
-        return acc;
-    },
-    {} as Record<string, AppSetting[]>,
-);
+            return acc;
+        },
+        {} as Record<string, AppSetting[]>,
+    );
+});
 </script>
