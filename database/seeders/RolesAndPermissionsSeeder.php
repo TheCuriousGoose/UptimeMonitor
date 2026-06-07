@@ -2,10 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Enums\Permission;
+use App\Enums\Role;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission as PermissionModel;
+use Spatie\Permission\Models\Role as RoleModel;
 use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndPermissionsSeeder extends Seeder
@@ -14,23 +15,13 @@ class RolesAndPermissionsSeeder extends Seeder
     {
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $permissions = [
-            'users.view',
-            'users.edit',
-            'roles.view',
-            'roles.create',
-            'roles.edit',
-            'roles.delete',
-        ];
-
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+        foreach (Permission::cases() as $permission) {
+            PermissionModel::firstOrCreate(['name' => $permission->value]);
         }
 
-        $superAdmin = Role::firstOrCreate(['name' => 'Super Admin']);
-        $admin = Role::firstOrCreate(['name' => 'Admin']);
-        Role::firstOrCreate(['name' => 'User']);
-
-        $admin->syncPermissions(['users.view', 'users.edit']);
+        foreach (Role::cases() as $role) {
+            $model = RoleModel::firstOrCreate(['name' => $role->value]);
+            $model->syncPermissions(array_map(fn($p) => $p->value, $role->permissions()));
+        }
     }
 }
