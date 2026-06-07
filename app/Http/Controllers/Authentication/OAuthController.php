@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
+use Throwable;
 
 class OAuthController extends Controller
 {
@@ -22,17 +24,32 @@ class OAuthController extends Controller
     public function callback(string $provider): RedirectResponse
     {
         abort_unless(in_array($provider, $this->providers), 404);
-        
-        $socialiteUser = Socialite::driver($provider)->user();
 
-        $user = User::firstOrCreate(
-            ['oauth_provider' => $provider, 'oauth_id' => $socialiteUser->getId()],
-            [
-                'name' => $socialiteUser->getName() ?? $socialiteUser->getNickname() ?? '',
-                'email' => $socialiteUser->getEmail(),
-                'email_verified_at' => now(),
-            ],
-        );
+        try {
+            $socialiteUser = Socialite::driver($provider)->user();
+        } catch (InvalidStateException) {
+            return to_route('login')->withErrors(['email' => __('auth.oauth_invalid_state')]);
+        } catch (Throwable) {
+            return to_route('login')->withErrors(['email' => __('auth.oauth_failed')]);
+        }
+
+        $email = $socialiteUser->getEmail();
+
+        if (! $email) {
+            return to_route('login')->withErrors(['email' => __('auth.oauth_no_email')]);
+        }
+
+        $user = User::firstOrNew(['email' => $email]);
+
+        $user->oauth_provider = $provider;
+        $user->oauth_id = $socialiteUser->getId();
+
+        if (! $user->exists) {
+            $user->name = $socialiteUser->getName() ?? $socialiteUser->getNickname() ?? '';
+            $user->email_verified_at = now();
+        }
+
+        $user->save();
 
         Auth::login($user, remember: true);
 
