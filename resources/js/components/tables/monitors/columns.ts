@@ -52,7 +52,7 @@ export const columns: ColumnDef<Monitor>[] = [
                     h(ClockIcon, { class: 'size-3.5 shrink-0' }),
                     h(
                         'span',
-                        { class: 'text-sm' },
+                        { class: 'font-mono text-sm tabular-nums' },
                         formatInterval(row.original.interval_seconds),
                     ),
                 ],
@@ -64,7 +64,9 @@ export const columns: ColumnDef<Monitor>[] = [
         cell: ({ row }) =>
             h(
                 'span',
-                { class: 'text-sm text-muted-foreground' },
+                {
+                    class: 'font-mono text-sm tabular-nums text-muted-foreground',
+                },
                 row.original.last_checked_at
                     ? formatRelative(row.original.last_checked_at)
                     : trans('monitors.never_checked'),

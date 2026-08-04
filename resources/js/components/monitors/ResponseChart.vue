@@ -137,13 +137,42 @@ function yFor(value: number): number {
     return height - (value / maxValue.value) * (height - 12) - 6;
 }
 
+/**
+ * Catmull-Rom through the data points, converted to cubic Beziers (the
+ * standard 1/6-tension formulation) — smooths the line without moving any
+ * point off its true value, unlike a moving-average filter.
+ */
+function smoothPath(coords: { x: number; y: number }[]): string {
+    if (coords.length < 2) {
+        return coords.length === 1 ? `M${coords[0].x},${coords[0].y}` : '';
+    }
+
+    let path = `M${coords[0].x},${coords[0].y}`;
+
+    for (let i = 0; i < coords.length - 1; i += 1) {
+        const p0 = coords[i === 0 ? 0 : i - 1];
+        const p1 = coords[i];
+        const p2 = coords[i + 1];
+        const p3 = coords[i + 2 < coords.length ? i + 2 : i + 1];
+
+        const c1x = p1.x + (p2.x - p0.x) / 6;
+        const c1y = p1.y + (p2.y - p0.y) / 6;
+        const c2x = p2.x - (p3.x - p1.x) / 6;
+        const c2y = p2.y - (p3.y - p1.y) / 6;
+
+        path += ` C${c1x},${c1y} ${c2x},${c2y} ${p2.x},${p2.y}`;
+    }
+
+    return path;
+}
+
 const linePath = computed(() =>
-    points.value
-        .map(
-            (point, index) =>
-                `${index === 0 ? 'M' : 'L'}${xFor(index)},${yFor(point.avg_response_ms)}`,
-        )
-        .join(' '),
+    smoothPath(
+        points.value.map((point, index) => ({
+            x: xFor(index),
+            y: yFor(point.avg_response_ms),
+        })),
+    ),
 );
 
 const areaPath = computed(() => {

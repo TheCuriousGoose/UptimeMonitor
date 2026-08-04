@@ -1,6 +1,6 @@
 <template>
     <span
-        class="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium"
+        class="inline-flex items-center gap-1.5 font-mono text-xs font-medium tracking-wide uppercase"
         :class="tone.classes"
     >
         <component
@@ -33,21 +33,19 @@ const props = defineProps<{
 const tones = {
     up: {
         icon: CheckCircle2Icon,
-        classes:
-            'border-emerald-600/25 bg-emerald-600/10 text-emerald-700 dark:text-emerald-400',
+        classes: 'text-emerald-700 dark:text-emerald-400',
     },
     down: {
         icon: XCircleIcon,
-        classes:
-            'border-red-600/25 bg-red-600/10 text-red-700 dark:text-red-400',
+        classes: 'text-red-700 dark:text-red-400',
     },
     paused: {
         icon: PauseIcon,
-        classes: 'border-border bg-muted text-muted-foreground',
+        classes: 'text-muted-foreground',
     },
     pending: {
         icon: ClockIcon,
-        classes: 'border-border bg-muted text-muted-foreground',
+        classes: 'text-muted-foreground',
     },
 } as const;
 
