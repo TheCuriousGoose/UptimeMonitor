@@ -24,15 +24,22 @@ class ProviderRegistrationTest extends TestCase
         }
     }
 
-    public function test_the_telescope_provider_is_only_wired_up_when_installed(): void
+    /**
+     * The conditional registration is environment gated, so a non-local
+     * environment must never pull Telescope into the container.
+     */
+    public function test_telescope_is_not_registered_outside_local(): void
     {
-        $source = file_get_contents(app_path('Providers/AppServiceProvider.php'));
+        $this->assertFalse($this->app->environment('local'));
 
-        $this->assertStringContainsString(
-            'class_exists(\Laravel\Telescope\Telescope::class)',
-            $source,
-            'The conditional registration must guard on the package being present.',
+        $registered = array_map(
+            fn ($provider) => is_object($provider) ? $provider::class : (string) $provider,
+            $this->app->getLoadedProviders() ? array_keys($this->app->getLoadedProviders()) : [],
         );
+
+        foreach ($registered as $provider) {
+            $this->assertStringNotContainsStringIgnoringCase('Telescope', $provider);
+        }
     }
 
     public function test_the_application_boots_with_the_registered_providers(): void

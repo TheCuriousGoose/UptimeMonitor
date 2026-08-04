@@ -31,6 +31,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Telescope\Telescope;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -85,7 +86,7 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function registerTelescope(): void
     {
-        if (! class_exists(\Laravel\Telescope\Telescope::class)) {
+        if (! class_exists(Telescope::class)) {
             return;
         }
 
