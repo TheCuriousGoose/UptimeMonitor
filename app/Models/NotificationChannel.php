@@ -51,13 +51,27 @@ class NotificationChannel extends Model
     }
 
     /**
-     * The destination this channel delivers to — an address for email,
-     * an endpoint for everything else.
+     * The destination this channel delivers to — an address for email, an
+     * endpoint for webhook-style channels, a credential for the integrations
+     * that authenticate instead of using a secret URL.
      */
     public function destination(): string
     {
-        return (string) ($this->type === ChannelType::Email
-            ? ($this->config['email'] ?? '')
-            : ($this->config['url'] ?? ''));
+        return (string) ($this->config[$this->type->destinationKey()] ?? '');
+    }
+
+    /**
+     * A destination safe to render. Credentials are masked to their last four
+     * characters — enough to tell two keys apart, useless if the page leaks.
+     */
+    public function maskedDestination(): string
+    {
+        $destination = $this->destination();
+
+        if (! $this->type->destinationIsSecret() || $destination === '') {
+            return $destination;
+        }
+
+        return str_repeat('•', 8).substr($destination, -4);
     }
 }

@@ -32,6 +32,12 @@ enum Permission: string
     case StatusPagesEdit = 'status_pages.edit';
     case StatusPagesDelete = 'status_pages.delete';
 
+    // Content (docs, blog, changelog)
+    case ContentView = 'content.view';
+    case ContentCreate = 'content.create';
+    case ContentEdit = 'content.edit';
+    case ContentDelete = 'content.delete';
+
     /**
      * All Permission cases for a given resource prefix.
      * Useful for seeding or syncing role permissions by resource.

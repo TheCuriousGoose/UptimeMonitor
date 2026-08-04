@@ -3,7 +3,9 @@ import { Link } from '@inertiajs/vue3';
 import Heading from '@/components/Heading.vue';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
+import { trans } from '@/lib/i18n';
 import { toUrl } from '@/lib/utils';
+import { index as editApiTokens } from '@/routes/api-tokens';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
@@ -21,6 +23,10 @@ const sidebarNavItems: NavItem[] = [
     {
         title: 'Appearance',
         href: editAppearance(),
+    },
+    {
+        title: trans('api_tokens.heading'),
+        href: editApiTokens(),
     },
 ];
 

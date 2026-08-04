@@ -22,7 +22,10 @@ use App\Enums\MonitorType;
 use App\Monitoring\Notifiers\DiscordNotifier;
 use App\Monitoring\Notifiers\MailNotifier;
 use App\Monitoring\Notifiers\NotifierRegistry;
+use App\Monitoring\Notifiers\OpsgenieNotifier;
+use App\Monitoring\Notifiers\PagerDutyNotifier;
 use App\Monitoring\Notifiers\SlackNotifier;
+use App\Monitoring\Notifiers\TeamsNotifier;
 use App\Monitoring\Notifiers\WebhookNotifier;
 use App\Settings\SettingRepository;
 use Carbon\CarbonImmutable;
@@ -54,6 +57,9 @@ class AppServiceProvider extends ServiceProvider
             ChannelType::Webhook->value => WebhookNotifier::class,
             ChannelType::Slack->value => SlackNotifier::class,
             ChannelType::Discord->value => DiscordNotifier::class,
+            ChannelType::PagerDuty->value => PagerDutyNotifier::class,
+            ChannelType::Opsgenie->value => OpsgenieNotifier::class,
+            ChannelType::Teams->value => TeamsNotifier::class,
         ]));
 
         // Bound as interfaces so tests can swap in fakes for network access.

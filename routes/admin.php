@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ContentEntryController;
 use App\Http\Controllers\Admin\ImpersonateRoleController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingController;
@@ -16,6 +17,11 @@ Route::middleware('role:Super Admin')->prefix('admin')->name('admin.')->group(fu
     Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::put('users/{user}/password', [UserController::class, 'resetPassword'])->name('users.password.update');
     Route::post('users/{user}/password-reset-link', [UserController::class, 'sendPasswordResetLink'])->name('users.password-reset-link.store');
+
+    Route::get('content', [ContentEntryController::class, 'index'])->name('content.index');
+    Route::post('content', [ContentEntryController::class, 'store'])->name('content.store');
+    Route::put('content/{entry}', [ContentEntryController::class, 'update'])->name('content.update');
+    Route::delete('content/{entry}', [ContentEntryController::class, 'destroy'])->name('content.destroy');
 
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::put('settings/{key}', [SettingController::class, 'update'])->name('settings.update');

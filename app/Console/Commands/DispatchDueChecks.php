@@ -6,6 +6,7 @@ use App\Jobs\RunMonitorCheck;
 use App\Models\Monitor;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class DispatchDueChecks extends Command
 {
@@ -26,16 +27,31 @@ class DispatchDueChecks extends Command
         $dispatched = 0;
 
         try {
-            Monitor::query()->due()->chunkById(500, function ($monitors) use (&$dispatched): void {
-                foreach ($monitors as $monitor) {
-                    // Push the next check forward immediately so a backed up queue
-                    // cannot dispatch the same monitor again on the next tick.
-                    $monitor->forceFill(['next_check_at' => $monitor->nextCheckFrom()])->save();
+            while (true) {
+                $monitors = Monitor::query()->due()->orderBy('id')->limit(500)->get();
 
+                if ($monitors->isEmpty()) {
+                    break;
+                }
+
+                // Claim the whole batch in one statement rather than a save()
+                // per row. One short lock, taken in primary-key order, instead
+                // of hundreds interleaved with the workers' own writes — the
+                // row-at-a-time version deadlocked against StatusEvaluator and
+                // those checks were lost.
+                Monitor::query()
+                    ->whereIn('id', $monitors->modelKeys())
+                    ->update([
+                        'next_check_at' => DB::raw(
+                            'DATE_ADD(NOW(), INTERVAL GREATEST(interval_seconds, 30) SECOND)',
+                        ),
+                    ]);
+
+                foreach ($monitors as $monitor) {
                     RunMonitorCheck::dispatch($monitor);
                     $dispatched++;
                 }
-            });
+            }
         } finally {
             $lock->release();
         }

@@ -38,7 +38,7 @@ export { useSidebar } from "./utils"
 // Active state is a flush left accent bar rather than a filled rounded pill —
 // the rail reads as a console gutter, and the marker lines up down the edge.
 export const sidebarMenuButtonVariants = cva(
-  "peer/menu-button relative flex w-full items-center gap-2.5 overflow-hidden rounded-none py-2 pr-2 pl-3 text-left text-sm outline-hidden ring-sidebar-ring transition-colors before:absolute before:top-1/2 before:left-0 before:h-0 before:w-[2px] before:-translate-y-1/2 before:bg-sidebar-primary before:transition-[height] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent/60 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[active=true]:before:h-5 data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+  "peer/menu-button relative flex w-full items-center gap-2.5 overflow-hidden rounded-none py-2 pr-2 pl-3 text-left text-sm outline-hidden ring-sidebar-ring transition-colors before:absolute before:top-1/2 before:left-0 before:h-0 before:w-[2px] before:-translate-y-1/2 before:bg-sidebar-primary before:transition-[height] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent/60 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[active=true]:before:h-5 data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:p-0! group-data-[collapsible=icon]:before:hidden group-data-[collapsible=icon]:[&>span:last-child]:hidden [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -47,8 +47,11 @@ export const sidebarMenuButtonVariants = cva(
           "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
       },
       size: {
-        default: "h-8 text-sm",
-        sm: "h-7 text-xs",
+        // Collapsed, the label is gone and the accent bar with it, so the icon
+        // centres in the rail and the active state carries the primary tint.
+        default:
+          "h-8 text-sm group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-sm group-data-[collapsible=icon]:[&>svg]:size-[18px] group-data-[collapsible=icon]:data-[active=true]:bg-sidebar-primary/15 group-data-[collapsible=icon]:data-[active=true]:text-sidebar-primary",
+        sm: "h-7 text-xs group-data-[collapsible=icon]:justify-center",
         lg: "h-12 text-sm group-data-[collapsible=icon]:p-0!",
       },
     },

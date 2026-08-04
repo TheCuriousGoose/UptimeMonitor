@@ -51,6 +51,7 @@ export const i18n = createI18n({
 
 const global = i18n.global as unknown as {
     t: (key: string, named?: Record<string, string | number>) => string;
+    tm: (key: string) => unknown;
     locale: { value: string };
     setLocaleMessage: (locale: string, message: LocaleMessages) => void;
 };
@@ -70,6 +71,21 @@ const loadLocale = async (locale: string): Promise<void> => {
 /** Translate a key. Safe to call from non-component modules. */
 export const t = (key: string, named?: Record<string, string | number>): string => global.t(key, named);
 export const trans = t;
+
+/**
+ * Resolve a key that holds a list rather than a string — vue-i18n returns
+ * compiled message objects from `tm`, so each entry is passed back through
+ * `t` to get a plain string out.
+ */
+export const tList = (key: string): string[] => {
+    const raw = global.tm(key);
+
+    if (!Array.isArray(raw)) {
+        return [];
+    }
+
+    return raw.map((_, index) => global.t(`${key}[${index}]`));
+};
 
 export const setLocale = (locale: string): void => {
     global.locale.value = locale;

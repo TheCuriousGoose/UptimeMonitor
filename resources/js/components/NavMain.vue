@@ -19,7 +19,9 @@ const { isCurrentUrl } = useCurrentUrl();
 </script>
 
 <template>
-    <SidebarGroup class="px-0 py-0">
+    <!-- Full-bleed when expanded so the active accent bar sits on the rail
+         edge; the collapsed rail needs its inset back to centre the icons. -->
+    <SidebarGroup class="px-0 py-0 group-data-[collapsible=icon]:px-2">
         <SidebarGroupLabel
             class="px-3 text-[10px] font-semibold tracking-[0.12em] text-sidebar-foreground/50 uppercase"
         >

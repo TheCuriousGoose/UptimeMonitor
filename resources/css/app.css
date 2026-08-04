@@ -186,6 +186,82 @@
 }
 
 /*
+ * Long-form prose (rendered markdown and the legal pages).
+ *
+ * Written by hand rather than pulled from @tailwindcss/typography: the
+ * console look wants tighter headings, mono code and hairline rules, which
+ * would mean overriding most of that plugin's output anyway.
+ */
+@layer components {
+    .prose-console {
+        @apply text-[0.9375rem] leading-relaxed text-muted-foreground;
+    }
+    .prose-console > * + * {
+        @apply mt-4;
+    }
+    .prose-console h1,
+    .prose-console h2,
+    .prose-console h3,
+    .prose-console h4 {
+        @apply mt-10 mb-3 font-semibold tracking-tight text-foreground;
+    }
+    .prose-console h1 {
+        @apply text-2xl;
+    }
+    .prose-console h2 {
+        @apply text-lg;
+    }
+    .prose-console h3 {
+        @apply text-base;
+    }
+    .prose-console h4 {
+        @apply text-sm;
+    }
+    .prose-console > :first-child {
+        @apply mt-0;
+    }
+    .prose-console a {
+        @apply text-primary underline underline-offset-4;
+    }
+    .prose-console strong {
+        @apply font-semibold text-foreground;
+    }
+    .prose-console ul {
+        @apply list-disc space-y-1.5 pl-5;
+    }
+    .prose-console ol {
+        @apply list-decimal space-y-1.5 pl-5;
+    }
+    .prose-console code {
+        @apply rounded-[3px] border bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground;
+    }
+    .prose-console pre {
+        @apply overflow-x-auto rounded-sm border bg-muted/50 p-4;
+    }
+    .prose-console pre code {
+        @apply border-0 bg-transparent p-0 text-[0.85rem];
+    }
+    .prose-console blockquote {
+        @apply border-l-2 border-primary/40 pl-4 italic;
+    }
+    .prose-console hr {
+        @apply my-8 border-t;
+    }
+    .prose-console table {
+        @apply w-full border-collapse text-sm;
+    }
+    .prose-console th {
+        @apply border-b px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase;
+    }
+    .prose-console td {
+        @apply border-b px-3 py-2;
+    }
+    .prose-console img {
+        @apply max-w-full rounded-sm border;
+    }
+}
+
+/*
  * Data-visualisation tokens.
  *
  * Status hues are fixed rather than themed so "up" and "down" mean the same
