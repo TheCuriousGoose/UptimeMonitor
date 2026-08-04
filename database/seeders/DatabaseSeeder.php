@@ -12,10 +12,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Always runs (production-safe)
+        // Always runs (production-safe). ContentSeeder is create-only, so a
+        // re-seed on deploy never overwrites edited docs or legal pages.
         $this->call([
             RolesAndPermissionsSeeder::class,
             SettingSeeder::class,
+            ContentSeeder::class,
         ]);
 
         // Dev only

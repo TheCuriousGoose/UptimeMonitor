@@ -38,10 +38,29 @@ class ContentController extends Controller
         ]);
     }
 
+    /**
+     * Privacy and terms live at their own top-level URLs rather than under a
+     * /legal index — they are linked from the footer of every page, and the
+     * operator has to be able to edit them without a deploy.
+     */
+    public function legal(string $slug)
+    {
+        $entry = ContentEntry::query()
+            ->ofType(ContentType::Legal)
+            ->published()
+            ->where('slug', $slug)
+            ->firstOrFail();
+
+        return Inertia::render('content/Legal', [
+            'entry' => (new ContentEntryResource($entry))->resolve(),
+            'bodyHtml' => $this->markdown->toHtml($entry->body),
+        ]);
+    }
+
     public function show(string $segment, string $slug)
     {
         $type = collect(ContentType::cases())
-            ->first(fn (ContentType $case) => $case->segment() === $segment);
+            ->first(fn (ContentType $case) => $case->hasPublicIndex() && $case->segment() === $segment);
 
         abort_if($type === null, 404);
 
