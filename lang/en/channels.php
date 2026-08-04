@@ -33,7 +33,9 @@ return [
         ],
         'email' => [
             'title' => 'Email address',
-            'placeholder' => 'ops@example.com',
+            // vue-i18n reads a bare "@" as linked-message syntax, so it must
+            // be escaped or the whole message fails to compile at render time.
+            'placeholder' => 'ops{\'@\'}example.com',
         ],
         'url' => [
             'title' => 'Webhook URL',
