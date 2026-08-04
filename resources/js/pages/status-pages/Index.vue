@@ -208,7 +208,7 @@
                             }}
                         </p>
                     </div>
-                    <Switch v-model="form.is_published" />
+                    <Switch v-model:checked="form.is_published" />
                 </div>
             </div>
 
