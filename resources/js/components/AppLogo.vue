@@ -10,15 +10,17 @@ const name = computed(() => (page.props.name as string) ?? 'Vigil Watch');
 
 <template>
     <div
-        class="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm"
+        class="flex aspect-square size-8 shrink-0 items-center justify-center rounded-sm border border-sidebar-primary/40 bg-sidebar-primary/10 text-sidebar-primary"
     >
         <AppLogoIcon class="size-[18px]" />
     </div>
-    <div class="ml-2 grid flex-1 text-left leading-tight">
+    <div class="ml-2.5 grid flex-1 text-left leading-tight">
         <span class="truncate text-sm font-semibold tracking-tight">
             {{ name }}
         </span>
-        <span class="truncate text-[11px] text-muted-foreground">
+        <span
+            class="truncate font-mono text-[10px] tracking-[0.1em] text-muted-foreground uppercase"
+        >
             {{ $t('base.tagline') }}
         </span>
     </div>

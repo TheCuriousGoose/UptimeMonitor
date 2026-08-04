@@ -66,7 +66,8 @@ interface MonitorStats {
 
 interface SeriesPoint {
     bucket: string;
-    avg_response_ms: number;
+    /** Null when every check in the bucket failed — no successful sample. */
+    avg_response_ms: number | null;
     failures: number;
     total: number;
 }

@@ -28,16 +28,22 @@
                 vector-effect="non-scaling-stroke"
             />
 
-            <path :d="areaPath" :fill="seriesColor" fill-opacity="0.1" />
-            <path
-                :d="linePath"
-                fill="none"
-                :stroke="seriesColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                vector-effect="non-scaling-stroke"
-            />
+            <template v-for="(segment, index) in segments" :key="`s-${index}`">
+                <path
+                    :d="segment.area"
+                    :fill="seriesColor"
+                    fill-opacity="0.1"
+                />
+                <path
+                    :d="segment.line"
+                    fill="none"
+                    :stroke="seriesColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    vector-effect="non-scaling-stroke"
+                />
+            </template>
 
             <!-- Failures marked on the baseline so an outage is visible even
                  where the response line has no successful sample to draw. -->
@@ -62,11 +68,12 @@
                     vector-effect="non-scaling-stroke"
                 />
                 <circle
+                    v-if="hovered.y !== null"
                     :cx="hovered.x"
                     :cy="hovered.y"
                     r="4"
                     :fill="seriesColor"
-                    stroke="var(--card)"
+                    stroke="var(--background)"
                     stroke-width="2"
                     vector-effect="non-scaling-stroke"
                 />
@@ -81,8 +88,12 @@
             <p class="text-muted-foreground">
                 {{ formatDateTime(hovered.point.bucket) }}
             </p>
-            <p class="mt-0.5 font-medium">
-                {{ formatResponseMs(hovered.point.avg_response_ms) }}
+            <p class="mt-0.5 font-mono font-medium tabular-nums">
+                {{
+                    hovered.point.avg_response_ms === null
+                        ? $t('monitors.no_data')
+                        : formatResponseMs(hovered.point.avg_response_ms)
+                }}
             </p>
             <p
                 v-if="hovered.point.failures > 0"
@@ -121,7 +132,12 @@ const hoverIndex = ref<number | null>(null);
 const points = computed(() => props.series);
 
 const maxValue = computed(() =>
-    Math.max(1, ...points.value.map((point) => point.avg_response_ms)),
+    Math.max(
+        1,
+        ...points.value
+            .map((point) => point.avg_response_ms)
+            .filter((value): value is number => value !== null),
+    ),
 );
 
 function xFor(index: number): number {
@@ -166,21 +182,36 @@ function smoothPath(coords: { x: number; y: number }[]): string {
     return path;
 }
 
-const linePath = computed(() =>
-    smoothPath(
-        points.value.map((point, index) => ({
-            x: xFor(index),
-            y: yFor(point.avg_response_ms),
-        })),
-    ),
-);
+/**
+ * Buckets with no successful check carry a null average, and the line has to
+ * break across them rather than dive to the baseline — so the series is drawn
+ * as one path per contiguous run of real samples.
+ */
+const segments = computed(() => {
+    const runs: { x: number; y: number }[][] = [];
+    let current: { x: number; y: number }[] = [];
 
-const areaPath = computed(() => {
-    if (points.value.length === 0) {
-        return '';
+    points.value.forEach((point, index) => {
+        if (point.avg_response_ms === null) {
+            if (current.length > 0) {
+                runs.push(current);
+                current = [];
+            }
+
+            return;
+        }
+
+        current.push({ x: xFor(index), y: yFor(point.avg_response_ms) });
+    });
+
+    if (current.length > 0) {
+        runs.push(current);
     }
 
-    return `${linePath.value} L${xFor(points.value.length - 1)},${height} L${xFor(0)},${height} Z`;
+    return runs.map((coords) => ({
+        line: smoothPath(coords),
+        area: `${smoothPath(coords)} L${coords[coords.length - 1].x},${height} L${coords[0].x},${height} Z`,
+    }));
 });
 
 const failureMarks = computed(() =>
@@ -210,7 +241,9 @@ const hovered = computed(() => {
     return {
         point,
         x: xFor(hoverIndex.value),
-        y: yFor(point.avg_response_ms),
+        // Null where the bucket has no successful sample — the crosshair still
+        // shows, but there is no point on the line to mark.
+        y: point.avg_response_ms === null ? null : yFor(point.avg_response_ms),
     };
 });
 

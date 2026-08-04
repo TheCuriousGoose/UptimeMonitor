@@ -14,88 +14,79 @@
             </template>
         </PageHeader>
 
-        <div
+        <EmptyState
             v-if="channels.length === 0"
-            class="rounded-xl border bg-card p-10 text-center"
-        >
-            <BellIcon class="mx-auto size-8 text-muted-foreground" />
-            <h2 class="mt-4 text-lg font-semibold">
-                {{ $t('channels.empty.title') }}
-            </h2>
-            <p class="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                {{ $t('channels.empty.description') }}
-            </p>
-        </div>
+            :icon="BellIcon"
+            :title="$t('channels.empty.title')"
+            :description="$t('channels.empty.description')"
+        />
 
-        <div v-else class="grid gap-3 md:grid-cols-2">
-            <Card v-for="channel in channels" :key="channel.uuid">
-                <CardContent
-                    class="flex items-start justify-between gap-3 pt-6"
-                >
-                    <div class="min-w-0">
-                        <div class="flex items-center gap-2">
-                            <component
-                                :is="typeIcons[channel.type]"
-                                class="size-4 shrink-0 text-muted-foreground"
-                            />
-                            <p class="truncate font-medium">
-                                {{ channel.name }}
-                            </p>
-                            <Badge
-                                v-if="!channel.is_active"
-                                variant="secondary"
-                            >
-                                {{ $t('channels.form.is_active.title') }}: off
-                            </Badge>
-                        </div>
-                        <p class="mt-1 truncate text-sm text-muted-foreground">
-                            {{ channel.destination }}
+        <ul v-else class="divide-y rounded-sm border">
+            <li
+                v-for="channel in channels"
+                :key="channel.uuid"
+                class="flex items-start justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted/40"
+            >
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                        <component
+                            :is="typeIcons[channel.type]"
+                            class="size-4 shrink-0 text-muted-foreground"
+                        />
+                        <p class="truncate font-medium">
+                            {{ channel.name }}
                         </p>
-                        <p class="mt-1 text-xs text-muted-foreground">
-                            {{ $t('channels.types.' + channel.type) }}
-                            <template
-                                v-if="channel.monitors_count !== undefined"
-                            >
-                                ·
-                                {{
-                                    $t(
-                                        'channels.attached',
-                                        { count: channel.monitors_count },
-                                        channel.monitors_count,
-                                    )
-                                }}
-                            </template>
-                        </p>
+                        <Badge v-if="!channel.is_active" variant="secondary">
+                            {{ $t('channels.form.is_active.title') }}: off
+                        </Badge>
                     </div>
+                    <p
+                        class="mt-1 truncate font-mono text-sm text-muted-foreground"
+                    >
+                        {{ channel.destination }}
+                    </p>
+                    <p class="mt-1 text-xs text-muted-foreground">
+                        {{ $t('channels.types.' + channel.type) }}
+                        <template v-if="channel.monitors_count !== undefined">
+                            ·
+                            {{
+                                $t(
+                                    'channels.attached',
+                                    { count: channel.monitors_count },
+                                    channel.monitors_count,
+                                )
+                            }}
+                        </template>
+                    </p>
+                </div>
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger as-child>
-                            <Button variant="ghost" size="sm">
-                                <MoreHorizontalIcon />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem @select="openEdit(channel)">
-                                <PencilIcon />
-                                {{ $t('channels.actions.edit') }}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem @select="sendTest(channel)">
-                                <SendIcon />
-                                {{ $t('channels.actions.test') }}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                variant="destructive"
-                                @select="askDelete(channel)"
-                            >
-                                <Trash2Icon />
-                                {{ $t('channels.actions.delete') }}
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </CardContent>
-            </Card>
-        </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                        <Button variant="ghost" size="sm">
+                            <MoreHorizontalIcon />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem @select="openEdit(channel)">
+                            <PencilIcon />
+                            {{ $t('channels.actions.edit') }}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @select="sendTest(channel)">
+                            <SendIcon />
+                            {{ $t('channels.actions.test') }}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            variant="destructive"
+                            @select="askDelete(channel)"
+                        >
+                            <Trash2Icon />
+                            {{ $t('channels.actions.delete') }}
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </li>
+        </ul>
     </div>
 
     <Dialog v-model:open="formOpen">
@@ -135,10 +126,10 @@
                             v-for="option in types"
                             :key="option"
                             type="button"
-                            class="flex flex-col items-center gap-1 rounded-lg border p-2 text-xs transition hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            class="flex flex-col items-center gap-1 rounded-sm border p-2 text-xs transition-colors hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                             :class="
                                 form.type === option
-                                    ? 'border-primary bg-accent'
+                                    ? 'border-primary bg-primary/5 ring-1 ring-primary'
                                     : ''
                             "
                             :aria-pressed="form.type === option"
@@ -184,7 +175,7 @@
                 </div>
 
                 <div
-                    class="flex items-center justify-between gap-3 rounded-lg border p-3"
+                    class="flex items-center justify-between gap-3 rounded-sm border p-3"
                 >
                     <div>
                         <p class="text-sm font-medium">
@@ -236,11 +227,11 @@ import {
 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import InputError from '@/components/InputError.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
