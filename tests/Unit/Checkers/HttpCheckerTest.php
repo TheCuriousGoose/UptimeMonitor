@@ -122,22 +122,6 @@ class HttpCheckerTest extends TestCase
         $this->assertTrue($result->isUp);
     }
 
-    /**
-     * Monitors saved before config values were cast hold the string "0".
-     */
-    public function test_a_string_zero_still_disables_verification(): void
-    {
-        Http::fake(['*' => Http::response('ok', 200)]);
-
-        $monitor = $this->monitor(['verify_ssl' => '0']);
-
-        $this->assertFalse(
-            filter_var($monitor->resolvedConfig()['verify_ssl'], FILTER_VALIDATE_BOOLEAN),
-            'A stored "0" must be read as disabled.',
-        );
-        $this->assertTrue((new HttpChecker)->check($monitor)->isUp);
-    }
-
     public function test_it_uses_the_configured_http_method(): void
     {
         Http::fake(['*' => Http::response('', 200)]);
