@@ -17,7 +17,9 @@ class HttpChecker implements Checker
         try {
             $request = Http::timeout($monitor->timeout)->withUserAgent($this->userAgent());
 
-            if (($config['verify_ssl'] ?? true) === false) {
+            // Tolerate "0"/"false" from monitors saved before config values
+            // were cast, so an existing opt-out is still honoured.
+            if (! filter_var($config['verify_ssl'] ?? true, FILTER_VALIDATE_BOOLEAN)) {
                 $request = $request->withoutVerifying();
             }
 

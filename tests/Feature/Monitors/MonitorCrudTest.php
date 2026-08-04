@@ -120,6 +120,40 @@ class MonitorCrudTest extends TestCase
         $this->assertSame('HEAD', $config['method']);
     }
 
+    public function test_config_booleans_are_stored_as_real_booleans(): void
+    {
+        // The form posts "0"/"1" strings; stored as strings they would both
+        // read as truthy and the toggle would appear to do nothing.
+        $this->actingAs($this->user())->post(route('monitors.store'), $this->payload([
+            'config' => ['verify_ssl' => '0', 'method' => 'GET'],
+        ]))->assertSessionHasNoErrors();
+
+        $config = Monitor::first()->config;
+
+        $this->assertIsBool($config['verify_ssl']);
+        $this->assertFalse($config['verify_ssl']);
+    }
+
+    public function test_config_numbers_are_stored_as_integers(): void
+    {
+        $this->actingAs($this->user())->post(route('monitors.store'), $this->payload([
+            'type' => MonitorType::Port->value,
+            'url' => 'db.example.com',
+            'config' => ['port' => '5432'],
+        ]))->assertSessionHasNoErrors();
+
+        $this->assertSame(5432, Monitor::first()->config['port']);
+    }
+
+    public function test_an_empty_expected_status_is_stored_as_null(): void
+    {
+        $this->actingAs($this->user())->post(route('monitors.store'), $this->payload([
+            'config' => ['expected_status' => ''],
+        ]))->assertSessionHasNoErrors();
+
+        $this->assertNull(Monitor::first()->config['expected_status']);
+    }
+
     public function test_the_interval_must_respect_the_configured_minimum(): void
     {
         config(['monitoring.min_interval_seconds' => 30]);

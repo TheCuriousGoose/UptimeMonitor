@@ -22,7 +22,7 @@ class KeywordChecker extends HttpChecker
         }
 
         $found = str_contains($response->body(), $keyword);
-        $shouldBeAbsent = (bool) ($config['invert'] ?? false);
+        $shouldBeAbsent = filter_var($config['invert'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         if ($shouldBeAbsent && $found) {
             return "Keyword \"{$keyword}\" was found but should be absent";

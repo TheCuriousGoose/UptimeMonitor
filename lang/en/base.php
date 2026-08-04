@@ -7,4 +7,5 @@ return [
     'confirm' => 'Confirm',
     'delete' => 'Delete',
     'copied' => 'Link copied',
+    'tagline' => 'Uptime monitoring',
 ];

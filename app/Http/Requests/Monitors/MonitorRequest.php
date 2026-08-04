@@ -83,7 +83,9 @@ abstract class MonitorRequest extends FormRequest
         if ($type !== null) {
             // Drop any config keys that do not belong to the chosen type.
             $allowed = array_keys($type->defaultConfig());
-            $data['config'] = array_intersect_key($data['config'] ?? [], array_flip($allowed));
+            $data['config'] = $this->castConfig(
+                array_intersect_key($data['config'] ?? [], array_flip($allowed)),
+            );
         }
 
         return $data;
@@ -95,6 +97,38 @@ abstract class MonitorRequest extends FormRequest
     public function channelUuids(): array
     {
         return array_values(array_filter((array) $this->safe()->input('notification_channels', [])));
+    }
+
+    /**
+     * The config column is plain JSON with no Eloquent casts, so a checkbox
+     * posting "0" would otherwise be stored as the string "0" — which is
+     * truthy everywhere it gets read. Coerce values to their real types here.
+     *
+     * @param  array<string, mixed>  $config
+     * @return array<string, mixed>
+     */
+    private function castConfig(array $config): array
+    {
+        $casts = [
+            'verify_ssl' => 'bool',
+            'invert' => 'bool',
+            'port' => 'int',
+            'warn_days' => 'int',
+            'expected_status' => 'nullable_int',
+            'expected' => 'nullable_string',
+        ];
+
+        foreach ($config as $key => $value) {
+            $config[$key] = match ($casts[$key] ?? 'string') {
+                'bool' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+                'int' => (int) $value,
+                'nullable_int' => ($value === null || $value === '') ? null : (int) $value,
+                'nullable_string' => ($value === null || $value === '') ? null : (string) $value,
+                default => $value,
+            };
+        }
+
+        return $config;
     }
 
     protected function monitorType(): ?MonitorType
