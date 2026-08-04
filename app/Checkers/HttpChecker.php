@@ -40,7 +40,7 @@ class HttpChecker implements Checker
             return CheckResult::up($ms, $meta);
         } catch (Throwable $e) {
             return CheckResult::down(
-                $e->getMessage(),
+                $this->explain($e->getMessage()),
                 $this->elapsedMs($start),
                 ['checker' => $monitor->type->value],
             );
@@ -76,6 +76,29 @@ class HttpChecker implements Checker
     protected function assertBody(Response $response, array $config): ?string
     {
         return null;
+    }
+
+    /**
+     * Raw cURL strings are not actionable. Translate the ones with a known
+     * cause into something that says what to actually do about it.
+     */
+    protected function explain(string $message): string
+    {
+        if (str_contains($message, 'unable to get local issuer certificate')) {
+            return 'TLS verification failed: the server did not send its intermediate certificate. '
+                .'Browsers hide this by fetching it themselves. Fix the chain on the server, '
+                .'or turn off "Verify TLS certificate" for this monitor.';
+        }
+
+        if (str_contains($message, 'certificate has expired')) {
+            return 'TLS verification failed: the certificate has expired.';
+        }
+
+        if (preg_match('/subject name does not match|no alternative certificate subject/i', $message)) {
+            return 'TLS verification failed: the certificate does not cover this hostname.';
+        }
+
+        return $message;
     }
 
     protected function elapsedMs(float|int $start): int

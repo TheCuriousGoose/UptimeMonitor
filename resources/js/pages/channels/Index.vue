@@ -130,20 +130,30 @@
                     <Label for="channel-type">{{
                         $t('channels.form.type.title')
                     }}</Label>
-                    <Select v-model="form.type">
-                        <SelectTrigger id="channel-type"
-                            ><SelectValue
-                        /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem
-                                v-for="option in types"
-                                :key="option"
-                                :value="option"
-                            >
-                                {{ $t('channels.types.' + option) }}
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <!-- A button group rather than a dropdown: there are only
+                         four types, and nesting a select portal inside the
+                         dialog portal is needless machinery. -->
+                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        <button
+                            v-for="option in types"
+                            :key="option"
+                            type="button"
+                            class="flex flex-col items-center gap-1 rounded-lg border p-2 text-xs transition hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            :class="
+                                form.type === option
+                                    ? 'border-primary bg-accent'
+                                    : ''
+                            "
+                            :aria-pressed="form.type === option"
+                            @click="form.type = option"
+                        >
+                            <component
+                                :is="typeIcons[option]"
+                                class="size-4 shrink-0"
+                            />
+                            {{ $t('channels.types.' + option) }}
+                        </button>
+                    </div>
                     <p class="text-xs text-muted-foreground">
                         {{ $t('channels.hints.' + form.type) }}
                     </p>
@@ -187,7 +197,7 @@
                             {{ $t('channels.form.is_active.description') }}
                         </p>
                     </div>
-                    <Switch v-model="form.is_active" />
+                    <Switch v-model:checked="form.is_active" />
                 </div>
             </div>
 
@@ -249,13 +259,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { trans } from '@/lib/i18n';

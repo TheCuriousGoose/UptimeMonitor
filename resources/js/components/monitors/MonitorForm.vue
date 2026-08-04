@@ -124,7 +124,7 @@
                                     )
                                 }}</FieldDescription>
                             </FieldContent>
-                            <Switch id="invert" v-model="invert" />
+                            <Switch id="invert" v-model:checked="invert" />
                             <input
                                 type="hidden"
                                 name="config[invert]"
@@ -296,7 +296,10 @@
                                     )
                                 }}</FieldDescription>
                             </FieldContent>
-                            <Switch id="verify_ssl" v-model="verifySsl" />
+                            <Switch
+                                id="verify_ssl"
+                                v-model:checked="verifySsl"
+                            />
                             <input
                                 type="hidden"
                                 name="config[verify_ssl]"
@@ -461,7 +464,7 @@
                                 $t('monitors.form.is_active.description')
                             }}</FieldDescription>
                         </FieldContent>
-                        <Switch id="is_active" v-model="isActive" />
+                        <Switch id="is_active" v-model:checked="isActive" />
                         <input
                             type="hidden"
                             name="is_active"

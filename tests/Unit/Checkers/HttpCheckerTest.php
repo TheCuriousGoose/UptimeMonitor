@@ -78,6 +78,50 @@ class HttpCheckerTest extends TestCase
         $this->assertSame('Connection timed out', $result->error);
     }
 
+    public function test_an_incomplete_certificate_chain_gets_an_actionable_message(): void
+    {
+        Http::fake(fn () => throw new ConnectionException(
+            'cURL error 60: SSL certificate problem: unable to get local issuer certificate',
+        ));
+
+        $result = (new HttpChecker)->check($this->monitor());
+
+        $this->assertFalse($result->isUp);
+        $this->assertStringContainsString('intermediate certificate', $result->error);
+        $this->assertStringContainsString('Verify TLS certificate', $result->error);
+    }
+
+    public function test_an_expired_certificate_gets_an_actionable_message(): void
+    {
+        Http::fake(fn () => throw new ConnectionException(
+            'cURL error 60: SSL certificate problem: certificate has expired',
+        ));
+
+        $this->assertSame(
+            'TLS verification failed: the certificate has expired.',
+            (new HttpChecker)->check($this->monitor())->error,
+        );
+    }
+
+    public function test_unrecognised_errors_are_passed_through_unchanged(): void
+    {
+        Http::fake(fn () => throw new ConnectionException('Could not resolve host: nope.invalid'));
+
+        $this->assertSame(
+            'Could not resolve host: nope.invalid',
+            (new HttpChecker)->check($this->monitor())->error,
+        );
+    }
+
+    public function test_disabling_verification_skips_the_tls_check(): void
+    {
+        Http::fake(['*' => Http::response('ok', 200)]);
+
+        $result = (new HttpChecker)->check($this->monitor(['verify_ssl' => false]));
+
+        $this->assertTrue($result->isUp);
+    }
+
     public function test_it_uses_the_configured_http_method(): void
     {
         Http::fake(['*' => Http::response('', 200)]);
