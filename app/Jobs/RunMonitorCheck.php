@@ -4,8 +4,8 @@ namespace App\Jobs;
 
 use App\Checkers\CheckerRegistry;
 use App\Models\Monitor;
-use App\Models\MonitorCheck;
-use Cron\CronExpression;
+use App\Monitoring\QueueResolver;
+use App\Monitoring\StatusEvaluator;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -17,28 +17,15 @@ class RunMonitorCheck implements ShouldQueue
 
     public function __construct(public readonly Monitor $monitor)
     {
-        $checker = app(CheckerRegistry::class)->resolve($this->monitor->type->value);
-        $this->onQueue($checker->queue());
+        $lane = app(CheckerRegistry::class)->resolve($this->monitor->type->value)->queue();
+
+        $this->onQueue(app(QueueResolver::class)->for($lane));
     }
 
-    public function handle(CheckerRegistry $registry): void
+    public function handle(CheckerRegistry $registry, StatusEvaluator $evaluator): void
     {
-        $checker = $registry->resolve($this->monitor->type->value);
-        $result = $checker->check($this->monitor);
+        $result = $registry->resolve($this->monitor->type->value)->check($this->monitor);
 
-        MonitorCheck::create([
-            'monitor_id' => $this->monitor->id,
-            'is_up' => $result->isUp,
-            'response_ms' => $result->responseMs,
-            'error' => $result->error,
-            'meta' => $result->meta ?: null,
-            'checked_at' => now(),
-        ]);
-
-        $this->monitor->update([
-            'latest_is_up' => $result->isUp,
-            'next_check_at' => (new CronExpression($this->monitor->check_interval))
-                ->getNextRunDate(),
-        ]);
+        $evaluator->record($this->monitor, $result);
     }
 }

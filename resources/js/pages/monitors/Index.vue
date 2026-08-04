@@ -7,27 +7,51 @@ import TableColumnFilter from '@/components/tables/TableColumnFilter.vue';
 import TableFilterBar from '@/components/tables/TableFilterBar.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { trans } from '@/lib/i18n';
 import * as monitorsRoute from '@/routes/monitors';
-import type { Monitor } from '@/types/monitors';
+import type { Monitor, MonitorStatus } from '@/types/monitors';
 import type { Pagination } from '@/types/pagination';
 import debounce from '@/util/debounce';
 
-defineProps<{
+const props = defineProps<{
     monitors: Pagination<Monitor>;
-}>()
+    filters: {
+        search: string | null;
+        status: MonitorStatus | null;
+    };
+}>();
 
-const search = ref<string>('');
+const ALL = 'all';
 
-watch(search, debounce((value: string) => {
-    const query = value.trim();
+const search = ref<string>(props.filters.search ?? '');
+const status = ref<string>(props.filters.status ?? ALL);
 
-    router.get(monitorsRoute.index(), { search: query || undefined }, {
-        preserveState: true,
-        replace: true,
-        only: ['monitors'],
-    });
-}, 300));
+const statuses: MonitorStatus[] = ['up', 'down', 'paused', 'pending'];
+
+function reload() {
+    router.get(
+        monitorsRoute.index(),
+        {
+            search: search.value.trim() || undefined,
+            status: status.value === ALL ? undefined : status.value,
+        },
+        {
+            preserveState: true,
+            replace: true,
+            only: ['monitors', 'filters'],
+        },
+    );
+}
+
+watch(search, debounce(reload, 300));
+watch(status, reload);
 
 setLayoutProps({
     breadcrumbs: [
@@ -39,23 +63,49 @@ setLayoutProps({
 });
 </script>
 
-
 <template>
-
     <Head :title="$t('monitors.table.header')" />
 
     <TableFilterBar>
         <template #filters>
-            <Input name="search" type="search" class="w-64" v-model="search"
-                :placeholder="$t('monitors.table.filters.search.placeholder')" />
+            <Input
+                v-model="search"
+                name="search"
+                type="search"
+                class="w-64"
+                :placeholder="$t('monitors.table.filters.search.placeholder')"
+            />
+            <Select v-model="status">
+                <SelectTrigger class="w-44">
+                    <SelectValue
+                        :placeholder="$t('monitors.table.filters.status.label')"
+                    />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem :value="ALL">{{
+                        $t('monitors.table.filters.status.all')
+                    }}</SelectItem>
+                    <SelectItem
+                        v-for="option in statuses"
+                        :key="option"
+                        :value="option"
+                    >
+                        {{ $t(`monitors.status.${option}`) }}
+                    </SelectItem>
+                </SelectContent>
+            </Select>
         </template>
         <template #actions>
             <Button :as="Link" :href="monitorsRoute.create()">
                 <PlusIcon />
                 {{ $t('monitors.create.label') }}
             </Button>
-            <TableColumnFilter table="monitors" column-translations="monitors.table.columns" />
+            <TableColumnFilter
+                table="monitors"
+                column-translations="monitors.table.columns"
+            />
         </template>
     </TableFilterBar>
+
     <MonitorsTable :monitors="monitors" />
 </template>

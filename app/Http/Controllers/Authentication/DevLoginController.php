@@ -15,7 +15,7 @@ class DevLoginController extends Controller
      */
     public function loginAsAdmin(): RedirectResponse
     {
-        if (!app()->isLocal()) {
+        if (! app()->isLocal()) {
             abort(403, 'This action is only available in local development.');
         }
 
@@ -28,7 +28,7 @@ class DevLoginController extends Controller
             ]
         );
 
-        if (!$admin->hasRole('Super Admin')) {
+        if (! $admin->hasRole('Super Admin')) {
             $admin->syncRoles('Super Admin');
         }
 
@@ -42,7 +42,7 @@ class DevLoginController extends Controller
      */
     public function loginAsUser(): RedirectResponse
     {
-        if (!app()->isLocal()) {
+        if (! app()->isLocal()) {
             abort(403, 'This action is only available in local development.');
         }
 

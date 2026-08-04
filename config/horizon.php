@@ -197,26 +197,16 @@ return [
     */
 
     'defaults' => [
+        // A single pool drains every queue this app uses, so one worker is
+        // enough. The extra lanes only receive jobs when
+        // MONITORING_SEPARATE_QUEUES is enabled, and are listed here so that
+        // switching it on needs no Horizon changes.
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['default'],
+            'queue' => ['default', 'alerts', 'checks-http', 'checks-network'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
-            'maxProcesses' => 1,
-            'maxTime' => 0,
-            'maxJobs' => 0,
-            'memory' => 128,
-            'tries' => 1,
-            'timeout' => 60,
-            'nice' => 0,
-        ],
-
-        'supervisor-checks-http' => [
-            'connection' => 'redis',
-            'queue' => ['checks-http'],
-            'balance' => 'auto',
-            'autoScalingStrategy' => 'time',
-            'maxProcesses' => 2,
+            'maxProcesses' => 3,
             'maxTime' => 0,
             'maxJobs' => 0,
             'memory' => 128,
@@ -233,21 +223,11 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
-
-            'supervisor-checks-http' => [
-                'maxProcesses' => 5,
-                'balanceMaxShift' => 1,
-                'balanceCooldown' => 3,
-            ],
         ],
 
         'local' => [
             'supervisor-1' => [
-                'maxProcesses' => 1,
-            ],
-
-            'supervisor-checks-http' => [
-                'maxProcesses' => 2,
+                'maxProcesses' => 3,
             ],
         ],
     ],

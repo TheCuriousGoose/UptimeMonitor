@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class StatusPageResource extends JsonResource
+{
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'uuid' => $this->uuid,
+            'slug' => $this->slug,
+            'title' => $this->title,
+            'description' => $this->description,
+            'is_published' => $this->is_published,
+            'public_url' => route('status.show', $this->slug),
+            'monitors_count' => $this->whenCounted('monitors'),
+            'monitors' => $this->whenLoaded(
+                'monitors',
+                fn () => MonitorResource::collection($this->monitors)->resolve(),
+            ),
+        ];
+    }
+}

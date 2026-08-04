@@ -5,9 +5,9 @@ return [
     'table' => [
         'setting' => 'Setting',
         'key' => 'Key',
-        'value' => 'Value'
+        'value' => 'Value',
     ],
     'edit' => [
-        'title' => 'Edit Setting'
-    ]
+        'title' => 'Edit Setting',
+    ],
 ];

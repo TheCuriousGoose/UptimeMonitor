@@ -19,6 +19,9 @@ createInertiaApp({
         switch (true) {
             case name === 'Welcome':
                 return null;
+            // Public status pages render standalone, with no app chrome.
+            case name.startsWith('status/'):
+                return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):
@@ -39,7 +42,7 @@ createInertiaApp({
             .use(plugin)
             .use(i18n)
             .use(pinia);
-            
+
         registerPermissionDirectives(app);
 
         app.mount(el!);

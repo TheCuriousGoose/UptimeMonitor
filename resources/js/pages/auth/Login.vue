@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, useForm } from '@inertiajs/vue3';
+import { Shield, User } from 'lucide-vue-next';
 import { ref } from 'vue';
 import OauthButtons from '@/components/auth/OAuthButtons.vue';
 import InputError from '@/components/InputError.vue';
@@ -15,7 +16,6 @@ import { trans } from '@/lib/i18n';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import { Shield, User } from 'lucide-vue-next';
 
 defineOptions({
     layout: {

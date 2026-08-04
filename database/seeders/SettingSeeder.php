@@ -19,7 +19,7 @@ class SettingSeeder extends Seeder
             'label' => 'Google OAuth',
             'description' => 'Enable Google OAuth authentication',
             'type' => SettingType::Boolean,
-            'value' => '0'
+            'value' => '0',
         ],
         [
             'key' => 'oauth.github',
@@ -27,8 +27,8 @@ class SettingSeeder extends Seeder
             'label' => 'GitHub OAuth',
             'description' => 'Enable GitHub OAuth authentication',
             'type' => SettingType::Boolean,
-            'value' => '0'
-        ]
+            'value' => '0',
+        ],
     ];
 
     public function run(): void

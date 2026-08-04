@@ -1,0 +1,214 @@
+<template>
+    <div
+        v-if="points.length === 0"
+        class="flex h-48 items-center justify-center text-sm text-muted-foreground"
+    >
+        {{ $t('monitors.no_data') }}
+    </div>
+
+    <div v-else class="relative" @pointerleave="hoverIndex = null">
+        <svg
+            :viewBox="`0 0 ${width} ${height}`"
+            class="h-48 w-full"
+            preserveAspectRatio="none"
+            role="img"
+            :aria-label="ariaLabel"
+            @pointermove="onPointerMove"
+        >
+            <!-- Recessive hairline grid; the data is the only loud thing here. -->
+            <line
+                v-for="tick in yTicks"
+                :key="tick.value"
+                :x1="0"
+                :x2="width"
+                :y1="tick.y"
+                :y2="tick.y"
+                stroke="var(--viz-grid)"
+                stroke-width="1"
+                vector-effect="non-scaling-stroke"
+            />
+
+            <path :d="areaPath" :fill="seriesColor" fill-opacity="0.1" />
+            <path
+                :d="linePath"
+                fill="none"
+                :stroke="seriesColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                vector-effect="non-scaling-stroke"
+            />
+
+            <!-- Failures marked on the baseline so an outage is visible even
+                 where the response line has no successful sample to draw. -->
+            <rect
+                v-for="failure in failureMarks"
+                :key="`f-${failure.index}`"
+                :x="failure.x - 1"
+                :y="height - 6"
+                width="2"
+                height="6"
+                :fill="downColor"
+            />
+
+            <template v-if="hovered">
+                <line
+                    :x1="hovered.x"
+                    :x2="hovered.x"
+                    :y1="0"
+                    :y2="height"
+                    stroke="var(--viz-grid)"
+                    stroke-width="1"
+                    vector-effect="non-scaling-stroke"
+                />
+                <circle
+                    :cx="hovered.x"
+                    :cy="hovered.y"
+                    r="4"
+                    :fill="seriesColor"
+                    stroke="var(--card)"
+                    stroke-width="2"
+                    vector-effect="non-scaling-stroke"
+                />
+            </template>
+        </svg>
+
+        <div
+            v-if="hovered"
+            class="pointer-events-none absolute top-2 z-10 min-w-36 rounded-md border bg-popover px-2.5 py-1.5 text-xs shadow-md"
+            :style="tooltipStyle"
+        >
+            <p class="text-muted-foreground">
+                {{ formatDateTime(hovered.point.bucket) }}
+            </p>
+            <p class="mt-0.5 font-medium">
+                {{ formatResponseMs(hovered.point.avg_response_ms) }}
+            </p>
+            <p
+                v-if="hovered.point.failures > 0"
+                class="mt-0.5 text-muted-foreground"
+            >
+                {{ hovered.point.failures }} failed of {{ hovered.point.total }}
+            </p>
+        </div>
+
+        <div
+            class="mt-1 flex justify-between text-xs text-muted-foreground tabular-nums"
+        >
+            <span>{{ formatDateTime(points[0].bucket) }}</span>
+            <span>{{ formatResponseMs(maxValue) }} max</span>
+            <span>{{ formatDateTime(points[points.length - 1].bucket) }}</span>
+        </div>
+    </div>
+</template>
+
+<script setup lang="ts">
+import { computed, ref } from 'vue';
+import { formatDateTime, formatResponseMs } from '@/lib/format';
+import type { SeriesPoint } from '@/types/monitors';
+
+const props = defineProps<{
+    series: SeriesPoint[];
+}>();
+
+const width = 600;
+const height = 160;
+const seriesColor = 'var(--viz-series)';
+const downColor = 'var(--viz-down)';
+
+const hoverIndex = ref<number | null>(null);
+
+const points = computed(() => props.series);
+
+const maxValue = computed(() =>
+    Math.max(1, ...points.value.map((point) => point.avg_response_ms)),
+);
+
+function xFor(index: number): number {
+    if (points.value.length <= 1) {
+        return width / 2;
+    }
+
+    return (index / (points.value.length - 1)) * width;
+}
+
+function yFor(value: number): number {
+    // Leave headroom at the top so the peak never touches the frame.
+    return height - (value / maxValue.value) * (height - 12) - 6;
+}
+
+const linePath = computed(() =>
+    points.value
+        .map(
+            (point, index) =>
+                `${index === 0 ? 'M' : 'L'}${xFor(index)},${yFor(point.avg_response_ms)}`,
+        )
+        .join(' '),
+);
+
+const areaPath = computed(() => {
+    if (points.value.length === 0) {
+        return '';
+    }
+
+    return `${linePath.value} L${xFor(points.value.length - 1)},${height} L${xFor(0)},${height} Z`;
+});
+
+const failureMarks = computed(() =>
+    points.value
+        .map((point, index) => ({
+            index,
+            x: xFor(index),
+            failures: point.failures,
+        }))
+        .filter((mark) => mark.failures > 0),
+);
+
+const yTicks = computed(() =>
+    [0, 0.5, 1].map((fraction) => ({
+        value: Math.round(maxValue.value * fraction),
+        y: yFor(maxValue.value * fraction),
+    })),
+);
+
+const hovered = computed(() => {
+    if (hoverIndex.value === null || !points.value[hoverIndex.value]) {
+        return null;
+    }
+
+    const point = points.value[hoverIndex.value];
+
+    return {
+        point,
+        x: xFor(hoverIndex.value),
+        y: yFor(point.avg_response_ms),
+    };
+});
+
+const tooltipStyle = computed(() => {
+    const ratio = hovered.value ? hovered.value.x / width : 0;
+
+    return ratio > 0.6
+        ? { right: `${(1 - ratio) * 100}%` }
+        : { left: `${ratio * 100}%` };
+});
+
+function onPointerMove(event: PointerEvent) {
+    const target = event.currentTarget as SVGSVGElement;
+    const bounds = target.getBoundingClientRect();
+    const ratio = (event.clientX - bounds.left) / bounds.width;
+
+    hoverIndex.value = Math.max(
+        0,
+        Math.min(
+            points.value.length - 1,
+            Math.round(ratio * (points.value.length - 1)),
+        ),
+    );
+}
+
+const ariaLabel = computed(
+    () =>
+        `Average response time over time, peaking at ${maxValue.value} milliseconds.`,
+);
+</script>

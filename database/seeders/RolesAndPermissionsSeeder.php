@@ -21,7 +21,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
         foreach (Role::cases() as $role) {
             $model = RoleModel::firstOrCreate(['name' => $role->value]);
-            $model->syncPermissions(array_map(fn($p) => $p->value, $role->permissions()));
+            $model->syncPermissions(array_map(fn ($p) => $p->value, $role->permissions()));
         }
     }
 }

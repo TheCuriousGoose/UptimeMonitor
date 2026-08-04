@@ -58,4 +58,3 @@ class OAuthController extends Controller
         return to_route('monitors.index')->with('success', __('auth.successful'));
     }
 }
-

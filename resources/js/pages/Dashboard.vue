@@ -1,38 +1,205 @@
 <template>
-    <Head title="Dashboard" />
+    <Head :title="$t('dashboards.title')" />
 
-    <div
-        class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4"
-    >
-        <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-            <div
-                class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-            >
-                <PlaceholderPattern />
-            </div>
-            <div
-                class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-            >
-                <PlaceholderPattern />
-            </div>
-            <div
-                class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-            >
-                <PlaceholderPattern />
-            </div>
-        </div>
+    <div class="flex flex-col gap-6 p-4">
+        <!-- A brand new account has nothing to show, so lead with the one
+             action that makes the rest of the app useful. -->
         <div
-            class="relative min-h-[100vh] flex-1 rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border"
+            v-if="summary.total === 0"
+            class="rounded-xl border bg-card p-10 text-center"
         >
-            <PlaceholderPattern />
+            <ActivityIcon class="mx-auto size-8 text-muted-foreground" />
+            <h2 class="mt-4 text-lg font-semibold">
+                {{ $t('dashboards.empty.title') }}
+            </h2>
+            <p class="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+                {{ $t('dashboards.empty.description') }}
+            </p>
+            <Button :as="Link" :href="monitorsRoute.create()" class="mt-5">
+                <PlusIcon />
+                {{ $t('dashboards.empty.action') }}
+            </Button>
         </div>
+
+        <template v-else>
+            <div>
+                <h1 class="text-xl font-semibold">
+                    {{ $t('dashboards.title') }}
+                </h1>
+                <p class="mt-1 text-sm text-muted-foreground">
+                    {{ $t('dashboards.subtitle') }}
+                </p>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <StatTile
+                    :label="$t('dashboards.cards.uptime')"
+                    :value="formatUptime(summary.uptime_percentage)"
+                    :icon="TrendingUpIcon"
+                />
+                <StatTile
+                    :label="$t('dashboards.cards.down')"
+                    :value="summary.down"
+                    :icon="XCircleIcon"
+                    :value-class="
+                        summary.down > 0 ? 'text-red-600 dark:text-red-400' : ''
+                    "
+                    :hint="`${summary.up} ${$t('dashboards.cards.up').toLowerCase()}`"
+                />
+                <StatTile
+                    :label="$t('dashboards.cards.response')"
+                    :value="formatResponseMs(summary.avg_response_ms)"
+                    :icon="GaugeIcon"
+                />
+                <StatTile
+                    :label="$t('dashboards.cards.incidents')"
+                    :value="summary.ongoing_incidents"
+                    :icon="SirenIcon"
+                    :hint="
+                        summary.paused > 0
+                            ? `${summary.paused} ${$t('dashboards.cards.paused').toLowerCase()}`
+                            : undefined
+                    "
+                />
+            </div>
+
+            <div class="grid gap-4 lg:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle class="text-base">{{
+                            $t('dashboards.attention.title')
+                        }}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p
+                            v-if="attention.length === 0"
+                            class="py-6 text-center text-sm text-muted-foreground"
+                        >
+                            {{ $t('dashboards.attention.empty') }}
+                        </p>
+                        <ul v-else class="divide-y">
+                            <li
+                                v-for="monitor in attention"
+                                :key="monitor.uuid"
+                                class="flex items-center justify-between gap-3 py-2.5"
+                            >
+                                <div class="min-w-0">
+                                    <Link
+                                        :href="
+                                            monitorsRoute.show(monitor.uuid).url
+                                        "
+                                        class="block truncate font-medium hover:underline"
+                                    >
+                                        {{ monitor.name }}
+                                    </Link>
+                                    <p
+                                        class="truncate text-xs text-muted-foreground"
+                                    >
+                                        {{
+                                            $t(
+                                                'dashboards.attention.down_since',
+                                                {
+                                                    time: formatRelative(
+                                                        monitor.status_changed_at,
+                                                    ),
+                                                },
+                                            )
+                                        }}
+                                    </p>
+                                </div>
+                                <MonitorStatusBadge :status="monitor.status" />
+                            </li>
+                        </ul>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle class="text-base">{{
+                            $t('dashboards.incidents.title')
+                        }}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p
+                            v-if="recentIncidents.length === 0"
+                            class="py-6 text-center text-sm text-muted-foreground"
+                        >
+                            {{ $t('dashboards.incidents.empty') }}
+                        </p>
+                        <ul v-else class="divide-y">
+                            <li
+                                v-for="incident in recentIncidents"
+                                :key="incident.uuid"
+                                class="flex items-center justify-between gap-3 py-2.5"
+                            >
+                                <div class="min-w-0">
+                                    <p class="truncate font-medium">
+                                        {{ incident.monitor?.name }}
+                                    </p>
+                                    <p
+                                        class="truncate text-xs text-muted-foreground"
+                                    >
+                                        {{ incident.cause ?? '—' }} ·
+                                        {{
+                                            formatDateTime(incident.started_at)
+                                        }}
+                                    </p>
+                                </div>
+                                <span
+                                    class="shrink-0 text-xs font-medium"
+                                    :class="
+                                        incident.is_ongoing
+                                            ? 'text-red-600 dark:text-red-400'
+                                            : 'text-muted-foreground'
+                                    "
+                                >
+                                    {{
+                                        incident.is_ongoing
+                                            ? $t('dashboards.incidents.ongoing')
+                                            : formatDuration(
+                                                  incident.duration_seconds,
+                                              )
+                                    }}
+                                </span>
+                            </li>
+                        </ul>
+                    </CardContent>
+                </Card>
+            </div>
+        </template>
     </div>
 </template>
 
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import PlaceholderPattern from '@/components/PlaceholderPattern.vue';
+import { Head, Link } from '@inertiajs/vue3';
+import {
+    ActivityIcon,
+    GaugeIcon,
+    PlusIcon,
+    SirenIcon,
+    TrendingUpIcon,
+    XCircleIcon,
+} from 'lucide-vue-next';
+import MonitorStatusBadge from '@/components/monitors/MonitorStatusBadge.vue';
+import StatTile from '@/components/StatTile.vue';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    formatDateTime,
+    formatDuration,
+    formatRelative,
+    formatResponseMs,
+    formatUptime,
+} from '@/lib/format';
 import { dashboard } from '@/routes';
+import * as monitorsRoute from '@/routes/monitors';
+import type { DashboardSummary, Incident, Monitor } from '@/types/monitors';
+
+defineProps<{
+    summary: DashboardSummary;
+    attention: Monitor[];
+    recentIncidents: Incident[];
+}>();
 
 defineOptions({
     layout: {

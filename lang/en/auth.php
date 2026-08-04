@@ -53,6 +53,6 @@ return [
 
     'oauth' => [
         'google' => 'Continue with Google',
-        'github' => 'Continue with Github'
-    ]
+        'github' => 'Continue with Github',
+    ],
 ];

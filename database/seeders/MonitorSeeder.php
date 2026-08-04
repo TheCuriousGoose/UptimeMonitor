@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Enums\MonitorType;
+use App\Models\Incident;
 use App\Models\Monitor;
 use App\Models\MonitorCheck;
 use App\Models\User;
@@ -9,45 +11,78 @@ use Illuminate\Database\Seeder;
 
 class MonitorSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+    private const MONITORS = 24;
+
+    private const CHECKS_PER_MONITOR = 480;
+
     public function run(): void
     {
-        $amountOfMonitors = 200;
-        $amountOfChecksPerMonitor = 500;
         $user = User::query()->first() ?? User::factory()->create();
 
-        for ($i = 0; $i < $amountOfMonitors; $i++) {
+        foreach (range(1, self::MONITORS) as $index) {
+            $type = fake()->randomElement(MonitorType::cases());
+
             $monitor = Monitor::create([
-                'name' => ucfirst(fake()->word()).' '.fake()->randomElement(['API', 'Service', 'Gateway', 'Server', 'Dashboard', 'Platform', 'Worker', 'Queue']),
-                'url' => fake()->url(),
+                'name' => ucfirst(fake()->word()).' '.fake()->randomElement(
+                    ['API', 'Service', 'Gateway', 'Server', 'Dashboard', 'Platform', 'Worker', 'Queue'],
+                ),
+                'url' => $type->expectsUrl() ? fake()->url() : fake()->domainName(),
+                'type' => $type,
+                'config' => $type->defaultConfig(),
                 'created_by' => $user->id,
-                'timeout' => 5,
-                'check_interval' => '* * * * *',
+                'timeout' => 10,
+                'interval_seconds' => fake()->randomElement([60, 300, 600]),
+                'is_active' => $index % 12 !== 0,
             ]);
 
-            // Create fake monitor checks for each monitor
-            for ($j = 0; $j < $amountOfChecksPerMonitor; $j++) {
-                $isUp = rand(1, 100) > 2;
-                $checkedAt = now()->subMinutes($amountOfChecksPerMonitor - $j);
-                $statusCode = $isUp ? 200 : fake()->randomElement([500, 502, 503, 504]);
-
-                MonitorCheck::create([
-                    'monitor_id' => $monitor->id,
-                    'checked_at' => $checkedAt,
-                    'response_ms' => $isUp ? fake()->randomElement(array_merge(array_fill(0, 70, fake()->numberBetween(50, 300)), array_fill(0, 30, fake()->numberBetween(300, 2000)))) : 5001,
-                    'is_up' => $isUp,
-                    'error' => $isUp ? null : fake()->randomElement([
-                        'Connection timeout after 5 seconds',
-                        'Service unavailable',
-                        'Internal server error',
-                        'Gateway timeout',
-                        'Service temporarily down',
-                    ]),
-                    'meta' => ['status_code' => $statusCode, 'checker' => 'http'],
-                ]);
-            }
+            $this->seedHistory($monitor);
         }
+    }
+
+    /**
+     * Generate a believable check history with a couple of outages so the
+     * dashboard, charts and incident list all have something to show.
+     */
+    private function seedHistory(Monitor $monitor): void
+    {
+        $rows = [];
+        $outageStart = fake()->numberBetween(50, self::CHECKS_PER_MONITOR - 60);
+        $outageLength = fake()->numberBetween(3, 12);
+        $lastIsUp = true;
+
+        for ($i = 0; $i < self::CHECKS_PER_MONITOR; $i++) {
+            $inOutage = $i >= $outageStart && $i < $outageStart + $outageLength;
+            $isUp = ! $inOutage && fake()->numberBetween(1, 100) > 1;
+            $lastIsUp = $isUp;
+
+            $rows[] = [
+                'monitor_id' => $monitor->id,
+                'checked_at' => now()->subMinutes((self::CHECKS_PER_MONITOR - $i) * 3),
+                'response_ms' => $isUp ? fake()->numberBetween(40, 900) : 0,
+                'is_up' => $isUp,
+                'error' => $isUp ? null : fake()->randomElement([
+                    'HTTP 503', 'Connection timed out', 'HTTP 502', 'Name resolution failed',
+                ]),
+                'meta' => json_encode(['status_code' => $isUp ? 200 : 503, 'checker' => $monitor->type->value]),
+            ];
+        }
+
+        foreach (array_chunk($rows, 200) as $chunk) {
+            MonitorCheck::insert($chunk);
+        }
+
+        Incident::create([
+            'monitor_id' => $monitor->id,
+            'started_at' => now()->subMinutes((self::CHECKS_PER_MONITOR - $outageStart) * 3),
+            'resolved_at' => now()->subMinutes((self::CHECKS_PER_MONITOR - $outageStart - $outageLength) * 3),
+            'cause' => 'HTTP 503',
+            'failed_checks' => $outageLength,
+        ]);
+
+        $monitor->forceFill([
+            'latest_is_up' => $lastIsUp,
+            'last_checked_at' => now(),
+            'status_changed_at' => now()->subHours(2),
+        ])->save();
     }
 }

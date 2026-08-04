@@ -1,270 +1,339 @@
 <template>
+    <Head :title="monitor.name" />
 
-    <Head :title="$t('monitors.table.header')" />
-
-    <Card>
-        <CardHeader class="flex flex-row items-center justify-between">
-            <div>{{ $t('monitors.uptime_timeline_for', { name: monitor.name }) }}</div>
-            <Select :model-value="period" @update:model-value="(v) => updatePeriod(v as string)">
-                <SelectTrigger class="w-[180px]">
-                    <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem v-for="p in periods" :key="p" :value="p">
-                        {{ $t('monitors.periods.' + p) }}
-                    </SelectItem>
-                </SelectContent>
-            </Select>
-        </CardHeader>
-        <CardContent>
-            <div class="space-y-3">
-                <TooltipProvider>
-                    <div
-                        class="grid h-5 w-full items-center gap-px rounded-sm bg-muted/35 p-px"
-                        :style="{ gridTemplateColumns: `repeat(${timelineBars.length}, minmax(0, 1fr))` }"
-                    >
-                        <Tooltip v-for="bar in timelineBars" :key="bar.index">
-                            <TooltipTrigger as-child>
-                                <div
-                                    class="h-full min-w-0 rounded-[2px]"
-                                    :class="{
-                                        'bg-emerald-500': bar.status === 'up',
-                                        'bg-red-500': bar.status === 'down',
-                                        'bg-transparent': bar.status === 'empty',
-                                    }"
-                                />
-                            </TooltipTrigger>
-                            <TooltipContent class="space-y-1">
-                                <p class="opacity-70">
-                                    {{ formatDateLabel(bar.barStart) }} &ndash; {{ formatDateLabel(bar.barEnd) }}
-                                </p>
-                                <p class="flex items-center gap-1.5 font-medium">
-                                    <span
-                                        class="inline-block size-1.5 shrink-0 rounded-full"
-                                        :class="{
-                                            'bg-emerald-400': bar.status === 'up',
-                                            'bg-red-400': bar.status === 'down',
-                                        }"
-                                    />
-                                    <span v-if="bar.status === 'up'">{{ $t('monitors.is_up') }}</span>
-                                    <span v-else-if="bar.status === 'down'">{{ $t('monitors.is_down') }}</span>
-                                    <span v-else class="opacity-50">{{ $t('monitors.no_data') }}</span>
-                                </p>
-                                <p v-if="bar.checkCount > 0" class="opacity-70">
-                                    <template v-if="bar.lastStatusCode !== null">HTTP {{ bar.lastStatusCode }}</template>
-                                    <template v-if="bar.avgResponseMs !== null">
-                                        <template v-if="bar.lastStatusCode !== null"> &middot; </template>{{ bar.avgResponseMs }}&thinsp;ms<template v-if="bar.checkCount > 1"> avg</template>
-                                    </template>
-                                    <template v-if="bar.checkCount > 1">
-                                        &middot; {{ bar.checkCount }} checks<template v-if="bar.downCount > 0">, {{ bar.downCount }} failed</template>
-                                    </template>
-                                </p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </div>
-                </TooltipProvider>
-
-                <div class="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{{ periodStartLabel }}</span>
-                    <span>{{ $t('monitors.periods.' + period) }}</span>
-                    <span>{{ currentTimeLabel }}</span>
+    <div class="flex flex-col gap-4 p-4">
+        <!-- Header: identity, current state, and the actions you reach for
+             during an incident, all above the fold. -->
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h1 class="truncate text-xl font-semibold">
+                        {{ monitor.name }}
+                    </h1>
+                    <MonitorStatusBadge :status="monitor.status" />
                 </div>
+                <p class="mt-1 truncate text-sm text-muted-foreground">
+                    {{ $t(`monitors.form.type.options.${monitor.type}`) }} ·
+                    {{ monitor.url }}
+                </p>
             </div>
-        </CardContent>
-    </Card>
 
+            <div class="flex flex-wrap items-center gap-2">
+                <Select
+                    :model-value="period"
+                    @update:model-value="
+                        (value) => updatePeriod(value as string)
+                    "
+                >
+                    <SelectTrigger class="w-40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem
+                            v-for="option in periods"
+                            :key="option"
+                            :value="option"
+                        >
+                            {{ $t(`monitors.periods.${option}`) }}
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
+                <Button variant="outline" @click="runCheck">
+                    <PlayIcon />
+                    {{ $t('monitors.actions.check_now') }}
+                </Button>
+                <Button variant="outline" @click="toggleState">
+                    <component
+                        :is="monitor.is_active ? PauseIcon : PlayCircleIcon"
+                    />
+                    {{
+                        monitor.is_active
+                            ? $t('monitors.actions.pause')
+                            : $t('monitors.actions.resume')
+                    }}
+                </Button>
+                <Button
+                    :as="Link"
+                    variant="outline"
+                    :href="monitorsRoute.edit(monitor.uuid).url"
+                >
+                    <PencilIcon />
+                    {{ $t('monitors.actions.edit') }}
+                </Button>
+            </div>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatTile
+                :label="$t('monitors.stats.uptime')"
+                :value="formatUptime(stats.uptime_percentage)"
+            />
+            <StatTile
+                :label="$t('monitors.stats.avg_response')"
+                :value="formatResponseMs(stats.avg_response_ms)"
+            />
+            <StatTile
+                :label="$t('monitors.stats.p95_response')"
+                :value="formatResponseMs(stats.p95_response_ms)"
+            />
+            <StatTile
+                :label="$t('monitors.stats.downtime')"
+                :value="
+                    stats.downtime_seconds > 0
+                        ? formatDuration(stats.downtime_seconds)
+                        : '—'
+                "
+                :hint="`${stats.incidents} ${$t('monitors.stats.incidents').toLowerCase()} · ${stats.total_checks} ${$t('monitors.stats.checks').toLowerCase()}`"
+            />
+        </div>
+
+        <Card>
+            <CardHeader>
+                <CardTitle class="text-base">{{
+                    $t('monitors.show.timeline')
+                }}</CardTitle>
+                <CardDescription>{{
+                    $t(`monitors.periods.${period}`)
+                }}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <UptimeTimeline :checks="checks" :period="period" />
+            </CardContent>
+        </Card>
+
+        <div class="grid gap-4 lg:grid-cols-3">
+            <Card class="lg:col-span-2">
+                <CardHeader>
+                    <CardTitle class="text-base">{{
+                        $t('monitors.show.response_chart')
+                    }}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <ResponseChart :series="series" />
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle class="text-base">{{
+                        $t('monitors.show.details')
+                    }}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <dl class="space-y-3 text-sm">
+                        <div class="flex justify-between gap-3">
+                            <dt class="text-muted-foreground">
+                                {{ $t('monitors.form.check_interval.title') }}
+                            </dt>
+                            <dd>
+                                {{ formatInterval(monitor.interval_seconds) }}
+                            </dd>
+                        </div>
+                        <div class="flex justify-between gap-3">
+                            <dt class="text-muted-foreground">
+                                {{ $t('monitors.form.timeout.title') }}
+                            </dt>
+                            <dd>{{ monitor.timeout }}s</dd>
+                        </div>
+                        <div class="flex justify-between gap-3">
+                            <dt class="text-muted-foreground">
+                                {{
+                                    $t(
+                                        'monitors.form.confirmation_threshold.title',
+                                    )
+                                }}
+                            </dt>
+                            <dd>{{ monitor.confirmation_threshold }}</dd>
+                        </div>
+                        <div class="flex justify-between gap-3">
+                            <dt class="text-muted-foreground">
+                                {{ $t('monitors.show.last_checked') }}
+                            </dt>
+                            <dd>
+                                {{
+                                    monitor.last_checked_at
+                                        ? formatRelative(
+                                              monitor.last_checked_at,
+                                          )
+                                        : $t('monitors.never_checked')
+                                }}
+                            </dd>
+                        </div>
+                        <div
+                            v-for="(value, key) in visibleConfig"
+                            :key="key"
+                            class="flex justify-between gap-3"
+                        >
+                            <dt class="text-muted-foreground">{{ key }}</dt>
+                            <dd class="truncate">{{ value }}</dd>
+                        </div>
+                    </dl>
+
+                    <div
+                        v-if="monitor.notification_channels?.length"
+                        class="mt-4 border-t pt-4"
+                    >
+                        <p
+                            class="mb-2 text-xs font-medium text-muted-foreground"
+                        >
+                            {{ $t('monitors.form.channels.title') }}
+                        </p>
+                        <ul class="space-y-1 text-sm">
+                            <li
+                                v-for="channel in monitor.notification_channels"
+                                :key="channel.uuid"
+                                class="truncate"
+                            >
+                                {{ channel.name }}
+                            </li>
+                        </ul>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+
+        <Card>
+            <CardHeader>
+                <CardTitle class="text-base">{{
+                    $t('monitors.show.incidents')
+                }}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p
+                    v-if="incidents.length === 0"
+                    class="py-6 text-center text-sm text-muted-foreground"
+                >
+                    {{ $t('monitors.show.no_incidents') }}
+                </p>
+                <ul v-else class="divide-y">
+                    <li
+                        v-for="incident in incidents"
+                        :key="incident.uuid"
+                        class="flex items-start justify-between gap-3 py-3"
+                    >
+                        <div class="min-w-0">
+                            <p class="text-sm font-medium">
+                                {{ incident.cause ?? '—' }}
+                            </p>
+                            <p class="mt-0.5 text-xs text-muted-foreground">
+                                {{ formatDateTime(incident.started_at) }} ·
+                                {{ incident.failed_checks }} failed checks
+                            </p>
+                        </div>
+                        <span
+                            class="shrink-0 text-xs font-medium"
+                            :class="
+                                incident.is_ongoing
+                                    ? 'text-red-600 dark:text-red-400'
+                                    : 'text-muted-foreground'
+                            "
+                        >
+                            {{
+                                incident.is_ongoing
+                                    ? $t('monitors.show.ongoing', {
+                                          time: formatRelative(
+                                              incident.started_at,
+                                          ),
+                                      })
+                                    : $t('monitors.show.resolved_after', {
+                                          duration: formatDuration(
+                                              incident.duration_seconds,
+                                          ),
+                                      })
+                            }}
+                        </span>
+                    </li>
+                </ul>
+            </CardContent>
+        </Card>
+    </div>
 </template>
 
 <script setup lang="ts">
-import { Head, setLayoutProps, router } from '@inertiajs/vue3';
+import { Head, Link, router, setLayoutProps } from '@inertiajs/vue3';
+import {
+    PauseIcon,
+    PencilIcon,
+    PlayCircleIcon,
+    PlayIcon,
+} from 'lucide-vue-next';
 import { computed } from 'vue';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import MonitorStatusBadge from '@/components/monitors/MonitorStatusBadge.vue';
+import ResponseChart from '@/components/monitors/ResponseChart.vue';
+import UptimeTimeline from '@/components/monitors/UptimeTimeline.vue';
+import StatTile from '@/components/StatTile.vue';
+import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
+    formatDateTime,
+    formatDuration,
+    formatInterval,
+    formatRelative,
+    formatResponseMs,
+    formatUptime,
+} from '@/lib/format';
 import { trans } from '@/lib/i18n';
-import * as monitorsRoute from "@/routes/monitors/index"
-import type { Monitor, MonitorCheck } from '@/types/monitors';
+import * as monitorsRoute from '@/routes/monitors';
+import type {
+    Incident,
+    Monitor,
+    MonitorCheck,
+    MonitorStats,
+    SeriesPoint,
+} from '@/types/monitors';
 
 const props = defineProps<{
     monitor: Monitor;
+    checks: MonitorCheck[];
+    stats: MonitorStats;
+    series: SeriesPoint[];
+    incidents: Incident[];
     period: string;
     periods: string[];
 }>();
 
-type TimelineBar = {
-    index: number;
-    status: 'up' | 'down' | 'empty';
-    barStart: number;
-    barEnd: number;
-    checkCount: number;
-    downCount: number;
-    avgResponseMs: number | null;
-    lastStatusCode: number | null;
-};
+/** Only show config the user actually set something meaningful for. */
+const visibleConfig = computed(() =>
+    Object.fromEntries(
+        Object.entries(props.monitor.config ?? {}).filter(
+            ([, value]) => value !== null && value !== '' && value !== false,
+        ),
+    ),
+);
 
-const MAX_RENDER_BARS = 720;
-
-function periodDurationMs(period: string): number {
-    switch (period) {
-        case '1h':
-            return 60 * 60 * 1000;
-        case '7d':
-            return 7 * 24 * 60 * 60 * 1000;
-        case '30d':
-            return 30 * 24 * 60 * 60 * 1000;
-        case '24h':
-        default:
-            return 24 * 60 * 60 * 1000;
-    }
+function updatePeriod(next: string) {
+    router.get(
+        monitorsRoute.show(props.monitor.uuid),
+        { period: next },
+        { preserveState: true, preserveScroll: true },
+    );
 }
 
-function parseCheckIntervalMs(interval: string): number | null {
-    if (interval === '* * * * *') {
-        return 60 * 1000;
-    }
-
-    const everyMinutes = interval.match(/^\*\/(\d+) \* \* \* \*$/);
-
-    if (everyMinutes) {
-        return Number(everyMinutes[1]) * 60 * 1000;
-    }
-
-    const hourlyAtMinute = interval.match(/^(\d+) \* \* \* \*$/);
-
-    if (hourlyAtMinute) {
-        return 60 * 60 * 1000;
-    }
-
-    return null;
+function runCheck() {
+    router.post(
+        monitorsRoute.check(props.monitor.uuid).url,
+        {},
+        { preserveScroll: true },
+    );
 }
 
-function median(numbers: number[]): number | null {
-    if (numbers.length === 0) {
-        return null;
-    }
-
-    const sorted = [...numbers].sort((left, right) => left - right);
-    const midpoint = Math.floor(sorted.length / 2);
-
-    if (sorted.length % 2 === 0) {
-        return (sorted[midpoint - 1] + sorted[midpoint]) / 2;
-    }
-
-    return sorted[midpoint];
-}
-
-function estimateCadenceMs(checks: MonitorCheck[], fallbackInterval: string): number {
-    const fromInterval = parseCheckIntervalMs(fallbackInterval);
-
-    if (fromInterval !== null) {
-        return fromInterval;
-    }
-
-    const timestamps = checks
-        .map((check) => new Date(check.checked_at).getTime())
-        .sort((left, right) => left - right);
-
-    const deltas: number[] = [];
-
-    for (let index = 1; index < timestamps.length; index += 1) {
-        const delta = timestamps[index] - timestamps[index - 1];
-
-        if (delta > 0) {
-            deltas.push(delta);
-        }
-    }
-
-    return median(deltas) ?? 5 * 60 * 1000;
-}
-
-function formatDateLabel(timestamp: number): string {
-    return new Intl.DateTimeFormat(undefined, {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    }).format(new Date(timestamp));
-}
-
-const timelineState = computed(() => {
-    const duration = periodDurationMs(props.period);
-    const end = Date.now();
-    const start = end - duration;
-    const checks = [...(props.monitor.checks ?? [])]
-        .filter((check) => {
-            const checkedAt = new Date(check.checked_at).getTime();
-
-            return checkedAt >= start && checkedAt <= end;
-        })
-        .sort((left, right) => new Date(left.checked_at).getTime() - new Date(right.checked_at).getTime());
-
-    const cadenceMs = Math.max(estimateCadenceMs(checks, props.monitor.check_interval), 60 * 1000);
-    const rawSlotCount = Math.max(1, Math.ceil(duration / cadenceMs));
-    const slotsPerBar = Math.max(1, Math.ceil(rawSlotCount / MAX_RENDER_BARS));
-    const barDurationMs = cadenceMs * slotsPerBar;
-    const barCount = Math.max(1, Math.ceil(duration / barDurationMs));
-
-    const bars: TimelineBar[] = Array.from({ length: barCount }, (_, index) => {
-        const barStart = start + index * barDurationMs;
-        const barEnd = Math.min(end, barStart + barDurationMs);
-
-        return {
-            index,
-            status: 'empty',
-            barStart,
-            barEnd,
-            checkCount: 0,
-            downCount: 0,
-            avgResponseMs: null,
-            lastStatusCode: null,
-        };
-    });
-
-    const responseMsSums = new Array(barCount).fill(0);
-    const responseMsCounts = new Array(barCount).fill(0);
-
-    for (const check of checks) {
-        const checkedAt = new Date(check.checked_at).getTime();
-        const barIndex = Math.min(barCount - 1, Math.floor((checkedAt - start) / barDurationMs));
-        const currentBar = bars[barIndex];
-
-        if (currentBar.status !== 'down') {
-            currentBar.status = check.is_up ? 'up' : 'down';
-        }
-
-        currentBar.checkCount += 1;
-
-        if (!check.is_up) {
-            currentBar.downCount += 1;
-        }
-
-        if (check.response_ms > 0) {
-            responseMsSums[barIndex] += check.response_ms;
-            responseMsCounts[barIndex] += 1;
-        }
-
-        currentBar.lastStatusCode = check.meta?.status_code ?? null;
-    }
-
-    for (let i = 0; i < barCount; i++) {
-        if (responseMsCounts[i] > 0) {
-            bars[i].avgResponseMs = Math.round(responseMsSums[i] / responseMsCounts[i]);
-        }
-    }
-
-    return {
-        bars,
-        start,
-        end,
-    };
-});
-
-const timelineBars = computed(() => timelineState.value.bars);
-const periodStartLabel = computed(() => formatDateLabel(timelineState.value.start));
-const currentTimeLabel = computed(() => formatDateLabel(timelineState.value.end));
-
-function updatePeriod(newPeriod: string) {
-    router.get(monitorsRoute.show(props.monitor), { period: newPeriod }, { preserveState: true, preserveScroll: true });
+function toggleState() {
+    router.patch(
+        monitorsRoute.state(props.monitor.uuid).url,
+        {},
+        { preserveScroll: true },
+    );
 }
 
 setLayoutProps({
@@ -274,9 +343,8 @@ setLayoutProps({
             href: monitorsRoute.index(),
         },
         {
-            title: trans('monitors.breadcrumbs.show', { name: props.monitor.name }),
+            title: props.monitor.name,
         },
     ],
 });
-
 </script>

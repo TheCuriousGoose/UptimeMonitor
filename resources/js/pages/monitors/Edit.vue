@@ -1,29 +1,40 @@
 <template>
     <Head :title="trans('monitors.breadcrumbs.edit', { name: monitor.name })" />
-    <MonitorForm
-        :types="types"
-        :form="monitorsRoute.update.form(monitor.uuid)"
-        :defaults="{
-            name: monitor.name,
-            url: monitor.url,
-            type: monitor.type,
-            timeout: monitor.timeout,
-            check_interval: monitor.check_interval,
-            is_active: monitor.is_active,
-        }"
-    />
+
+    <div class="p-4">
+        <div class="mb-6">
+            <h1 class="text-xl font-semibold">
+                {{ $t('monitors.edit.form.title') }}
+            </h1>
+            <p class="mt-1 text-sm text-muted-foreground">
+                {{ $t('monitors.edit.form.subtitle') }}
+            </p>
+        </div>
+
+        <MonitorForm
+            :types="types"
+            :channels="channels"
+            :defaults="monitor"
+            :form="monitorsRoute.update.form(monitor.uuid)"
+        />
+    </div>
 </template>
 
 <script setup lang="ts">
 import { Head, setLayoutProps } from '@inertiajs/vue3';
-import MonitorForm from '@/components/forms/monitorForm.vue';
+import MonitorForm from '@/components/monitors/MonitorForm.vue';
 import { trans } from '@/lib/i18n';
 import * as monitorsRoute from '@/routes/monitors';
-import type { Monitor, MonitorType } from '@/types/monitors';
+import type {
+    Monitor,
+    MonitorType,
+    NotificationChannel,
+} from '@/types/monitors';
 
 const props = defineProps<{
-    types: MonitorType[];
     monitor: Monitor;
+    types: MonitorType[];
+    channels: NotificationChannel[];
 }>();
 
 setLayoutProps({
@@ -33,9 +44,12 @@ setLayoutProps({
             href: monitorsRoute.index(),
         },
         {
-            title: trans('monitors.breadcrumbs.edit', { name: props.monitor.name }),
+            title: props.monitor.name,
+            href: monitorsRoute.show(props.monitor.uuid),
+        },
+        {
+            title: trans('monitors.breadcrumbs.create'),
         },
     ],
 });
-
 </script>

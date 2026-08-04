@@ -167,6 +167,7 @@ return [
     'ulid' => 'The :attribute field must be a valid ULID.',
     'uuid' => 'The :attribute field must be a valid UUID.',
     'cron' => 'The :attribute field must be a valid cron expression',
+    'hostname' => 'The :attribute field must be a hostname or IP address, without http:// or https://.',
 
     /*
     |--------------------------------------------------------------------------

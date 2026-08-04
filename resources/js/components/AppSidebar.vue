@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, Monitor, Settings2, ShieldCheck, Users } from 'lucide-vue-next';
+import {
+    Bell,
+    Globe,
+    LayoutGrid,
+    Monitor,
+    Settings2,
+    ShieldCheck,
+    Users,
+} from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -15,18 +23,22 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import {trans } from '@/lib/i18n';
+import { trans } from '@/lib/i18n';
 import { dashboard } from '@/routes';
 import adminRoles from '@/routes/admin/roles';
 import adminSettings from '@/routes/admin/settings';
 import adminUsers from '@/routes/admin/users';
+import channels from '@/routes/channels';
 import monitors from '@/routes/monitors';
+import statusPages from '@/routes/status-pages';
 import type { Auth } from '@/types';
 import type { NavItem } from '@/types';
 
 const page = usePage();
 const auth = computed(() => page.props.auth as Auth);
-const isSuperAdmin = computed(() => auth.value.roles?.includes('Super Admin') ?? false);
+const isSuperAdmin = computed(
+    () => auth.value.roles?.includes('Super Admin') ?? false,
+);
 
 const mainNavItems: NavItem[] = [
     {
@@ -37,7 +49,17 @@ const mainNavItems: NavItem[] = [
     {
         title: trans('monitors.title'),
         href: monitors.index(),
-        icon: Monitor
+        icon: Monitor,
+    },
+    {
+        title: trans('channels.title'),
+        href: channels.index(),
+        icon: Bell,
+    },
+    {
+        title: trans('status_pages.title'),
+        href: statusPages.index(),
+        icon: Globe,
     },
 ];
 

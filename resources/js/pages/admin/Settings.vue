@@ -133,7 +133,7 @@ function openEdit(setting: AppSetting) {
     editValue.value = setting.value ?? '';
     
     // Explicitly parse string boolean representations cleanly
-    editBooleanValue.value = setting.value === '1' || setting.value === 'true' || setting.value === true;
+    editBooleanValue.value = setting.value === '1' || setting.value === 'true';
     
     nextTick(() => {
         editOpen.value = true;

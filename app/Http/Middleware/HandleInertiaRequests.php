@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Setting;
 use App\Settings\SettingRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -19,6 +18,7 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
+
     private ?SettingRepository $settingRepository = null;
 
     /**
@@ -40,7 +40,7 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $this->settingRepository = new SettingRepository();
+        $this->settingRepository = new SettingRepository;
 
         return [
             ...parent::share($request),
@@ -55,7 +55,7 @@ class HandleInertiaRequests extends Middleware
                     : null,
             ],
             'settings' => [
-                'authentication' => $this->settingRepository->group('authentication')
+                'authentication' => $this->settingRepository->group('authentication'),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => [
@@ -67,6 +67,6 @@ class HandleInertiaRequests extends Middleware
 
     private function getUserPermissions(Request $request): Collection
     {
-        return once(fn() => $request->user()?->getAllPermissions()->pluck('name') ?? collect());
+        return once(fn () => $request->user()?->getAllPermissions()->pluck('name') ?? collect());
     }
 }

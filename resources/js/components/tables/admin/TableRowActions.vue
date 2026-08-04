@@ -18,14 +18,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import type { Role } from '@/types/admin';
-import type { User } from '@/types/auth';
 import {
     Tabs,
     TabsContent,
     TabsList,
     TabsTrigger,
 } from '@/components/ui/tabs';
+import type { Role } from '@/types/admin';
+import type { User } from '@/types/auth';
 
 type UserWithRoles = User & { roles: Role[] };
 
