@@ -22,14 +22,21 @@
         </div>
 
         <template v-else>
-            <div>
-                <h1 class="text-xl font-semibold">
-                    {{ $t('dashboards.title') }}
-                </h1>
-                <p class="mt-1 text-sm text-muted-foreground">
-                    {{ $t('dashboards.subtitle') }}
-                </p>
-            </div>
+            <PageHeader
+                :title="$t('dashboards.title')"
+                :description="$t('dashboards.subtitle')"
+            >
+                <template #actions>
+                    <Button
+                        :as="Link"
+                        variant="outline"
+                        :href="monitorsRoute.create()"
+                    >
+                        <PlusIcon />
+                        {{ $t('monitors.create.label') }}
+                    </Button>
+                </template>
+            </PageHeader>
 
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <StatTile
@@ -181,6 +188,7 @@ import {
     XCircleIcon,
 } from 'lucide-vue-next';
 import MonitorStatusBadge from '@/components/monitors/MonitorStatusBadge.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import StatTile from '@/components/StatTile.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

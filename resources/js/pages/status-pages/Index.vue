@@ -2,20 +2,17 @@
     <Head :title="$t('status_pages.heading')" />
 
     <div class="flex flex-col gap-4 p-4">
-        <div class="flex flex-wrap items-start justify-between gap-3">
-            <div>
-                <h1 class="text-xl font-semibold">
-                    {{ $t('status_pages.heading') }}
-                </h1>
-                <p class="mt-1 text-sm text-muted-foreground">
-                    {{ $t('status_pages.subtitle') }}
-                </p>
-            </div>
-            <Button @click="openCreate">
-                <PlusIcon />
-                {{ $t('status_pages.form.create') }}
-            </Button>
-        </div>
+        <PageHeader
+            :title="$t('status_pages.heading')"
+            :description="$t('status_pages.subtitle')"
+        >
+            <template #actions>
+                <Button @click="openCreate">
+                    <PlusIcon />
+                    {{ $t('status_pages.form.create') }}
+                </Button>
+            </template>
+        </PageHeader>
 
         <div
             v-if="pages.length === 0"
@@ -247,6 +244,7 @@ import {
 import { ref } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import InputError from '@/components/InputError.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
