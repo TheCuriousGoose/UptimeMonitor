@@ -14,86 +14,80 @@
             </template>
         </PageHeader>
 
-        <div
+        <EmptyState
             v-if="pages.length === 0"
-            class="rounded-xl border bg-card p-10 text-center"
-        >
-            <GlobeIcon class="mx-auto size-8 text-muted-foreground" />
-            <h2 class="mt-4 text-lg font-semibold">
-                {{ $t('status_pages.empty.title') }}
-            </h2>
-            <p class="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                {{ $t('status_pages.empty.description') }}
-            </p>
-        </div>
+            :icon="GlobeIcon"
+            :title="$t('status_pages.empty.title')"
+            :description="$t('status_pages.empty.description')"
+        />
 
-        <div v-else class="grid gap-3 md:grid-cols-2">
-            <Card v-for="page in pages" :key="page.uuid">
-                <CardContent
-                    class="flex items-start justify-between gap-3 pt-6"
-                >
-                    <div class="min-w-0">
-                        <div class="flex items-center gap-2">
-                            <p class="truncate font-medium">{{ page.title }}</p>
-                            <Badge v-if="!page.is_published" variant="secondary"
-                                >Draft</Badge
-                            >
-                        </div>
-                        <a
+        <ul v-else class="divide-y rounded-sm border">
+            <li
+                v-for="page in pages"
+                :key="page.uuid"
+                class="flex items-start justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted/40"
+            >
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                        <p class="truncate font-medium">{{ page.title }}</p>
+                        <Badge v-if="!page.is_published" variant="secondary"
+                            >Draft</Badge
+                        >
+                    </div>
+                    <a
+                        :href="page.public_url"
+                        target="_blank"
+                        rel="noopener"
+                        class="mt-1 block truncate font-mono text-sm text-muted-foreground hover:underline"
+                    >
+                        /status/{{ page.slug }}
+                    </a>
+                    <p
+                        v-if="page.monitors_count !== undefined"
+                        class="mt-1 text-xs text-muted-foreground"
+                    >
+                        {{
+                            $t(
+                                'status_pages.monitors_count',
+                                { count: page.monitors_count },
+                                page.monitors_count,
+                            )
+                        }}
+                    </p>
+                </div>
+
+                <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                        <Button variant="ghost" size="sm">
+                            <MoreHorizontalIcon />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem @select="openEdit(page)">
+                            <PencilIcon />
+                            {{ $t('status_pages.actions.edit') }}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            as="a"
                             :href="page.public_url"
                             target="_blank"
                             rel="noopener"
-                            class="mt-1 block truncate text-sm text-muted-foreground hover:underline"
                         >
-                            /status/{{ page.slug }}
-                        </a>
-                        <p
-                            v-if="page.monitors_count !== undefined"
-                            class="mt-1 text-xs text-muted-foreground"
+                            <ExternalLinkIcon />
+                            {{ $t('status_pages.actions.visit') }}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            variant="destructive"
+                            @select="askDelete(page)"
                         >
-                            {{
-                                $t(
-                                    'status_pages.monitors_count',
-                                    { count: page.monitors_count },
-                                    page.monitors_count,
-                                )
-                            }}
-                        </p>
-                    </div>
-
-                    <DropdownMenu>
-                        <DropdownMenuTrigger as-child>
-                            <Button variant="ghost" size="sm">
-                                <MoreHorizontalIcon />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem @select="openEdit(page)">
-                                <PencilIcon />
-                                {{ $t('status_pages.actions.edit') }}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                as="a"
-                                :href="page.public_url"
-                                target="_blank"
-                                rel="noopener"
-                            >
-                                <ExternalLinkIcon />
-                                {{ $t('status_pages.actions.visit') }}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                variant="destructive"
-                                @select="askDelete(page)"
-                            >
-                                <Trash2Icon />
-                                {{ $t('status_pages.actions.delete') }}
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </CardContent>
-            </Card>
-        </div>
+                            <Trash2Icon />
+                            {{ $t('status_pages.actions.delete') }}
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </li>
+        </ul>
     </div>
 
     <Dialog v-model:open="formOpen">
@@ -167,7 +161,7 @@
                         <label
                             v-for="monitor in monitors"
                             :key="monitor.uuid"
-                            class="flex cursor-pointer items-center gap-3 rounded-lg border p-2.5"
+                            class="flex cursor-pointer items-center gap-3 rounded-sm border p-2.5 transition-colors hover:bg-muted/40"
                         >
                             <Checkbox
                                 :model-value="
@@ -193,7 +187,7 @@
                 </div>
 
                 <div
-                    class="flex items-center justify-between gap-3 rounded-lg border p-3"
+                    class="flex items-center justify-between gap-3 rounded-sm border p-3"
                 >
                     <div>
                         <p class="text-sm font-medium">
@@ -243,11 +237,11 @@ import {
 } from 'lucide-vue-next';
 import { ref } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import InputError from '@/components/InputError.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,

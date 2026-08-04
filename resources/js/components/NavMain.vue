@@ -19,8 +19,12 @@ const { isCurrentUrl } = useCurrentUrl();
 </script>
 
 <template>
-    <SidebarGroup class="px-2 py-0">
-        <SidebarGroupLabel>{{ label ?? 'Platform' }}</SidebarGroupLabel>
+    <SidebarGroup class="px-0 py-0">
+        <SidebarGroupLabel
+            class="px-3 text-[10px] font-semibold tracking-[0.12em] text-sidebar-foreground/50 uppercase"
+        >
+            {{ label ?? 'Platform' }}
+        </SidebarGroupLabel>
         <SidebarMenu>
             <SidebarMenuItem v-for="item in items" :key="item.title">
                 <SidebarMenuButton

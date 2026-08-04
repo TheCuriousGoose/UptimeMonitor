@@ -87,173 +87,138 @@
             />
         </div>
 
-        <Card>
-            <CardHeader class="border-b">
-                <CardTitle
-                    class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
-                    >{{ $t('monitors.show.timeline') }}</CardTitle
-                >
-                <CardDescription>{{
-                    $t(`monitors.periods.${period}`)
-                }}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <UptimeTimeline
-                    :checks="checks"
-                    :period="period"
-                    :interval-seconds="monitor.interval_seconds"
-                />
-            </CardContent>
-        </Card>
+        <Section
+            :title="$t('monitors.show.timeline')"
+            :description="$t(`monitors.periods.${period}`)"
+        >
+            <UptimeTimeline
+                :checks="checks"
+                :period="period"
+                :interval-seconds="monitor.interval_seconds"
+            />
+        </Section>
 
-        <div class="grid gap-4 lg:grid-cols-3">
-            <Card class="lg:col-span-2">
-                <CardHeader class="border-b">
-                    <CardTitle
-                        class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
-                        >{{ $t('monitors.show.response_chart') }}</CardTitle
-                    >
-                </CardHeader>
-                <CardContent>
-                    <ResponseChart :series="series" />
-                </CardContent>
-            </Card>
+        <div
+            class="grid gap-6 divide-y divide-border lg:grid-cols-3 lg:divide-x lg:divide-y-0"
+        >
+            <Section
+                :title="$t('monitors.show.response_chart')"
+                class="lg:col-span-2"
+            >
+                <ResponseChart :series="series" />
+            </Section>
 
-            <Card>
-                <CardHeader class="border-b">
-                    <CardTitle
-                        class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
-                        >{{ $t('monitors.show.details') }}</CardTitle
-                    >
-                </CardHeader>
-                <CardContent>
-                    <dl class="space-y-3 text-sm">
-                        <div class="flex justify-between gap-3">
-                            <dt class="text-muted-foreground">
-                                {{ $t('monitors.form.check_interval.title') }}
-                            </dt>
-                            <dd>
-                                {{ formatInterval(monitor.interval_seconds) }}
-                            </dd>
-                        </div>
-                        <div class="flex justify-between gap-3">
-                            <dt class="text-muted-foreground">
-                                {{ $t('monitors.form.timeout.title') }}
-                            </dt>
-                            <dd>{{ monitor.timeout }}s</dd>
-                        </div>
-                        <div class="flex justify-between gap-3">
-                            <dt class="text-muted-foreground">
-                                {{
-                                    $t(
-                                        'monitors.form.confirmation_threshold.title',
-                                    )
-                                }}
-                            </dt>
-                            <dd>{{ monitor.confirmation_threshold }}</dd>
-                        </div>
-                        <div class="flex justify-between gap-3">
-                            <dt class="text-muted-foreground">
-                                {{ $t('monitors.show.last_checked') }}
-                            </dt>
-                            <dd>
-                                {{
-                                    monitor.last_checked_at
-                                        ? formatRelative(
-                                              monitor.last_checked_at,
-                                          )
-                                        : $t('monitors.never_checked')
-                                }}
-                            </dd>
-                        </div>
-                        <div
-                            v-for="(value, key) in visibleConfig"
-                            :key="key"
-                            class="flex justify-between gap-3"
-                        >
-                            <dt class="text-muted-foreground">{{ key }}</dt>
-                            <dd class="truncate">{{ value }}</dd>
-                        </div>
-                    </dl>
-
-                    <div
-                        v-if="monitor.notification_channels?.length"
-                        class="mt-4 border-t pt-4"
-                    >
-                        <p
-                            class="mb-2 text-xs font-medium text-muted-foreground"
-                        >
-                            {{ $t('monitors.form.channels.title') }}
-                        </p>
-                        <ul class="space-y-1 text-sm">
-                            <li
-                                v-for="channel in monitor.notification_channels"
-                                :key="channel.uuid"
-                                class="truncate"
-                            >
-                                {{ channel.name }}
-                            </li>
-                        </ul>
+            <Section :title="$t('monitors.show.details')" class="lg:pl-6">
+                <dl class="space-y-3 text-sm">
+                    <div class="flex justify-between gap-3">
+                        <dt class="text-muted-foreground">
+                            {{ $t('monitors.form.check_interval.title') }}
+                        </dt>
+                        <dd>
+                            {{ formatInterval(monitor.interval_seconds) }}
+                        </dd>
                     </div>
-                </CardContent>
-            </Card>
+                    <div class="flex justify-between gap-3">
+                        <dt class="text-muted-foreground">
+                            {{ $t('monitors.form.timeout.title') }}
+                        </dt>
+                        <dd>{{ monitor.timeout }}s</dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
+                        <dt class="text-muted-foreground">
+                            {{
+                                $t('monitors.form.confirmation_threshold.title')
+                            }}
+                        </dt>
+                        <dd>{{ monitor.confirmation_threshold }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
+                        <dt class="text-muted-foreground">
+                            {{ $t('monitors.show.last_checked') }}
+                        </dt>
+                        <dd>
+                            {{
+                                monitor.last_checked_at
+                                    ? formatRelative(monitor.last_checked_at)
+                                    : $t('monitors.never_checked')
+                            }}
+                        </dd>
+                    </div>
+                    <div
+                        v-for="(value, key) in visibleConfig"
+                        :key="key"
+                        class="flex justify-between gap-3"
+                    >
+                        <dt class="text-muted-foreground">{{ key }}</dt>
+                        <dd class="truncate">{{ value }}</dd>
+                    </div>
+                </dl>
+
+                <div
+                    v-if="monitor.notification_channels?.length"
+                    class="mt-4 border-t pt-4"
+                >
+                    <p class="mb-2 text-xs font-medium text-muted-foreground">
+                        {{ $t('monitors.form.channels.title') }}
+                    </p>
+                    <ul class="space-y-1 text-sm">
+                        <li
+                            v-for="channel in monitor.notification_channels"
+                            :key="channel.uuid"
+                            class="truncate"
+                        >
+                            {{ channel.name }}
+                        </li>
+                    </ul>
+                </div>
+            </Section>
         </div>
 
-        <Card>
-            <CardHeader class="border-b">
-                <CardTitle
-                    class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
-                    >{{ $t('monitors.show.incidents') }}</CardTitle
+        <Section :title="$t('monitors.show.incidents')">
+            <p
+                v-if="incidents.length === 0"
+                class="py-6 text-center text-sm text-muted-foreground"
+            >
+                {{ $t('monitors.show.no_incidents') }}
+            </p>
+            <ul v-else class="divide-y">
+                <li
+                    v-for="incident in incidents"
+                    :key="incident.uuid"
+                    class="flex items-start justify-between gap-3 py-3"
                 >
-            </CardHeader>
-            <CardContent>
-                <p
-                    v-if="incidents.length === 0"
-                    class="py-6 text-center text-sm text-muted-foreground"
-                >
-                    {{ $t('monitors.show.no_incidents') }}
-                </p>
-                <ul v-else class="divide-y">
-                    <li
-                        v-for="incident in incidents"
-                        :key="incident.uuid"
-                        class="flex items-start justify-between gap-3 py-3"
+                    <div class="min-w-0">
+                        <p class="text-sm font-medium">
+                            {{ incident.cause ?? '—' }}
+                        </p>
+                        <p class="mt-0.5 text-xs text-muted-foreground">
+                            {{ formatDateTime(incident.started_at) }} ·
+                            {{ incident.failed_checks }} failed checks
+                        </p>
+                    </div>
+                    <span
+                        class="shrink-0 text-xs font-medium"
+                        :class="
+                            incident.is_ongoing
+                                ? 'text-red-600 dark:text-red-400'
+                                : 'text-muted-foreground'
+                        "
                     >
-                        <div class="min-w-0">
-                            <p class="text-sm font-medium">
-                                {{ incident.cause ?? '—' }}
-                            </p>
-                            <p class="mt-0.5 text-xs text-muted-foreground">
-                                {{ formatDateTime(incident.started_at) }} ·
-                                {{ incident.failed_checks }} failed checks
-                            </p>
-                        </div>
-                        <span
-                            class="shrink-0 text-xs font-medium"
-                            :class="
-                                incident.is_ongoing
-                                    ? 'text-red-600 dark:text-red-400'
-                                    : 'text-muted-foreground'
-                            "
-                        >
-                            {{
-                                incident.is_ongoing
-                                    ? $t('monitors.show.ongoing', {
-                                          time: formatRelative(
-                                              incident.started_at,
-                                          ),
-                                      })
-                                    : $t('monitors.show.resolved_after', {
-                                          duration: formatDuration(
-                                              incident.duration_seconds,
-                                          ),
-                                      })
-                            }}
-                        </span>
-                    </li>
-                </ul>
-            </CardContent>
-        </Card>
+                        {{
+                            incident.is_ongoing
+                                ? $t('monitors.show.ongoing', {
+                                      time: formatRelative(incident.started_at),
+                                  })
+                                : $t('monitors.show.resolved_after', {
+                                      duration: formatDuration(
+                                          incident.duration_seconds,
+                                      ),
+                                  })
+                        }}
+                    </span>
+                </li>
+            </ul>
+        </Section>
     </div>
 </template>
 
@@ -269,15 +234,9 @@ import { computed } from 'vue';
 import MonitorStatusBadge from '@/components/monitors/MonitorStatusBadge.vue';
 import ResponseChart from '@/components/monitors/ResponseChart.vue';
 import UptimeTimeline from '@/components/monitors/UptimeTimeline.vue';
+import Section from '@/components/Section.vue';
 import StatTile from '@/components/StatTile.vue';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
 import {
     Select,
     SelectContent,

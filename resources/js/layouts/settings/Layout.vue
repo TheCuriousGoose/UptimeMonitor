@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import Heading from '@/components/Heading.vue';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { toUrl } from '@/lib/utils';
@@ -37,25 +36,23 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
 
         <div class="flex flex-col lg:flex-row lg:space-x-12">
             <aside class="w-full max-w-xl lg:w-48">
-                <nav
-                    class="flex flex-col space-y-1 space-x-0"
-                    aria-label="Settings"
-                >
-                    <Button
+                <!-- Same left-accent-bar language as the main rail, so
+                     "where am I" reads the same way everywhere. -->
+                <nav class="flex flex-col border-l" aria-label="Settings">
+                    <Link
                         v-for="item in sidebarNavItems"
                         :key="toUrl(item.href)"
-                        variant="ghost"
-                        :class="[
-                            'w-full justify-start',
-                            { 'bg-muted': isCurrentOrParentUrl(item.href) },
-                        ]"
-                        as-child
+                        :href="item.href"
+                        class="-ml-px flex items-center gap-2 border-l-2 py-1.5 pl-3 text-sm transition-colors hover:text-foreground"
+                        :class="
+                            isCurrentOrParentUrl(item.href)
+                                ? 'border-primary font-medium text-foreground'
+                                : 'border-transparent text-muted-foreground'
+                        "
                     >
-                        <Link :href="item.href">
-                            <component :is="item.icon" class="h-4 w-4" />
-                            {{ item.title }}
-                        </Link>
-                    </Button>
+                        <component :is="item.icon" class="h-4 w-4" />
+                        {{ item.title }}
+                    </Link>
                 </nav>
             </aside>
 

@@ -96,7 +96,7 @@ class UptimeStats
     /**
      * Response time series bucketed for charting, oldest first.
      *
-     * @return array<int, array{bucket: string, avg_response_ms: int, failures: int, total: int}>
+     * @return array<int, array{bucket: string, avg_response_ms: int|null, failures: int, total: int}>
      */
     public function responseSeries(Monitor $monitor, CarbonInterface $since, int $buckets = 48): array
     {
@@ -121,7 +121,10 @@ class UptimeStats
                 'bucket' => now()->setTimestamp(
                     $startTimestamp + ((int) $row->bucket_index * $bucketSeconds),
                 )->toIso8601String(),
-                'avg_response_ms' => $row->avg_ms !== null ? (int) round((float) $row->avg_ms) : 0,
+                // Null, not zero: a bucket where every check failed has no
+                // successful sample to average, and plotting it as 0 ms would
+                // draw a plunge to the baseline that reads as a real reading.
+                'avg_response_ms' => $row->avg_ms !== null ? (int) round((float) $row->avg_ms) : null,
                 'failures' => (int) $row->failures,
                 'total' => (int) $row->total,
             ])

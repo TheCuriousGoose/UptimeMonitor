@@ -3,8 +3,10 @@
 
     <div class="min-h-screen bg-background px-4 py-10 text-foreground">
         <div class="mx-auto w-full max-w-3xl">
-            <header class="mb-8">
-                <h1 class="text-2xl font-semibold">{{ page.title }}</h1>
+            <header class="mb-6 border-b pb-4">
+                <h1 class="text-2xl font-semibold tracking-tight">
+                    {{ page.title }}
+                </h1>
                 <p
                     v-if="page.description"
                     class="mt-1 text-sm text-muted-foreground"
@@ -13,9 +15,10 @@
                 </p>
             </header>
 
-            <!-- Overall banner: icon + words carry the state, colour only reinforces it. -->
+            <!-- Overall banner: icon + words carry the state, colour only
+                 reinforces it. A left status rule rather than a filled box. -->
             <div
-                class="mb-8 flex items-center gap-3 rounded-xl border p-4"
+                class="mb-8 flex items-center gap-3 rounded-sm border border-l-2 px-4 py-3"
                 :class="overallTone.wrapper"
             >
                 <component
@@ -28,16 +31,16 @@
 
             <p
                 v-if="monitors.length === 0"
-                class="rounded-xl border bg-card p-10 text-center text-sm text-muted-foreground"
+                class="rounded-sm border border-dashed p-10 text-center text-sm text-muted-foreground"
             >
                 {{ $t('status_pages.public.no_monitors') }}
             </p>
 
-            <ul v-else class="space-y-4">
+            <ul v-else class="divide-y rounded-sm border">
                 <li
                     v-for="monitor in monitors"
                     :key="monitor.name"
-                    class="rounded-xl border bg-card p-4"
+                    class="px-4 py-3.5"
                 >
                     <div
                         class="flex flex-wrap items-center justify-between gap-2"
@@ -52,7 +55,7 @@
                             <span class="font-medium">{{ monitor.name }}</span>
                         </div>
                         <span
-                            class="text-sm text-muted-foreground tabular-nums"
+                            class="font-mono text-sm text-muted-foreground tabular-nums"
                         >
                             {{ formatUptime(monitor.uptime_percentage) }} ·
                             {{ $t('status_pages.public.uptime_90d') }}

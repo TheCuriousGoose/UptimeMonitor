@@ -5,16 +5,11 @@
         class="max-w-3xl space-y-6"
     >
         <!-- 1. What to check -->
-        <Card>
-            <CardHeader>
-                <CardTitle class="text-base">{{
-                    $t('monitors.form.sections.what')
-                }}</CardTitle>
-                <CardDescription>{{
-                    $t('monitors.form.type.description')
-                }}</CardDescription>
-            </CardHeader>
-            <CardContent class="space-y-6">
+        <Section
+            :title="$t('monitors.form.sections.what')"
+            :description="$t('monitors.form.type.description')"
+        >
+            <div class="space-y-6">
                 <!-- A card grid instead of a dropdown: each type explains itself,
                      so nobody has to guess what "keyword" means. -->
                 <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -22,9 +17,11 @@
                         v-for="option in types"
                         :key="option"
                         type="button"
-                        class="rounded-lg border p-3 text-left transition hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        class="rounded-sm border p-3 text-left transition-colors hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                         :class="
-                            type === option ? 'border-primary bg-accent' : ''
+                            type === option
+                                ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                : ''
                         "
                         :aria-pressed="type === option"
                         @click="type = option"
@@ -308,237 +305,213 @@
                         </Field>
                     </template>
                 </FieldGroup>
-            </CardContent>
-        </Card>
+            </div>
+        </Section>
 
         <!-- 2. Schedule -->
-        <Card>
-            <CardHeader>
-                <CardTitle class="text-base">{{
-                    $t('monitors.form.sections.schedule')
-                }}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <FieldGroup>
-                    <div class="grid gap-6 sm:grid-cols-2">
-                        <Field>
-                            <FieldLabel for="interval">{{
-                                $t('monitors.form.check_interval.title')
-                            }}</FieldLabel>
-                            <Select v-model="intervalOption">
-                                <SelectTrigger id="interval"
-                                    ><SelectValue
-                                /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem
-                                        v-for="preset in intervalPresets"
-                                        :key="preset.value"
-                                        :value="preset.value"
-                                    >
-                                        {{
-                                            $t(
-                                                `monitors.form.check_interval.options.${preset.label}`,
-                                            )
-                                        }}
-                                    </SelectItem>
-                                    <SelectItem value="custom">{{
-                                        $t('monitors.form.custom')
-                                    }}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Input
-                                v-if="intervalOption === 'custom'"
-                                v-model="intervalCustom"
-                                type="number"
-                                min="30"
-                                :placeholder="
-                                    $t(
-                                        'monitors.form.check_interval.custom_placeholder',
-                                    )
-                                "
-                            />
-                            <input
-                                type="hidden"
-                                name="interval_seconds"
-                                :value="intervalValue"
-                            />
-                            <FieldError>{{
-                                errors.interval_seconds
-                            }}</FieldError>
-                            <FieldDescription>{{
-                                $t('monitors.form.check_interval.description')
-                            }}</FieldDescription>
-                        </Field>
-
-                        <Field>
-                            <FieldLabel for="timeout">{{
-                                $t('monitors.form.timeout.title')
-                            }}</FieldLabel>
-                            <Select v-model="timeoutOption">
-                                <SelectTrigger id="timeout"
-                                    ><SelectValue
-                                /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem
-                                        v-for="preset in timeoutPresets"
-                                        :key="preset.value"
-                                        :value="preset.value"
-                                    >
-                                        {{
-                                            $t(
-                                                `monitors.form.timeout.options.${preset.label}`,
-                                            )
-                                        }}
-                                    </SelectItem>
-                                    <SelectItem value="custom">{{
-                                        $t('monitors.form.custom')
-                                    }}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Input
-                                v-if="timeoutOption === 'custom'"
-                                v-model="timeoutCustom"
-                                type="number"
-                                min="1"
-                                :placeholder="
-                                    $t(
-                                        'monitors.form.timeout.custom_placeholder',
-                                    )
-                                "
-                            />
-                            <input
-                                type="hidden"
-                                name="timeout"
-                                :value="timeoutValue"
-                            />
-                            <FieldError>{{ errors.timeout }}</FieldError>
-                            <FieldDescription>{{
-                                $t('monitors.form.timeout.description')
-                            }}</FieldDescription>
-                        </Field>
-                    </div>
-
+        <Section :title="$t('monitors.form.sections.schedule')">
+            <FieldGroup>
+                <div class="grid gap-6 sm:grid-cols-2">
                     <Field>
-                        <FieldLabel for="confirmation">{{
-                            $t('monitors.form.confirmation_threshold.title')
+                        <FieldLabel for="interval">{{
+                            $t('monitors.form.check_interval.title')
                         }}</FieldLabel>
-                        <Select v-model="confirmation">
-                            <SelectTrigger id="confirmation" class="sm:w-72"
+                        <Select v-model="intervalOption">
+                            <SelectTrigger id="interval"
                                 ><SelectValue
                             /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem
-                                    v-for="value in confirmationOptions"
-                                    :key="value"
-                                    :value="value"
+                                    v-for="preset in intervalPresets"
+                                    :key="preset.value"
+                                    :value="preset.value"
                                 >
                                     {{
                                         $t(
-                                            `monitors.form.confirmation_threshold.options.${value}`,
+                                            `monitors.form.check_interval.options.${preset.label}`,
                                         )
                                     }}
                                 </SelectItem>
+                                <SelectItem value="custom">{{
+                                    $t('monitors.form.custom')
+                                }}</SelectItem>
                             </SelectContent>
                         </Select>
+                        <Input
+                            v-if="intervalOption === 'custom'"
+                            v-model="intervalCustom"
+                            type="number"
+                            min="30"
+                            :placeholder="
+                                $t(
+                                    'monitors.form.check_interval.custom_placeholder',
+                                )
+                            "
+                        />
                         <input
                             type="hidden"
-                            name="confirmation_threshold"
-                            :value="confirmation"
+                            name="interval_seconds"
+                            :value="intervalValue"
                         />
-                        <FieldError>{{
-                            errors.confirmation_threshold
-                        }}</FieldError>
+                        <FieldError>{{ errors.interval_seconds }}</FieldError>
                         <FieldDescription>{{
-                            $t(
-                                'monitors.form.confirmation_threshold.description',
-                            )
+                            $t('monitors.form.check_interval.description')
                         }}</FieldDescription>
                     </Field>
 
-                    <Field orientation="horizontal">
-                        <FieldContent>
-                            <FieldLabel for="is_active">{{
-                                $t('monitors.form.is_active.title')
-                            }}</FieldLabel>
-                            <FieldDescription>{{
-                                $t('monitors.form.is_active.description')
-                            }}</FieldDescription>
-                        </FieldContent>
-                        <Switch id="is_active" v-model:checked="isActive" />
+                    <Field>
+                        <FieldLabel for="timeout">{{
+                            $t('monitors.form.timeout.title')
+                        }}</FieldLabel>
+                        <Select v-model="timeoutOption">
+                            <SelectTrigger id="timeout"
+                                ><SelectValue
+                            /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem
+                                    v-for="preset in timeoutPresets"
+                                    :key="preset.value"
+                                    :value="preset.value"
+                                >
+                                    {{
+                                        $t(
+                                            `monitors.form.timeout.options.${preset.label}`,
+                                        )
+                                    }}
+                                </SelectItem>
+                                <SelectItem value="custom">{{
+                                    $t('monitors.form.custom')
+                                }}</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Input
+                            v-if="timeoutOption === 'custom'"
+                            v-model="timeoutCustom"
+                            type="number"
+                            min="1"
+                            :placeholder="
+                                $t('monitors.form.timeout.custom_placeholder')
+                            "
+                        />
                         <input
                             type="hidden"
-                            name="is_active"
-                            :value="isActive ? '1' : '0'"
+                            name="timeout"
+                            :value="timeoutValue"
                         />
+                        <FieldError>{{ errors.timeout }}</FieldError>
+                        <FieldDescription>{{
+                            $t('monitors.form.timeout.description')
+                        }}</FieldDescription>
                     </Field>
-                </FieldGroup>
-            </CardContent>
-        </Card>
+                </div>
+
+                <Field>
+                    <FieldLabel for="confirmation">{{
+                        $t('monitors.form.confirmation_threshold.title')
+                    }}</FieldLabel>
+                    <Select v-model="confirmation">
+                        <SelectTrigger id="confirmation" class="sm:w-72"
+                            ><SelectValue
+                        /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem
+                                v-for="value in confirmationOptions"
+                                :key="value"
+                                :value="value"
+                            >
+                                {{
+                                    $t(
+                                        `monitors.form.confirmation_threshold.options.${value}`,
+                                    )
+                                }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <input
+                        type="hidden"
+                        name="confirmation_threshold"
+                        :value="confirmation"
+                    />
+                    <FieldError>{{ errors.confirmation_threshold }}</FieldError>
+                    <FieldDescription>{{
+                        $t('monitors.form.confirmation_threshold.description')
+                    }}</FieldDescription>
+                </Field>
+
+                <Field orientation="horizontal">
+                    <FieldContent>
+                        <FieldLabel for="is_active">{{
+                            $t('monitors.form.is_active.title')
+                        }}</FieldLabel>
+                        <FieldDescription>{{
+                            $t('monitors.form.is_active.description')
+                        }}</FieldDescription>
+                    </FieldContent>
+                    <Switch id="is_active" v-model:checked="isActive" />
+                    <input
+                        type="hidden"
+                        name="is_active"
+                        :value="isActive ? '1' : '0'"
+                    />
+                </Field>
+            </FieldGroup>
+        </Section>
 
         <!-- 3. Alerts -->
-        <Card>
-            <CardHeader>
-                <CardTitle class="text-base">{{
-                    $t('monitors.form.sections.alerts')
-                }}</CardTitle>
-                <CardDescription>{{
-                    $t('monitors.form.channels.description')
-                }}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <p
-                    v-if="channels.length === 0"
-                    class="text-sm text-muted-foreground"
+        <Section
+            :title="$t('monitors.form.sections.alerts')"
+            :description="$t('monitors.form.channels.description')"
+        >
+            <p
+                v-if="channels.length === 0"
+                class="text-sm text-muted-foreground"
+            >
+                {{ $t('monitors.form.channels.empty') }}
+                <Link :href="channelsRoute.index()" class="underline">
+                    {{ $t('monitors.form.channels.manage') }}
+                </Link>
+            </p>
+            <div v-else class="divide-y rounded-sm border">
+                <label
+                    v-for="channel in channels"
+                    :key="channel.uuid"
+                    class="flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/40"
                 >
-                    {{ $t('monitors.form.channels.empty') }}
-                    <Link :href="channelsRoute.index()" class="underline">
-                        {{ $t('monitors.form.channels.manage') }}
-                    </Link>
-                </p>
-                <div v-else class="space-y-3">
-                    <label
-                        v-for="channel in channels"
-                        :key="channel.uuid"
-                        class="flex cursor-pointer items-center gap-3 rounded-lg border p-3"
-                    >
-                        <Checkbox
-                            :model-value="
-                                selectedChannels.includes(channel.uuid)
-                            "
-                            @update:model-value="toggleChannel(channel.uuid)"
-                        />
-                        <span class="min-w-0">
-                            <span class="block text-sm font-medium">{{
-                                channel.name
-                            }}</span>
-                            <span
-                                class="block truncate text-xs text-muted-foreground"
-                            >
-                                {{ $t(`channels.types.${channel.type}`) }} ·
-                                {{ channel.destination }}
-                            </span>
+                    <Checkbox
+                        :model-value="selectedChannels.includes(channel.uuid)"
+                        @update:model-value="toggleChannel(channel.uuid)"
+                    />
+                    <span class="min-w-0">
+                        <span class="block text-sm font-medium">{{
+                            channel.name
+                        }}</span>
+                        <span
+                            class="block truncate text-xs text-muted-foreground"
+                        >
+                            {{ $t(`channels.types.${channel.type}`) }} ·
+                            {{ channel.destination }}
                         </span>
-                    </label>
-                    <input
-                        v-for="uuid in selectedChannels"
-                        :key="`sel-${uuid}`"
-                        type="hidden"
-                        name="notification_channels[]"
-                        :value="uuid"
-                    />
-                    <!-- Keeps the key present when everything is unticked, so an
-                         update can clear the list rather than silently keep it. -->
-                    <input
-                        v-if="selectedChannels.length === 0"
-                        type="hidden"
-                        name="notification_channels[]"
-                        value=""
-                    />
-                </div>
-            </CardContent>
-        </Card>
+                    </span>
+                </label>
+                <input
+                    v-for="uuid in selectedChannels"
+                    :key="`sel-${uuid}`"
+                    type="hidden"
+                    name="notification_channels[]"
+                    :value="uuid"
+                />
+                <!-- Keeps the key present when everything is unticked, so an
+                     update can clear the list rather than silently keep it. -->
+                <input
+                    v-if="selectedChannels.length === 0"
+                    type="hidden"
+                    name="notification_channels[]"
+                    value=""
+                />
+            </div>
+        </Section>
 
-        <div class="flex justify-end gap-2">
+        <div class="flex justify-end gap-2 border-t pt-4">
             <Button :as="Link" variant="ghost" :href="monitorsRoute.index()">
                 {{ $t('base.cancel') }}
             </Button>
@@ -561,14 +534,8 @@ import {
     ShieldCheckIcon,
 } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
+import Section from '@/components/Section.vue';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Field,
