@@ -16,8 +16,15 @@ Route::inertia('pricing', 'marketing/Pricing')->name('pricing');
 Route::inertia('about', 'marketing/About')->name('about');
 Route::inertia('contact', 'marketing/Contact')->name('contact');
 Route::inertia('roadmap', 'marketing/Roadmap')->name('roadmap');
-Route::inertia('privacy', 'marketing/Privacy')->name('privacy');
-Route::inertia('terms', 'marketing/Terms')->name('terms');
+
+// Legal pages are content entries, not static components: the controller
+// details in them differ per deployment and must be editable without a deploy.
+Route::get('privacy', [ContentController::class, 'legal'])
+    ->defaults('slug', 'privacy')
+    ->name('privacy');
+Route::get('terms', [ContentController::class, 'legal'])
+    ->defaults('slug', 'terms')
+    ->name('terms');
 
 // Public content readers, backed by content_entries.
 Route::get('docs', [ContentController::class, 'docs'])->name('docs.index');

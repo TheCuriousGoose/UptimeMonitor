@@ -99,6 +99,52 @@ class ContentTest extends TestCase
                 ->where('entries.1.title', 'Second'));
     }
 
+    // -- Legal pages -------------------------------------------------------
+
+    public function test_privacy_and_terms_render_from_content_entries(): void
+    {
+        $this->seed(\Database\Seeders\ContentSeeder::class);
+
+        foreach (['privacy', 'terms'] as $slug) {
+            $this->get(route($slug))
+                ->assertOk()
+                ->assertInertia(fn (AssertableInertia $page) => $page
+                    ->component('content/Legal')
+                    ->where('entry.slug', $slug)
+                    ->where('bodyHtml', fn (string $html) => $html !== ''));
+        }
+    }
+
+    /**
+     * Legal pages are reached at /privacy and /terms; they must not also be
+     * exposed through the generic /{segment}/{slug} content reader.
+     */
+    public function test_legal_entries_are_not_reachable_through_the_content_reader(): void
+    {
+        ContentEntry::factory()->type(ContentType::Legal)->create(['slug' => 'privacy']);
+
+        $this->get('/legal/privacy')->assertNotFound();
+    }
+
+    public function test_an_unpublished_legal_page_is_not_reachable(): void
+    {
+        ContentEntry::factory()->type(ContentType::Legal)->draft()->create(['slug' => 'privacy']);
+
+        $this->get(route('privacy'))->assertNotFound();
+    }
+
+    public function test_legal_entries_do_not_appear_in_the_public_feeds(): void
+    {
+        ContentEntry::factory()->type(ContentType::Legal)->create();
+        ContentEntry::factory()->type(ContentType::Post)->create();
+
+        $this->get(route('blog.index'))
+            ->assertInertia(fn (AssertableInertia $page) => $page->has('entries', 1));
+
+        $this->get(route('docs.index'))
+            ->assertInertia(fn (AssertableInertia $page) => $page->has('entries', 0));
+    }
+
     // -- Markdown safety ---------------------------------------------------
 
     /**

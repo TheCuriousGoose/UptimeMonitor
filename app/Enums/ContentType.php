@@ -7,6 +7,7 @@ enum ContentType: string
     case Doc = 'doc';
     case Post = 'post';
     case Changelog = 'changelog';
+    case Legal = 'legal';
 
     /** The public URL segment this type lives under. */
     public function segment(): string
@@ -15,7 +16,17 @@ enum ContentType: string
             self::Doc => 'docs',
             self::Post => 'blog',
             self::Changelog => 'changelog',
+            self::Legal => 'legal',
         };
+    }
+
+    /**
+     * Legal pages are reached at their own top-level URLs (/privacy, /terms)
+     * rather than through an index, so they are excluded from listings.
+     */
+    public function hasPublicIndex(): bool
+    {
+        return $this !== self::Legal;
     }
 
     /** Whether entries of this type carry a release version. */
@@ -31,12 +42,22 @@ enum ContentType: string
     }
 
     /**
-     * Docs read as a hand-ordered manual; the other two are reverse
-     * chronological feeds.
+     * Docs read as a hand-ordered manual; the feeds are reverse chronological.
      */
     public function isManuallyOrdered(): bool
     {
         return $this === self::Doc;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function indexableValues(): array
+    {
+        return array_values(array_map(
+            fn (self $type) => $type->value,
+            array_filter(self::cases(), fn (self $type) => $type->hasPublicIndex()),
+        ));
     }
 
     /**
