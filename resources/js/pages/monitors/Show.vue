@@ -61,7 +61,9 @@
             </div>
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div
+            class="grid grid-cols-2 gap-px overflow-hidden rounded-md border bg-border lg:grid-cols-4"
+        >
             <StatTile
                 :label="$t('monitors.stats.uptime')"
                 :value="formatUptime(stats.uptime_percentage)"
@@ -86,25 +88,31 @@
         </div>
 
         <Card>
-            <CardHeader>
-                <CardTitle class="text-base">{{
-                    $t('monitors.show.timeline')
-                }}</CardTitle>
+            <CardHeader class="border-b">
+                <CardTitle
+                    class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                    >{{ $t('monitors.show.timeline') }}</CardTitle
+                >
                 <CardDescription>{{
                     $t(`monitors.periods.${period}`)
                 }}</CardDescription>
             </CardHeader>
             <CardContent>
-                <UptimeTimeline :checks="checks" :period="period" />
+                <UptimeTimeline
+                    :checks="checks"
+                    :period="period"
+                    :interval-seconds="monitor.interval_seconds"
+                />
             </CardContent>
         </Card>
 
         <div class="grid gap-4 lg:grid-cols-3">
             <Card class="lg:col-span-2">
-                <CardHeader>
-                    <CardTitle class="text-base">{{
-                        $t('monitors.show.response_chart')
-                    }}</CardTitle>
+                <CardHeader class="border-b">
+                    <CardTitle
+                        class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >{{ $t('monitors.show.response_chart') }}</CardTitle
+                    >
                 </CardHeader>
                 <CardContent>
                     <ResponseChart :series="series" />
@@ -112,10 +120,11 @@
             </Card>
 
             <Card>
-                <CardHeader>
-                    <CardTitle class="text-base">{{
-                        $t('monitors.show.details')
-                    }}</CardTitle>
+                <CardHeader class="border-b">
+                    <CardTitle
+                        class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                        >{{ $t('monitors.show.details') }}</CardTitle
+                    >
                 </CardHeader>
                 <CardContent>
                     <dl class="space-y-3 text-sm">
@@ -191,10 +200,11 @@
         </div>
 
         <Card>
-            <CardHeader>
-                <CardTitle class="text-base">{{
-                    $t('monitors.show.incidents')
-                }}</CardTitle>
+            <CardHeader class="border-b">
+                <CardTitle
+                    class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                    >{{ $t('monitors.show.incidents') }}</CardTitle
+                >
             </CardHeader>
             <CardContent>
                 <p

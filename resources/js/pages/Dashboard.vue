@@ -38,7 +38,9 @@
                 </template>
             </PageHeader>
 
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div
+                class="grid grid-cols-2 gap-px overflow-hidden rounded-md border bg-border lg:grid-cols-4"
+            >
                 <StatTile
                     :label="$t('dashboards.cards.uptime')"
                     :value="formatUptime(summary.uptime_percentage)"
@@ -72,10 +74,11 @@
 
             <div class="grid gap-4 lg:grid-cols-2">
                 <Card>
-                    <CardHeader>
-                        <CardTitle class="text-base">{{
-                            $t('dashboards.attention.title')
-                        }}</CardTitle>
+                    <CardHeader class="border-b">
+                        <CardTitle
+                            class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                            >{{ $t('dashboards.attention.title') }}</CardTitle
+                        >
                     </CardHeader>
                     <CardContent>
                         <p
@@ -121,10 +124,11 @@
                 </Card>
 
                 <Card>
-                    <CardHeader>
-                        <CardTitle class="text-base">{{
-                            $t('dashboards.incidents.title')
-                        }}</CardTitle>
+                    <CardHeader class="border-b">
+                        <CardTitle
+                            class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                            >{{ $t('dashboards.incidents.title') }}</CardTitle
+                        >
                     </CardHeader>
                     <CardContent>
                         <p

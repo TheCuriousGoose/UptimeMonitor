@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-wrap items-start justify-between gap-3 pb-1">
+    <div class="flex flex-wrap items-start justify-between gap-3 border-b pb-4">
         <div class="min-w-0">
             <h1 class="text-xl font-semibold tracking-tight">{{ title }}</h1>
             <p
