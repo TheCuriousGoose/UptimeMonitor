@@ -62,6 +62,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PingRunner::class, SystemPingRunner::class);
 
         $this->app->singleton(SettingRepository::class);
+
+        $this->registerTelescope();
     }
 
     /**
@@ -74,6 +76,25 @@ class AppServiceProvider extends ServiceProvider
         Gate::before(function ($user, $ability) {
             return $user->hasRole('Super Admin') ? true : null;
         });
+    }
+
+    /**
+     * Telescope ships as a dev dependency. Registering its provider from
+     * bootstrap/providers.php would fatal on a `--no-dev` install, so it is
+     * only wired up when the package is actually present.
+     */
+    protected function registerTelescope(): void
+    {
+        if (! class_exists(\Laravel\Telescope\Telescope::class)) {
+            return;
+        }
+
+        if (! $this->app->environment('local')) {
+            return;
+        }
+
+        $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
+        $this->app->register(TelescopeServiceProvider::class);
     }
 
     /**
