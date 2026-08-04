@@ -28,8 +28,9 @@ abstract class ChannelRequest extends FormRequest
         $data = $this->safe()->only(['name', 'type', 'is_active', 'config']);
         $type = ChannelType::tryFrom((string) $this->input('type'));
 
-        // Keep only the config key this channel type actually uses.
-        $allowed = $type === ChannelType::Email ? ['email'] : ['url'];
+        // Keep only the config key this channel type actually uses, so a
+        // payload cannot smuggle in keys belonging to another type.
+        $allowed = $type ? [$type->destinationKey()] : [];
         $data['config'] = array_intersect_key($data['config'] ?? [], array_flip($allowed));
 
         return $data;

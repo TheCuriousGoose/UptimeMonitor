@@ -4,6 +4,7 @@ import { createApp, h } from 'vue';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
+import PublicLayout from '@/layouts/PublicLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
 import { i18n, setLocale } from '@/lib/i18n';
@@ -19,6 +20,14 @@ createInertiaApp({
         switch (true) {
             case name === 'Welcome':
                 return null;
+            // Errors can be hit by guests, so they must not depend on the
+            // authenticated app chrome.
+            case name === 'Error':
+                return null;
+            // Marketing and published content share the public shell.
+            case name.startsWith('marketing/'):
+            case name.startsWith('content/'):
+                return PublicLayout;
             // Public status pages render standalone, with no app chrome.
             case name.startsWith('status/'):
                 return null;

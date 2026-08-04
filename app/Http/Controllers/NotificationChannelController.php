@@ -21,18 +21,22 @@ class NotificationChannelController extends Controller
 
         $channels = NotificationChannel::query()
             ->where('user_id', Auth::id())
+            // Integrations are the same model but live on their own page.
+            ->whereIn('type', ChannelType::basicValues())
             ->withCount('monitors')
             ->orderBy('name')
             ->get();
 
         return Inertia::render('channels/Index', [
             'channels' => NotificationChannelResource::collection($channels)->resolve(),
-            'types' => ChannelType::values(),
+            'types' => ChannelType::basicValues(),
         ]);
     }
 
     public function store(StoreChannelRequest $request)
     {
+        $this->abortIfIntegration($request->input('type'));
+
         $request->user()->notificationChannels()->create($request->channelAttributes());
 
         return to_route('channels.index')->with('success', __('channels.messages.created.success'));
@@ -40,9 +44,23 @@ class NotificationChannelController extends Controller
 
     public function update(UpdateChannelRequest $request, NotificationChannel $channel)
     {
+        $this->abortIfIntegration($request->input('type'));
+
         $channel->update($request->channelAttributes());
 
         return to_route('channels.index')->with('success', __('channels.messages.updated.success'));
+    }
+
+    /**
+     * Integration types belong to IntegrationController; letting them through
+     * here would create a channel this page then refuses to list.
+     */
+    private function abortIfIntegration(mixed $type): void
+    {
+        abort_if(
+            ChannelType::tryFrom((string) $type)?->isIntegration() === true,
+            422,
+        );
     }
 
     public function destroy(NotificationChannel $channel)

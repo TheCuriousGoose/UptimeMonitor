@@ -16,7 +16,9 @@ class NotificationChannelResource extends JsonResource
             'uuid' => $this->uuid,
             'name' => $this->name,
             'type' => $this->type->value,
-            'destination' => $this->destination(),
+            // Masked, never raw: for PagerDuty and Opsgenie the destination is
+            // an API credential, and this resource is serialised into the page.
+            'destination' => $this->maskedDestination(),
             'is_active' => $this->is_active,
             'monitors_count' => $this->whenCounted('monitors'),
         ];

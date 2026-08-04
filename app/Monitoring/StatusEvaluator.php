@@ -18,12 +18,21 @@ class StatusEvaluator
 {
     public function __construct(private readonly AlertDispatcher $alerts) {}
 
+    /**
+     * Deadlocks here used to lose the check entirely: the job runs with
+     * tries=1, so a rolled-back transaction meant the result was never
+     * recorded. Retrying the transaction (not the network check) recovers
+     * from the transient case without re-probing the target.
+     */
+    private const TRANSACTION_ATTEMPTS = 3;
+
     public function record(Monitor $monitor, CheckResult $result, ?CarbonInterface $checkedAt = null): MonitorCheck
     {
         $checkedAt ??= now();
 
         [$check, $transition, $incident] = DB::transaction(
             fn () => $this->persist($monitor, $result, $checkedAt),
+            self::TRANSACTION_ATTEMPTS,
         );
 
         if ($transition === Transition::WentDown) {
@@ -42,6 +51,20 @@ class StatusEvaluator
      */
     private function persist(Monitor $monitor, CheckResult $result, CarbonInterface $checkedAt): array
     {
+        // Take the monitor row lock FIRST, before touching monitor_checks or
+        // incidents. Every writer that reaches this table now acquires locks
+        // in the same order, which is what stops the dispatcher and the
+        // workers from deadlocking against each other.
+        //
+        // It also re-reads the row, so the streak arithmetic below starts from
+        // committed state on every attempt — a retried transaction must not
+        // increment a streak the rolled-back attempt already bumped.
+        $locked = Monitor::query()->whereKey($monitor->getKey())->lockForUpdate()->first();
+
+        if ($locked !== null) {
+            $monitor->setRawAttributes($locked->getAttributes(), sync: true);
+        }
+
         $check = MonitorCheck::create([
             'monitor_id' => $monitor->id,
             'is_up' => $result->isUp,

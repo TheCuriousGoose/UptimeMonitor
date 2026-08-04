@@ -2,11 +2,14 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import {
     Bell,
+    FileText,
     Globe,
     LayoutGrid,
     Monitor,
+    Plug,
     Settings2,
     ShieldCheck,
+    Siren,
     Users,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -25,10 +28,13 @@ import {
 } from '@/components/ui/sidebar';
 import { trans } from '@/lib/i18n';
 import { dashboard } from '@/routes';
+import adminContent from '@/routes/admin/content';
 import adminRoles from '@/routes/admin/roles';
 import adminSettings from '@/routes/admin/settings';
 import adminUsers from '@/routes/admin/users';
 import channels from '@/routes/channels';
+import incidents from '@/routes/incidents';
+import integrations from '@/routes/integrations';
 import monitors from '@/routes/monitors';
 import statusPages from '@/routes/status-pages';
 import type { Auth } from '@/types';
@@ -52,9 +58,19 @@ const mainNavItems: NavItem[] = [
         icon: Monitor,
     },
     {
+        title: trans('incidents.title'),
+        href: incidents.index(),
+        icon: Siren,
+    },
+    {
         title: trans('channels.title'),
         href: channels.index(),
         icon: Bell,
+    },
+    {
+        title: trans('integrations.title'),
+        href: integrations.index(),
+        icon: Plug,
     },
     {
         title: trans('status_pages.title'),
@@ -73,6 +89,11 @@ const adminNavItems: NavItem[] = [
         title: 'Roles',
         href: adminRoles.index(),
         icon: ShieldCheck,
+    },
+    {
+        title: trans('content.heading'),
+        href: adminContent.index(),
+        icon: FileText,
     },
     {
         title: 'Settings',
