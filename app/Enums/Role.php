@@ -5,8 +5,8 @@ namespace App\Enums;
 enum Role: string
 {
     case SuperAdmin = 'Super Admin';
-    case Admin      = 'Admin';
-    case User       = 'User';
+    case Admin = 'Admin';
+    case User = 'User';
 
     /**
      * The permissions assigned to this role on seeding.
@@ -20,11 +20,23 @@ enum Role: string
             self::SuperAdmin => [],
             self::Admin => [
                 ...Permission::forResource('users'),
-                ...Permission::forResource('monitors'),
+                ...self::monitoringPermissions(),
             ],
-            self::User       => [
-                ...Permission::forResource('monitors')
-            ],
+            self::User => self::monitoringPermissions(),
         };
+    }
+
+    /**
+     * Everything an ordinary user needs to run their own monitoring.
+     *
+     * @return Permission[]
+     */
+    private static function monitoringPermissions(): array
+    {
+        return [
+            ...Permission::forResource('monitors'),
+            ...Permission::forResource('channels'),
+            ...Permission::forResource('status_pages'),
+        ];
     }
 }

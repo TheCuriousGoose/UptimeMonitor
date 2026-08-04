@@ -49,7 +49,7 @@ class SettingRepository
      */
     public function group(string $group): Collection
     {
-        return $this->load()->filter(fn(Setting $s) => $s->group === $group)->values();
+        return $this->load()->filter(fn (Setting $s) => $s->group === $group)->values();
     }
 
     /**
@@ -82,9 +82,9 @@ class SettingRepository
         return match ($setting->type) {
             SettingType::Boolean => filter_var($setting->value, FILTER_VALIDATE_BOOLEAN),
             SettingType::Integer => (int) $setting->value,
-            SettingType::Float   => (float) $setting->value,
-            SettingType::Json    => json_decode($setting->value, true),
-            SettingType::String  => (string) ($setting->value ?? ''),
+            SettingType::Float => (float) $setting->value,
+            SettingType::Json => json_decode($setting->value, true),
+            SettingType::String => (string) ($setting->value ?? ''),
         };
     }
 
@@ -92,8 +92,8 @@ class SettingRepository
     {
         return match ($type) {
             SettingType::Boolean => $value ? '1' : '0',
-            SettingType::Json    => json_encode($value),
-            default              => (string) $value,
+            SettingType::Json => json_encode($value),
+            default => (string) $value,
         };
     }
 }

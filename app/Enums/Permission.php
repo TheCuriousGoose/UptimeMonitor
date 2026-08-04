@@ -5,27 +5,38 @@ namespace App\Enums;
 enum Permission: string
 {
     // Users
-    case UsersView   = 'users.view';
-    case UsersEdit   = 'users.edit';
+    case UsersView = 'users.view';
+    case UsersEdit = 'users.edit';
 
     // Roles
-    case RolesView   = 'roles.view';
+    case RolesView = 'roles.view';
     case RolesCreate = 'roles.create';
-    case RolesEdit   = 'roles.edit';
+    case RolesEdit = 'roles.edit';
     case RolesDelete = 'roles.delete';
 
     // Monitors
-    case MonitorsView   = 'monitors.view';
+    case MonitorsView = 'monitors.view';
     case MonitorsCreate = 'monitors.create';
-    case MonitorsEdit   = 'monitors.edit';
+    case MonitorsEdit = 'monitors.edit';
     case MonitorsDelete = 'monitors.delete';
+
+    // Notification channels
+    case ChannelsView = 'channels.view';
+    case ChannelsCreate = 'channels.create';
+    case ChannelsEdit = 'channels.edit';
+    case ChannelsDelete = 'channels.delete';
+
+    // Status pages
+    case StatusPagesView = 'status_pages.view';
+    case StatusPagesCreate = 'status_pages.create';
+    case StatusPagesEdit = 'status_pages.edit';
+    case StatusPagesDelete = 'status_pages.delete';
 
     /**
      * All Permission cases for a given resource prefix.
      * Useful for seeding or syncing role permissions by resource.
      *
      * Example: Permission::forResource('monitors')
-     *   => [Permission::MonitorsCreate]
      *
      * @return self[]
      */
@@ -33,7 +44,7 @@ enum Permission: string
     {
         return array_values(array_filter(
             self::cases(),
-            fn(self $p) => str_starts_with($p->value, $resource.'.')
+            fn (self $p) => str_starts_with($p->value, $resource.'.'),
         ));
     }
 }

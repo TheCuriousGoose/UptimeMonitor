@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -13,8 +12,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-        $this->call(RolesAndPermissionsSeeder::class);
-        $this->call(SettingSeeder::class);
+        // Always runs (production-safe)
+        $this->call([
+            RolesAndPermissionsSeeder::class,
+            SettingSeeder::class,
+        ]);
+
+        // Dev only
+        if (app()->isLocal()) {
+            $this->call(DevSeeder::class);
+        }
     }
 }

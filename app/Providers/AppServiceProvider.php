@@ -3,7 +3,27 @@
 namespace App\Providers;
 
 use App\Checkers\CheckerRegistry;
+use App\Checkers\DnsChecker;
 use App\Checkers\HttpChecker;
+use App\Checkers\KeywordChecker;
+use App\Checkers\PingChecker;
+use App\Checkers\PortChecker;
+use App\Checkers\SslChecker;
+use App\Checkers\Support\CertificateReader;
+use App\Checkers\Support\DnsResolver;
+use App\Checkers\Support\PingRunner;
+use App\Checkers\Support\SocketConnector;
+use App\Checkers\Support\StreamCertificateReader;
+use App\Checkers\Support\StreamSocketConnector;
+use App\Checkers\Support\SystemDnsResolver;
+use App\Checkers\Support\SystemPingRunner;
+use App\Enums\ChannelType;
+use App\Enums\MonitorType;
+use App\Monitoring\Notifiers\DiscordNotifier;
+use App\Monitoring\Notifiers\MailNotifier;
+use App\Monitoring\Notifiers\NotifierRegistry;
+use App\Monitoring\Notifiers\SlackNotifier;
+use App\Monitoring\Notifiers\WebhookNotifier;
 use App\Settings\SettingRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -20,8 +40,26 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(CheckerRegistry::class, fn () => new CheckerRegistry([
-            'http' => HttpChecker::class,
+            MonitorType::Http->value => HttpChecker::class,
+            MonitorType::Keyword->value => KeywordChecker::class,
+            MonitorType::Port->value => PortChecker::class,
+            MonitorType::Ping->value => PingChecker::class,
+            MonitorType::Dns->value => DnsChecker::class,
+            MonitorType::Ssl->value => SslChecker::class,
         ]));
+
+        $this->app->singleton(NotifierRegistry::class, fn () => new NotifierRegistry([
+            ChannelType::Email->value => MailNotifier::class,
+            ChannelType::Webhook->value => WebhookNotifier::class,
+            ChannelType::Slack->value => SlackNotifier::class,
+            ChannelType::Discord->value => DiscordNotifier::class,
+        ]));
+
+        // Bound as interfaces so tests can swap in fakes for network access.
+        $this->app->bind(SocketConnector::class, StreamSocketConnector::class);
+        $this->app->bind(DnsResolver::class, SystemDnsResolver::class);
+        $this->app->bind(CertificateReader::class, StreamCertificateReader::class);
+        $this->app->bind(PingRunner::class, SystemPingRunner::class);
 
         $this->app->singleton(SettingRepository::class);
     }

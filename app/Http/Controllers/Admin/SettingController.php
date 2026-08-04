@@ -19,13 +19,13 @@ class SettingController extends Controller
     {
         return Inertia::render('admin/Settings', [
             'settings' => $this->settings->all()->map(fn ($s) => [
-                'id'          => $s->id,
-                'key'         => $s->key,
-                'group'       => $s->group,
-                'label'       => $s->label,
+                'id' => $s->id,
+                'key' => $s->key,
+                'group' => $s->group,
+                'label' => $s->label,
                 'description' => $s->description,
-                'type'        => $s->type->value,
-                'value'       => $s->value,
+                'type' => $s->type->value,
+                'value' => $s->value,
             ])->values(),
         ]);
     }
@@ -37,9 +37,9 @@ class SettingController extends Controller
         $rules = match ($setting->type) {
             SettingType::Boolean => ['value' => ['required', 'boolean']],
             SettingType::Integer => ['value' => ['required', 'integer']],
-            SettingType::Float   => ['value' => ['required', 'numeric']],
-            SettingType::Json    => ['value' => ['required', 'json']],
-            SettingType::String  => ['value' => ['required', 'string', 'max:10000']],
+            SettingType::Float => ['value' => ['required', 'numeric']],
+            SettingType::Json => ['value' => ['required', 'json']],
+            SettingType::String => ['value' => ['required', 'string', 'max:10000']],
         };
 
         $data = $request->validate($rules);

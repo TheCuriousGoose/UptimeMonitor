@@ -23,7 +23,7 @@ class Setting extends Model
             'label' => $this->label,
             'description' => $this->description,
             'type' => $this->type,
-            'value' => $this->value
-        ]; 
+            'value' => $this->value,
+        ];
     }
 }

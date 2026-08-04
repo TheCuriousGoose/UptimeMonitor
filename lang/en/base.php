@@ -3,5 +3,8 @@
 return [
     'save' => 'Save',
     'cancel' => 'Cancel',
-    'close' => 'Close'
+    'close' => 'Close',
+    'confirm' => 'Confirm',
+    'delete' => 'Delete',
+    'copied' => 'Link copied',
 ];

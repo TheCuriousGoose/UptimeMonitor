@@ -57,4 +57,23 @@ class UserFactory extends Factory
             'two_factor_confirmed_at' => now(),
         ]);
     }
+
+    /**
+     * Indicate that the user should be an admin.
+     * Note: Remember to call syncRoles after creating the user.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'name' => 'Admin User',
+        ])->afterCreating(fn (User $user) => $user->syncRoles('Super Admin'));
+    }
+
+    /**
+     * Indicate that the user should have a specific role.
+     */
+    public function withRole(string $role): static
+    {
+        return $this->afterCreating(fn (User $user) => $user->syncRoles($role));
+    }
 }

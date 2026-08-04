@@ -13,17 +13,17 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'preferences', 'oauth_provider', 'oauth_id', 'email_verified_at'])]
+#[Fillable(['name', 'email', 'password', 'preferences', 'email_verified_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable, HasRoles;
+    use HasFactory, HasRoles, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * Get the attributes that should be cast.
      *
-    * @return array<string, string>
+     * @return array<string, string>
      */
     protected function casts(): array
     {
@@ -38,6 +38,21 @@ class User extends Authenticatable
     public function monitors(): HasMany
     {
         return $this->hasMany(Monitor::class, 'created_by');
+    }
+
+    public function oauthConnections(): HasMany
+    {
+        return $this->hasMany(OAuthConnection::class);
+    }
+
+    public function notificationChannels(): HasMany
+    {
+        return $this->hasMany(NotificationChannel::class);
+    }
+
+    public function statusPages(): HasMany
+    {
+        return $this->hasMany(StatusPage::class);
     }
 
     public function can($ability, $arguments = []): bool

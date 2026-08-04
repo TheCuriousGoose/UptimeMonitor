@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\RoleResource;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,10 +13,19 @@ use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $roles = Role::query()
+            ->withCount('users')
+            ->with('permissions')
+            ->when($request->filled('search'), fn ($q) => $q
+                ->where('name', 'like', "%{$request->input('search')}%")
+            )
+            ->orderBy('name')
+            ->paginate(15);
+
         return Inertia::render('admin/Roles', [
-            'roles' => Role::withCount('users')->with('permissions')->get(),
+            'roles' => $roles->toResourceCollection(RoleResource::class),
             'permissions' => Permission::orderBy('name')->get(['id', 'name']),
         ]);
     }
