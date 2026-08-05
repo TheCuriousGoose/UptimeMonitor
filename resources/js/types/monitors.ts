@@ -111,12 +111,42 @@ interface NotificationChannel {
     monitors?: string[];
 }
 
+type StatusPageMode = 'light' | 'dark' | 'system';
+
+interface StatusPageLink {
+    label: string;
+    url: string;
+}
+
+/**
+ * A status page's house style. Always sent complete by StatusPageResource —
+ * never partially filled — so the editor can bind to it directly.
+ */
+interface StatusPageTheme {
+    mode: StatusPageMode;
+    font_family: string;
+    font_url: string | null;
+    radius: number;
+    width: number;
+    brand_color: string;
+    background: string | null;
+    foreground: string | null;
+    up_color: string;
+    down_color: string;
+    warning_color: string;
+    logo_url: string | null;
+    favicon_url: string | null;
+    footer_text: string | null;
+    links: StatusPageLink[];
+}
+
 interface StatusPage {
     uuid: string;
     slug: string;
     title: string;
     description: string | null;
     is_published: boolean;
+    theme: StatusPageTheme;
     public_url: string;
     monitors_count?: number;
     monitors?: Monitor[];
@@ -137,4 +167,7 @@ export type {
     NotificationChannel,
     SeriesPoint,
     StatusPage,
+    StatusPageLink,
+    StatusPageMode,
+    StatusPageTheme,
 };

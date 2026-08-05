@@ -1,25 +1,73 @@
 <template>
-    <Head :title="page.title" />
+    <Head :title="page.title">
+        <link
+            v-if="theme.favicon_url"
+            rel="icon"
+            :href="theme.favicon_url"
+            head-key="status-favicon"
+        />
+    </Head>
 
-    <div class="min-h-screen bg-background px-4 py-10 text-foreground">
-        <div class="mx-auto w-full max-w-3xl">
-            <header class="mb-6 border-b pb-4">
+    <!--
+        The owner's palette, injected as custom properties.
+
+        v-html rather than interpolation because Vue escapes quotes on the
+        server-rendered pass, and entities are not decoded inside a <style>
+        element — an escaped font stack would simply not apply. The string is
+        built by StatusPageTheme::css() from normalised hex, clamped lengths and
+        a filtered font stack, so it cannot carry markup of its own.
+    -->
+    <!-- eslint-disable-next-line vue/no-v-text-v-html-on-component -->
+    <component :is="'style'" v-html="themeCss" />
+
+    <div
+        class="sp-theme min-h-screen bg-[var(--sp-bg)] px-4 py-10 font-[family-name:var(--sp-font)] text-[var(--sp-fg)]"
+    >
+        <div class="mx-auto w-full" :style="{ maxWidth: 'var(--sp-width)' }">
+            <header
+                class="mb-6 border-b border-[var(--sp-border)] pb-5"
+                :class="theme.logo_url ? 'text-center' : ''"
+            >
+                <img
+                    v-if="theme.logo_url"
+                    :src="theme.logo_url"
+                    :alt="page.title"
+                    class="mx-auto mb-4 h-10 w-auto max-w-[240px] object-contain"
+                    referrerpolicy="no-referrer"
+                />
+
                 <h1 class="text-2xl font-semibold tracking-tight">
                     {{ page.title }}
                 </h1>
                 <p
                     v-if="page.description"
-                    class="mt-1 text-sm text-muted-foreground"
+                    class="mt-1 text-sm text-[var(--sp-muted-fg)]"
                 >
                     {{ page.description }}
                 </p>
+
+                <nav
+                    v-if="theme.links.length"
+                    class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm"
+                    :class="theme.logo_url ? 'justify-center' : ''"
+                >
+                    <a
+                        v-for="link in theme.links"
+                        :key="link.url"
+                        :href="link.url"
+                        rel="noopener noreferrer"
+                        class="text-[var(--sp-brand)] underline-offset-4 hover:underline"
+                    >
+                        {{ link.label }}
+                    </a>
+                </nav>
             </header>
 
             <!-- Overall banner: icon + words carry the state, colour only
                  reinforces it. A left status rule rather than a filled box. -->
             <div
-                class="mb-8 flex items-center gap-3 rounded-sm border border-l-2 px-4 py-3"
-                :class="overallTone.wrapper"
+                class="mb-8 flex items-center gap-3 rounded-[var(--sp-radius)] border border-l-2 px-4 py-3"
+                :style="overallTone.style"
             >
                 <component
                     :is="overallTone.icon"
@@ -31,12 +79,15 @@
 
             <p
                 v-if="monitors.length === 0"
-                class="rounded-sm border border-dashed p-10 text-center text-sm text-muted-foreground"
+                class="rounded-[var(--sp-radius)] border border-dashed border-[var(--sp-border)] p-10 text-center text-sm text-[var(--sp-muted-fg)]"
             >
                 {{ $t('status_pages.public.no_monitors') }}
             </p>
 
-            <ul v-else class="divide-y rounded-sm border">
+            <ul
+                v-else
+                class="divide-y divide-[var(--sp-border)] overflow-hidden rounded-[var(--sp-radius)] border border-[var(--sp-border)] bg-[var(--sp-surface)]"
+            >
                 <li
                     v-for="monitor in monitors"
                     :key="monitor.name"
@@ -49,13 +100,15 @@
                             <component
                                 :is="statusTone(monitor.status).icon"
                                 class="size-4 shrink-0"
-                                :class="statusTone(monitor.status).text"
+                                :style="{
+                                    color: statusTone(monitor.status).color,
+                                }"
                                 aria-hidden="true"
                             />
                             <span class="font-medium">{{ monitor.name }}</span>
                         </div>
                         <span
-                            class="font-mono text-sm text-muted-foreground tabular-nums"
+                            class="text-sm text-[var(--sp-muted-fg)] tabular-nums"
                         >
                             {{ formatUptime(monitor.uptime_percentage) }} ·
                             {{ $t('status_pages.public.uptime_90d') }}
@@ -88,27 +141,27 @@
             </ul>
 
             <footer
-                class="mt-8 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground"
+                class="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--sp-border)] pt-4 text-xs text-[var(--sp-muted-fg)]"
             >
                 <div class="flex items-center gap-3">
                     <span class="inline-flex items-center gap-1.5">
                         <span
                             class="inline-block h-2 w-1.5 rounded-[1px]"
-                            style="background-color: var(--viz-up)"
+                            :style="{ backgroundColor: 'var(--sp-up)' }"
                         />
                         {{ $t('status_pages.public.legend_up') }}
                     </span>
                     <span class="inline-flex items-center gap-1.5">
                         <span
                             class="inline-block h-3.5 w-1.5 rounded-[1px]"
-                            style="background-color: var(--viz-down)"
+                            :style="{ backgroundColor: 'var(--sp-down)' }"
                         />
                         {{ $t('status_pages.public.legend_down') }}
                     </span>
                     <span class="inline-flex items-center gap-1.5">
                         <span
                             class="inline-block h-1.5 w-1.5 rounded-[1px]"
-                            style="background-color: var(--viz-empty)"
+                            :style="{ backgroundColor: 'var(--sp-empty)' }"
                         />
                         {{ $t('status_pages.public.legend_empty') }}
                     </span>
@@ -119,6 +172,13 @@
                     })
                 }}</span>
             </footer>
+
+            <p
+                v-if="theme.footer_text"
+                class="mt-4 text-center text-xs text-[var(--sp-muted-fg)]"
+            >
+                {{ theme.footer_text }}
+            </p>
         </div>
     </div>
 </template>
@@ -130,10 +190,12 @@ import {
     CheckCircle2Icon,
     ClockIcon,
 } from 'lucide-vue-next';
+import type { CSSProperties } from 'vue';
 import { computed } from 'vue';
 import { formatDateTime, formatUptime } from '@/lib/format';
 import { trans } from '@/lib/i18n';
 import type { MonitorStatus } from '@/types/monitors';
+import type { StatusPageTheme } from '@/types/monitors';
 
 type PublicDay = {
     date: string;
@@ -153,17 +215,30 @@ const props = defineProps<{
     monitors: PublicMonitor[];
     overall: MonitorStatus;
     updatedAt: string;
+    theme: StatusPageTheme;
+    themeCss: string;
 }>();
 
 const DAYS = 90;
+
+/**
+ * A tinted panel built from one status colour, so a page that has recoloured
+ * "down" gets a matching banner rather than a stock red one.
+ */
+function tone(color: string): CSSProperties {
+    return {
+        color,
+        borderColor: `color-mix(in srgb, ${color} 30%, transparent)`,
+        backgroundColor: `color-mix(in srgb, ${color} 10%, var(--sp-bg))`,
+    };
+}
 
 const overallTone = computed(() => {
     if (props.overall === 'down') {
         return {
             icon: AlertTriangleIcon,
             label: trans('status_pages.public.degraded'),
-            wrapper:
-                'border-red-600/25 bg-red-600/10 text-red-700 dark:text-red-400',
+            style: tone('var(--sp-down)'),
         };
     }
 
@@ -171,34 +246,31 @@ const overallTone = computed(() => {
         return {
             icon: CheckCircle2Icon,
             label: trans('status_pages.public.all_operational'),
-            wrapper:
-                'border-emerald-600/25 bg-emerald-600/10 text-emerald-700 dark:text-emerald-400',
+            style: tone('var(--sp-up)'),
         };
     }
 
     return {
         icon: ClockIcon,
         label: trans('status_pages.public.pending'),
-        wrapper: 'border-border bg-muted text-muted-foreground',
+        style: {
+            color: 'var(--sp-muted-fg)',
+            borderColor: 'var(--sp-border)',
+            backgroundColor: 'var(--sp-muted)',
+        } satisfies CSSProperties,
     };
 });
 
 function statusTone(status: MonitorStatus) {
     if (status === 'down') {
-        return {
-            icon: AlertTriangleIcon,
-            text: 'text-red-600 dark:text-red-400',
-        };
+        return { icon: AlertTriangleIcon, color: 'var(--sp-down)' };
     }
 
     if (status === 'up') {
-        return {
-            icon: CheckCircle2Icon,
-            text: 'text-emerald-600 dark:text-emerald-400',
-        };
+        return { icon: CheckCircle2Icon, color: 'var(--sp-up)' };
     }
 
-    return { icon: ClockIcon, text: 'text-muted-foreground' };
+    return { icon: ClockIcon, color: 'var(--sp-muted-fg)' };
 }
 
 /**
@@ -232,12 +304,12 @@ function dayHeight(day: PublicDay): string {
 
 function dayColor(day: PublicDay): string {
     if (day.total === 0) {
-        return 'var(--viz-empty)';
+        return 'var(--sp-empty)';
     }
 
     return (day.uptime_percentage ?? 100) >= 100
-        ? 'var(--viz-up)'
-        : 'var(--viz-down)';
+        ? 'var(--sp-up)'
+        : 'var(--sp-down)';
 }
 
 function dayTitle(day: PublicDay): string {

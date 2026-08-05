@@ -28,7 +28,9 @@
                 <ul class="mt-3 space-y-2">
                     <li v-for="entry in group.entries" :key="entry.uuid">
                         <Link
-                            :href="show({ segment: 'docs', slug: entry.slug }).url"
+                            :href="
+                                show({ segment: 'docs', slug: entry.slug }).url
+                            "
                             class="text-sm underline-offset-4 hover:underline"
                         >
                             {{ entry.title }}

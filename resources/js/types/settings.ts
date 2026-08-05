@@ -3,8 +3,8 @@ export interface Setting {
     label: string;
     type: string;
     value: any;
-}   
+}
 
 export interface Settings {
-    authentication: Setting[]
+    authentication: Setting[];
 }

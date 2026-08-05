@@ -18,6 +18,9 @@ class StatusPageResource extends JsonResource
             'title' => $this->title,
             'description' => $this->description,
             'is_published' => $this->is_published,
+            // Always the resolved theme, never the raw column: the editor
+            // binds straight to these keys and should never see a null.
+            'theme' => $this->resolvedTheme()->toArray(),
             'public_url' => route('status.show', $this->slug),
             'monitors_count' => $this->whenCounted('monitors'),
             'monitors' => $this->whenLoaded(

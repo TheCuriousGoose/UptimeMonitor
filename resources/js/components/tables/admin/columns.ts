@@ -14,7 +14,11 @@ export const createColumns = (roles: Role[]): ColumnDef<UserWithRoles>[] => [
         cell: ({ row }) =>
             h('div', { class: 'flex flex-col' }, [
                 h('span', { class: 'font-medium' }, row.original.name),
-                h('span', { class: 'text-xs text-muted-foreground' }, row.original.email),
+                h(
+                    'span',
+                    { class: 'text-xs text-muted-foreground' },
+                    row.original.email,
+                ),
             ]),
     },
     {
@@ -24,25 +28,29 @@ export const createColumns = (roles: Role[]): ColumnDef<UserWithRoles>[] => [
             const userRoles = row.original.roles || [];
 
             if (userRoles.length === 0) {
-                return h('span', { class: 'text-xs text-muted-foreground' }, 'No roles');
+                return h(
+                    'span',
+                    { class: 'text-xs text-muted-foreground' },
+                    'No roles',
+                );
             }
 
             return h('div', { class: 'flex flex-wrap gap-1' }, [
                 ...userRoles.map((role) =>
                     h(
                         Badge,
-                        { 
-                            key: role.id, 
-                            variant: 
-                                role.name === 'Super Admin' 
-                                    ? 'default' 
-                                    : role.name === 'Admin' 
-                                    ? 'secondary' 
-                                    : 'outline',
-                            class: 'text-xs'
+                        {
+                            key: role.id,
+                            variant:
+                                role.name === 'Super Admin'
+                                    ? 'default'
+                                    : role.name === 'Admin'
+                                      ? 'secondary'
+                                      : 'outline',
+                            class: 'text-xs',
                         },
                         () => role.name,
-                    )
+                    ),
                 ),
             ]);
         },
@@ -51,13 +59,16 @@ export const createColumns = (roles: Role[]): ColumnDef<UserWithRoles>[] => [
         accessorKey: 'created_at',
         header: () => 'Created',
         cell: ({ row }) =>
-            h('span', { class: 'text-sm text-muted-foreground' },
-                new Date(row.original.created_at).toLocaleDateString()
+            h(
+                'span',
+                { class: 'text-sm text-muted-foreground' },
+                new Date(row.original.created_at).toLocaleDateString(),
             ),
     },
     {
         accessorKey: 'actions',
         header: () => 'Actions',
-        cell: ({ row }) => h(TableRowActions, { user: row.original, allRoles: roles }),
+        cell: ({ row }) =>
+            h(TableRowActions, { user: row.original, allRoles: roles }),
     },
 ];

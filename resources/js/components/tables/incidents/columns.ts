@@ -45,7 +45,9 @@ export const columns: ColumnDef<Incident>[] = [
         cell: ({ row }) =>
             h(
                 'span',
-                { class: 'font-mono text-sm tabular-nums text-muted-foreground' },
+                {
+                    class: 'font-mono text-sm tabular-nums text-muted-foreground',
+                },
                 formatDateTime(row.original.started_at),
             ),
     },
@@ -69,7 +71,9 @@ export const columns: ColumnDef<Incident>[] = [
         cell: ({ row }) =>
             h(
                 'span',
-                { class: 'font-mono text-sm tabular-nums text-muted-foreground' },
+                {
+                    class: 'font-mono text-sm tabular-nums text-muted-foreground',
+                },
                 String(row.original.failed_checks),
             ),
     },

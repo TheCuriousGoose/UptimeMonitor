@@ -18,7 +18,7 @@
                     class="group flex w-full flex-col rounded-sm border p-5 transition-colors hover:border-foreground/25 hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                 >
                     <p
-                        class="font-mono text-xs tabular-nums text-muted-foreground"
+                        class="font-mono text-xs text-muted-foreground tabular-nums"
                     >
                         {{ formatDateTime(entry.published_at) }}
                     </p>

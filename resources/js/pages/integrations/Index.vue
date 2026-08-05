@@ -26,7 +26,9 @@
                         }}</span>
                     </span>
                     <span class="mt-1.5 text-xs text-muted-foreground">
-                        {{ $t(`integrations.providers.${provider}.description`) }}
+                        {{
+                            $t(`integrations.providers.${provider}.description`)
+                        }}
                     </span>
                     <span
                         class="mt-3 font-mono text-[10px] tracking-wide text-primary uppercase"
@@ -167,7 +169,9 @@
                         :type="inputType"
                         autocomplete="off"
                         :placeholder="
-                            $t(`integrations.providers.${form.type}.placeholder`)
+                            $t(
+                                `integrations.providers.${form.type}.placeholder`,
+                            )
                         "
                     />
                     <p class="text-xs text-muted-foreground">
@@ -259,7 +263,11 @@
                         </p>
                     </div>
 
-                    <div v-for="event in events" :key="event" class="grid gap-1.5">
+                    <div
+                        v-for="event in events"
+                        :key="event"
+                        class="grid gap-1.5"
+                    >
                         <p class="text-xs font-medium">
                             {{ $t(`integrations.form.templates.${event}`) }}
                         </p>
@@ -269,13 +277,13 @@
                                 $t('integrations.form.templates.subject')
                             "
                         />
-                        <InputError
-                            :message="templateError(event, 'title')"
-                        />
+                        <InputError :message="templateError(event, 'title')" />
                         <textarea
                             v-model="form.templates[event].body"
                             rows="2"
-                            :placeholder="$t('integrations.form.templates.body')"
+                            :placeholder="
+                                $t('integrations.form.templates.body')
+                            "
                             class="w-full rounded-sm border border-input bg-transparent px-2.5 py-2 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring dark:bg-input/20"
                         />
                         <InputError :message="templateError(event, 'body')" />
@@ -296,10 +304,7 @@
                         </div>
                     </div>
 
-                    <p
-                        v-if="ignoresBody"
-                        class="text-xs text-muted-foreground"
-                    >
+                    <p v-if="ignoresBody" class="text-xs text-muted-foreground">
                         {{ $t('integrations.form.templates.unsupported') }}
                     </p>
                 </div>

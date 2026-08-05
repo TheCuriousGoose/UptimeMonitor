@@ -113,7 +113,6 @@ import {
     features,
     home,
     login,
-    pricing,
     privacy,
     register,
     roadmap,
@@ -129,7 +128,6 @@ const year = new Date().getFullYear();
 
 const nav = [
     { label: trans('marketing.nav.features'), href: features().url },
-    { label: trans('marketing.nav.pricing'), href: pricing().url },
     { label: trans('marketing.nav.docs'), href: docs.index().url },
     { label: trans('marketing.nav.changelog'), href: changelog.index().url },
     { label: trans('marketing.nav.blog'), href: blog.index().url },
@@ -140,7 +138,6 @@ const footerGroups = [
         heading: trans('marketing.footer.product'),
         items: [
             { label: trans('marketing.nav.features'), href: features().url },
-            { label: trans('marketing.nav.pricing'), href: pricing().url },
             { label: trans('marketing.nav.roadmap'), href: roadmap().url },
             {
                 label: trans('marketing.nav.changelog'),

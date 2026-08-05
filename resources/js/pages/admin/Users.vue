@@ -24,15 +24,22 @@ setLayoutProps({
 
 const search = ref<string>('');
 
-watch(search, debounce((value: string) => {
-    const query = value.trim();
+watch(
+    search,
+    debounce((value: string) => {
+        const query = value.trim();
 
-    router.get(adminUsers.index(), { search: query || undefined }, {
-        preserveState: true,
-        replace: true,
-        only: ['users'],
-    });
-}, 300));
+        router.get(
+            adminUsers.index(),
+            { search: query || undefined },
+            {
+                preserveState: true,
+                replace: true,
+                only: ['users'],
+            },
+        );
+    }, 300),
+);
 </script>
 
 <template>

@@ -1,6 +1,11 @@
 <template>
-    <Button as="a" v-if="get('oauth.' + provider, 0) == 1" variant="outline" :href="oauth.redirect(provider).url">
-        <span class="gap-2 flex">
+    <Button
+        as="a"
+        v-if="get('oauth.' + provider, 0) == 1"
+        variant="outline"
+        :href="oauth.redirect(provider).url"
+    >
+        <span class="flex gap-2">
             <Icon :icon="'simple-icons:' + provider" class="size-5" />
             {{ $t('auth.oauth.' + provider) }}
         </span>
@@ -17,5 +22,5 @@ defineProps<{
     provider: string;
 }>();
 
-const { get } = useSettings()
+const { get } = useSettings();
 </script>

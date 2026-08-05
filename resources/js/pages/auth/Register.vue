@@ -29,7 +29,6 @@ const form = useForm({
 </script>
 
 <template>
-
     <Head :title="$t('auth.register.page_title')" />
 
     <OAuthButtons />
@@ -40,44 +39,88 @@ const form = useForm({
                 <Separator class="w-full" />
             </div>
             <div class="relative flex justify-center text-xs uppercase">
-                <span class="bg-background px-2 text-muted-foreground">{{ $t('auth.login.or') }}</span>
+                <span class="bg-background px-2 text-muted-foreground">{{
+                    $t('auth.login.or')
+                }}</span>
             </div>
         </div>
     </div>
 
-    <Form :data="form" :reset-on-success="['password', 'password_confirmation']"
-        v-slot="{ errors, processing }" class="flex flex-col gap-6">
+    <Form
+        :data="form"
+        :reset-on-success="['password', 'password_confirmation']"
+        v-slot="{ errors, processing }"
+        class="flex flex-col gap-6"
+    >
         <div class="grid gap-6">
             <div class="grid gap-2">
                 <Label for="name">{{ $t('auth.register.name_label') }}</Label>
-                <Input id="name" type="text" required autofocus :tabindex="1" autocomplete="name" name="name"
-                    :placeholder="$t('auth.register.name_placeholder')" />
+                <Input
+                    id="name"
+                    type="text"
+                    required
+                    autofocus
+                    :tabindex="1"
+                    autocomplete="name"
+                    name="name"
+                    :placeholder="$t('auth.register.name_placeholder')"
+                />
                 <InputError :message="errors.name" />
             </div>
 
             <div class="grid gap-2">
                 <Label for="email">{{ $t('auth.register.email_label') }}</Label>
-                <Input id="email" type="email" required :tabindex="2" autocomplete="email" name="email"
-                    :placeholder="$t('auth.register.email_placeholder')" />
+                <Input
+                    id="email"
+                    type="email"
+                    required
+                    :tabindex="2"
+                    autocomplete="email"
+                    name="email"
+                    :placeholder="$t('auth.register.email_placeholder')"
+                />
                 <InputError :message="errors.email" />
             </div>
 
             <div class="grid gap-2">
-                <Label for="password">{{ $t('auth.register.password_label') }}</Label>
-                <PasswordInput id="password" required :tabindex="3" autocomplete="new-password" name="password"
-                    :placeholder="$t('auth.register.password_placeholder')" />
+                <Label for="password">{{
+                    $t('auth.register.password_label')
+                }}</Label>
+                <PasswordInput
+                    id="password"
+                    required
+                    :tabindex="3"
+                    autocomplete="new-password"
+                    name="password"
+                    :placeholder="$t('auth.register.password_placeholder')"
+                />
                 <InputError :message="errors.password" />
             </div>
 
             <div class="grid gap-2">
-                <Label for="password_confirmation">{{ $t('auth.register.password_confirmation_label') }}</Label>
-                <PasswordInput id="password_confirmation" required :tabindex="4" autocomplete="new-password"
-                    name="password_confirmation" :placeholder="$t('auth.register.password_confirmation_placeholder')" />
+                <Label for="password_confirmation">{{
+                    $t('auth.register.password_confirmation_label')
+                }}</Label>
+                <PasswordInput
+                    id="password_confirmation"
+                    required
+                    :tabindex="4"
+                    autocomplete="new-password"
+                    name="password_confirmation"
+                    :placeholder="
+                        $t('auth.register.password_confirmation_placeholder')
+                    "
+                />
                 <InputError :message="errors.password_confirmation" />
             </div>
 
-            <Button type="submit" class="mt-2 w-full" tabindex="5" :disabled="processing"
-                data-test="register-user-button">
+            <Button
+                type="submit"
+                class="mt-2 w-full"
+                tabindex="5"
+                :disabled="processing"
+                data-test="register-user-button"
+            >
                 <Spinner v-if="processing" />
                 {{ $t('auth.register.submit') }}
             </Button>
@@ -85,8 +128,12 @@ const form = useForm({
 
         <div class="text-center text-sm text-muted-foreground">
             {{ $t('auth.register.have_account') }}
-            <TextLink :href="login()" class="underline underline-offset-4" :tabindex="6">{{ $t('auth.register.log_in')
-                }}</TextLink>
+            <TextLink
+                :href="login()"
+                class="underline underline-offset-4"
+                :tabindex="6"
+                >{{ $t('auth.register.log_in') }}</TextLink
+            >
         </div>
     </Form>
 </template>

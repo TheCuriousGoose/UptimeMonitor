@@ -91,7 +91,7 @@
     </div>
 
     <Dialog v-model:open="formOpen">
-        <DialogScrollContent class="sm:max-w-lg">
+        <DialogScrollContent class="sm:max-w-2xl">
             <DialogHeader>
                 <DialogTitle>
                     {{
@@ -102,106 +102,149 @@
                 </DialogTitle>
             </DialogHeader>
 
-            <div class="space-y-4 py-1">
-                <div class="grid gap-1.5">
-                    <Label for="page-title">{{
-                        $t('status_pages.form.title_field.title')
-                    }}</Label>
-                    <Input
-                        id="page-title"
-                        v-model="form.title"
-                        :placeholder="
-                            $t('status_pages.form.title_field.placeholder')
-                        "
-                    />
-                    <InputError :message="form.errors.title" />
-                </div>
+            <Tabs v-model="tab" class="py-1">
+                <TabsList class="w-full">
+                    <TabsTrigger value="general">{{
+                        $t('status_pages.form.tabs.general')
+                    }}</TabsTrigger>
+                    <TabsTrigger value="branding">{{
+                        $t('status_pages.form.tabs.branding')
+                    }}</TabsTrigger>
+                    <TabsTrigger value="layout">{{
+                        $t('status_pages.form.tabs.layout')
+                    }}</TabsTrigger>
+                </TabsList>
 
-                <div class="grid gap-1.5">
-                    <Label for="page-slug">{{
-                        $t('status_pages.form.slug.title')
-                    }}</Label>
-                    <Input
-                        id="page-slug"
-                        v-model="form.slug"
-                        :placeholder="$t('status_pages.form.slug.placeholder')"
-                    />
-                    <p class="text-xs text-muted-foreground">
-                        {{ $t('status_pages.form.slug.description') }}
-                    </p>
-                    <InputError :message="form.errors.slug" />
-                </div>
-
-                <div class="grid gap-1.5">
-                    <Label for="page-description">{{
-                        $t('status_pages.form.description.title')
-                    }}</Label>
-                    <Input
-                        id="page-description"
-                        v-model="form.description"
-                        :placeholder="
-                            $t('status_pages.form.description.placeholder')
-                        "
-                    />
-                    <InputError :message="form.errors.description" />
-                </div>
-
-                <div class="grid gap-2">
-                    <Label>{{ $t('status_pages.form.monitors.title') }}</Label>
-                    <p class="text-xs text-muted-foreground">
-                        {{ $t('status_pages.form.monitors.description') }}
-                    </p>
-                    <p
-                        v-if="monitors.length === 0"
-                        class="text-sm text-muted-foreground"
-                    >
-                        {{ $t('status_pages.form.monitors.empty') }}
-                    </p>
-                    <div v-else class="max-h-60 space-y-2 overflow-y-auto pr-1">
-                        <label
-                            v-for="monitor in monitors"
-                            :key="monitor.uuid"
-                            class="flex cursor-pointer items-center gap-3 rounded-sm border p-2.5 transition-colors hover:bg-muted/40"
-                        >
-                            <Checkbox
-                                :model-value="
-                                    form.monitors.includes(monitor.uuid)
-                                "
-                                @update:model-value="
-                                    toggleMonitor(monitor.uuid)
-                                "
-                            />
-                            <span class="min-w-0">
-                                <span
-                                    class="block truncate text-sm font-medium"
-                                    >{{ monitor.name }}</span
-                                >
-                                <span
-                                    class="block truncate text-xs text-muted-foreground"
-                                    >{{ monitor.url }}</span
-                                >
-                            </span>
-                        </label>
+                <TabsContent value="general" class="space-y-4">
+                    <div class="grid gap-1.5">
+                        <Label for="page-title">{{
+                            $t('status_pages.form.title_field.title')
+                        }}</Label>
+                        <Input
+                            id="page-title"
+                            v-model="form.title"
+                            :placeholder="
+                                $t('status_pages.form.title_field.placeholder')
+                            "
+                        />
+                        <InputError :message="form.errors.title" />
                     </div>
-                    <InputError :message="form.errors.monitors" />
-                </div>
 
-                <div
-                    class="flex items-center justify-between gap-3 rounded-sm border p-3"
-                >
-                    <div>
-                        <p class="text-sm font-medium">
-                            {{ $t('status_pages.form.is_published.title') }}
-                        </p>
+                    <div class="grid gap-1.5">
+                        <Label for="page-slug">{{
+                            $t('status_pages.form.slug.title')
+                        }}</Label>
+                        <Input
+                            id="page-slug"
+                            v-model="form.slug"
+                            :placeholder="
+                                $t('status_pages.form.slug.placeholder')
+                            "
+                        />
                         <p class="text-xs text-muted-foreground">
-                            {{
-                                $t('status_pages.form.is_published.description')
-                            }}
+                            {{ $t('status_pages.form.slug.description') }}
                         </p>
+                        <InputError :message="form.errors.slug" />
                     </div>
-                    <Switch v-model:checked="form.is_published" />
-                </div>
-            </div>
+
+                    <div class="grid gap-1.5">
+                        <Label for="page-description">{{
+                            $t('status_pages.form.description.title')
+                        }}</Label>
+                        <Input
+                            id="page-description"
+                            v-model="form.description"
+                            :placeholder="
+                                $t('status_pages.form.description.placeholder')
+                            "
+                        />
+                        <InputError :message="form.errors.description" />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label>{{
+                            $t('status_pages.form.monitors.title')
+                        }}</Label>
+                        <p class="text-xs text-muted-foreground">
+                            {{ $t('status_pages.form.monitors.description') }}
+                        </p>
+                        <p
+                            v-if="monitors.length === 0"
+                            class="text-sm text-muted-foreground"
+                        >
+                            {{ $t('status_pages.form.monitors.empty') }}
+                        </p>
+                        <div
+                            v-else
+                            class="max-h-60 space-y-2 overflow-y-auto pr-1"
+                        >
+                            <label
+                                v-for="monitor in monitors"
+                                :key="monitor.uuid"
+                                class="flex cursor-pointer items-center gap-3 rounded-sm border p-2.5 transition-colors hover:bg-muted/40"
+                            >
+                                <Checkbox
+                                    :model-value="
+                                        form.monitors.includes(monitor.uuid)
+                                    "
+                                    @update:model-value="
+                                        toggleMonitor(monitor.uuid)
+                                    "
+                                />
+                                <span class="min-w-0">
+                                    <span
+                                        class="block truncate text-sm font-medium"
+                                        >{{ monitor.name }}</span
+                                    >
+                                    <span
+                                        class="block truncate text-xs text-muted-foreground"
+                                        >{{ monitor.url }}</span
+                                    >
+                                </span>
+                            </label>
+                        </div>
+                        <InputError :message="form.errors.monitors" />
+                    </div>
+
+                    <div
+                        class="flex items-center justify-between gap-3 rounded-sm border p-3"
+                    >
+                        <div>
+                            <p class="text-sm font-medium">
+                                {{ $t('status_pages.form.is_published.title') }}
+                            </p>
+                            <p class="text-xs text-muted-foreground">
+                                {{
+                                    $t(
+                                        'status_pages.form.is_published.description',
+                                    )
+                                }}
+                            </p>
+                        </div>
+                        <Switch v-model:checked="form.is_published" />
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="branding">
+                    <ThemeEditor
+                        v-model:theme="form.theme"
+                        section="branding"
+                        :errors="form.errors"
+                        :title="form.title"
+                        @reset="resetTheme"
+                    />
+                </TabsContent>
+
+                <TabsContent value="layout">
+                    <ThemeEditor
+                        v-model:theme="form.theme"
+                        section="layout"
+                        :errors="form.errors"
+                        :title="form.title"
+                        @reset="resetTheme"
+                    />
+                </TabsContent>
+            </Tabs>
 
             <DialogFooter>
                 <Button variant="outline" @click="formOpen = false">{{
@@ -240,6 +283,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import InputError from '@/components/InputError.vue';
 import PageHeader from '@/components/PageHeader.vue';
+import ThemeEditor from '@/components/status-pages/ThemeEditor.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -261,9 +305,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { trans } from '@/lib/i18n';
+import { THEME_DEFAULTS } from '@/lib/statusPageTheme';
 import * as statusPagesRoute from '@/routes/status-pages';
-import type { Monitor, StatusPage } from '@/types/monitors';
+import type { Monitor, StatusPage, StatusPageTheme } from '@/types/monitors';
 
 defineProps<{
     pages: StatusPage[];
@@ -274,6 +320,7 @@ const formOpen = ref(false);
 const editing = ref<StatusPage | null>(null);
 const confirmingDelete = ref(false);
 const pendingDelete = ref<StatusPage | null>(null);
+const tab = ref('general');
 
 const form = useForm<{
     title: string;
@@ -281,12 +328,14 @@ const form = useForm<{
     description: string;
     is_published: boolean;
     monitors: string[];
+    theme: StatusPageTheme;
 }>({
     title: '',
     slug: '',
     description: '',
     is_published: true,
     monitors: [],
+    theme: { ...THEME_DEFAULTS },
 });
 
 function openCreate() {
@@ -297,6 +346,8 @@ function openCreate() {
     form.description = '';
     form.is_published = true;
     form.monitors = [];
+    resetTheme();
+    tab.value = 'general';
     formOpen.value = true;
 }
 
@@ -308,7 +359,40 @@ function openEdit(page: StatusPage) {
     form.description = page.description ?? '';
     form.is_published = page.is_published;
     form.monitors = (page.monitors ?? []).map((monitor) => monitor.uuid);
+    // The resource always sends a complete theme, but a page saved before
+    // theming existed could still be missing keys if the payload is cached.
+    form.theme = {
+        ...THEME_DEFAULTS,
+        ...page.theme,
+        links: (page.theme?.links ?? []).map((link) => ({ ...link })),
+    };
+    tab.value = 'general';
     formOpen.value = true;
+}
+
+function resetTheme() {
+    form.theme = { ...THEME_DEFAULTS, links: [] };
+}
+
+const LAYOUT_KEYS = [
+    'font_family',
+    'font_url',
+    'radius',
+    'width',
+    'footer_text',
+    'links',
+];
+
+function tabFor(key: string): string {
+    if (!key.startsWith('theme.')) {
+        return 'general';
+    }
+
+    const field = key.slice('theme.'.length);
+
+    return LAYOUT_KEYS.some((name) => field.startsWith(name))
+        ? 'layout'
+        : 'branding';
 }
 
 function toggleMonitor(uuid: string) {
@@ -322,6 +406,11 @@ function submit() {
         preserveScroll: true,
         onSuccess: () => {
             formOpen.value = false;
+        },
+        // Theme fields live behind their own tabs, so an error there would
+        // otherwise be reported on a panel nobody is looking at.
+        onError: (errors: Record<string, string>) => {
+            tab.value = tabFor(Object.keys(errors)[0] ?? '');
         },
     };
 

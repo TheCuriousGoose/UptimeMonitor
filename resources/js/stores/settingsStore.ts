@@ -20,8 +20,8 @@ export const useSettingsStore = defineStore('settings', () => {
             const setting = section.find((s) => s.key === key);
 
             if (setting) {
-return setting.value;
-}
+                return setting.value;
+            }
         }
 
         return defaultValue;
