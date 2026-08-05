@@ -14,7 +14,7 @@ type Props = {
 
 withDefaults(defineProps<Props>(), {
     breadcrumbs: () => [],
-    customPadding: 'p-4'
+    customPadding: 'p-4',
 });
 </script>
 

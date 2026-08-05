@@ -6,6 +6,7 @@ return [
     'close' => 'Close',
     'confirm' => 'Confirm',
     'delete' => 'Delete',
+    'clear' => 'Clear',
     'copied' => 'Link copied',
     'tagline' => 'Uptime monitoring',
 

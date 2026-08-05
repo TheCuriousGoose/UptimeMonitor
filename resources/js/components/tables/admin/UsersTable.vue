@@ -18,6 +18,12 @@ const columns = computed(() => createColumns(props.roles));
 </script>
 
 <template>
-    <DataTable :columns="columns" :pagination="users" table-key="users" :row-id="(row) => String(row.id)"
-        empty-text="No users found." item-label="Users" />
+    <DataTable
+        :columns="columns"
+        :pagination="users"
+        table-key="users"
+        :row-id="(row) => String(row.id)"
+        empty-text="No users found."
+        item-label="Users"
+    />
 </template>

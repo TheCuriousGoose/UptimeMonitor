@@ -27,10 +27,9 @@ function normalizePlaceholders(value: unknown): unknown {
     return value;
 }
 
-const modules = import.meta.glob<LocaleModule>(
-    '../../../lang/*.json',
-    { eager: true },
-);
+const modules = import.meta.glob<LocaleModule>('../../../lang/*.json', {
+    eager: true,
+});
 const loaders = import.meta.glob<LocaleModule>('../../../lang/*.json');
 
 const messages: Record<string, LocaleMessages> = Object.fromEntries(
@@ -63,13 +62,18 @@ const loadLocale = async (locale: string): Promise<void> => {
         return;
     }
 
-    const messages = normalizePlaceholders((await loader()).default) as LocaleMessages;
+    const messages = normalizePlaceholders(
+        (await loader()).default,
+    ) as LocaleMessages;
 
     global.setLocaleMessage(locale, messages);
 };
 
 /** Translate a key. Safe to call from non-component modules. */
-export const t = (key: string, named?: Record<string, string | number>): string => global.t(key, named);
+export const t = (
+    key: string,
+    named?: Record<string, string | number>,
+): string => global.t(key, named);
 export const trans = t;
 
 /**
@@ -92,7 +96,10 @@ export const setLocale = (locale: string): void => {
 };
 
 if (import.meta.hot) {
-    import.meta.hot.on('lang:updated', async ({ locale }: { locale: string }) => {
-        await loadLocale(locale);
-    });
+    import.meta.hot.on(
+        'lang:updated',
+        async ({ locale }: { locale: string }) => {
+            await loadLocale(locale);
+        },
+    );
 }

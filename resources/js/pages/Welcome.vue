@@ -1,4 +1,3 @@
-
 <template>
     <Head title="Welcome">
         <link rel="preconnect" href="https://rsms.me/" />

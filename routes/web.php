@@ -12,7 +12,6 @@ Route::inertia('/', 'marketing/Home', [
 
 // Marketing pages — static copy, no controller state of their own.
 Route::inertia('features', 'marketing/Features')->name('features');
-Route::inertia('pricing', 'marketing/Pricing')->name('pricing');
 Route::inertia('about', 'marketing/About')->name('about');
 Route::inertia('contact', 'marketing/Contact')->name('contact');
 Route::inertia('roadmap', 'marketing/Roadmap')->name('roadmap');

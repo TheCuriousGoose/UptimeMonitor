@@ -8,7 +8,7 @@
             </h1>
             <p
                 v-if="entry.published_at"
-                class="mt-2 font-mono text-xs tabular-nums text-muted-foreground"
+                class="mt-2 font-mono text-xs text-muted-foreground tabular-nums"
             >
                 {{
                     $t('marketing.legal.updated', {

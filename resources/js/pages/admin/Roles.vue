@@ -32,15 +32,22 @@ setLayoutProps({
 
 const search = ref<string>('');
 
-watch(search, debounce((value: string) => {
-    const query = value.trim();
+watch(
+    search,
+    debounce((value: string) => {
+        const query = value.trim();
 
-    router.get(rolesRoute.index(), { search: query || undefined }, {
-        preserveState: true,
-        replace: true,
-        only: ['roles'],
-    });
-}, 300));
+        router.get(
+            rolesRoute.index(),
+            { search: query || undefined },
+            {
+                preserveState: true,
+                replace: true,
+                only: ['roles'],
+            },
+        );
+    }, 300),
+);
 
 // ---- Create ----
 const createOpen = ref(false);
@@ -48,13 +55,17 @@ const createName = ref('');
 const createPerms = ref<number[]>([]);
 
 function submitCreate() {
-    router.post(rolesRoute.store().url, { name: createName.value, permissions: createPerms.value }, {
-        onSuccess: () => {
-            createOpen.value = false;
-            createName.value = '';
-            createPerms.value = [];
+    router.post(
+        rolesRoute.store().url,
+        { name: createName.value, permissions: createPerms.value },
+        {
+            onSuccess: () => {
+                createOpen.value = false;
+                createName.value = '';
+                createPerms.value = [];
+            },
         },
-    });
+    );
 }
 </script>
 
@@ -73,7 +84,9 @@ function submitCreate() {
         <template #actions>
             <Dialog v-model:open="createOpen">
                 <DialogTrigger as-child>
-                    <Button size="sm"><PlusIcon class="size-4 mr-1.5" /> New Role</Button>
+                    <Button size="sm"
+                        ><PlusIcon class="mr-1.5 size-4" /> New Role</Button
+                    >
                 </DialogTrigger>
                 <DialogContent class="sm:max-w-xl">
                     <DialogHeader>
@@ -82,12 +95,19 @@ function submitCreate() {
                     <div class="space-y-4 py-2">
                         <div class="grid gap-1.5">
                             <Label for="create-name">Name</Label>
-                            <Input id="create-name" v-model="createName" placeholder="e.g. Editor" />
+                            <Input
+                                id="create-name"
+                                v-model="createName"
+                                placeholder="e.g. Editor"
+                            />
                         </div>
                         <div class="grid gap-2">
                             <Label>Permissions</Label>
                             <div class="max-h-96 overflow-y-auto pr-1">
-                                <RolePermissionPicker v-model="createPerms" :permissions="props.permissions" />
+                                <RolePermissionPicker
+                                    v-model="createPerms"
+                                    :permissions="props.permissions"
+                                />
                             </div>
                         </div>
                     </div>

@@ -39,7 +39,7 @@
                 </nav>
             </aside>
 
-            <article class="min-w-0 max-w-3xl">
+            <article class="max-w-3xl min-w-0">
                 <Link
                     :href="indexHref"
                     class="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-wide text-muted-foreground uppercase hover:text-foreground"
@@ -58,7 +58,7 @@
                         }}</Badge>
                         <span
                             v-if="entry.published_at"
-                            class="font-mono text-xs tabular-nums text-muted-foreground"
+                            class="font-mono text-xs text-muted-foreground tabular-nums"
                         >
                             {{ formatDateTime(entry.published_at) }}
                         </span>
@@ -68,10 +68,7 @@
                     >
                         {{ entry.title }}
                     </h1>
-                    <p
-                        v-if="entry.excerpt"
-                        class="mt-2 text-muted-foreground"
-                    >
+                    <p v-if="entry.excerpt" class="mt-2 text-muted-foreground">
                         {{ entry.excerpt }}
                     </p>
                 </header>

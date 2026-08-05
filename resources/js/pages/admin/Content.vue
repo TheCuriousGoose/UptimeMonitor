@@ -21,12 +21,16 @@
                     name="search"
                     type="search"
                     class="w-64"
-                    :placeholder="$t('content.table.filters.search.placeholder')"
+                    :placeholder="
+                        $t('content.table.filters.search.placeholder')
+                    "
                 />
                 <Select v-model="type">
                     <SelectTrigger class="w-48">
                         <SelectValue
-                            :placeholder="$t('content.table.filters.type.label')"
+                            :placeholder="
+                                $t('content.table.filters.type.label')
+                            "
                         />
                     </SelectTrigger>
                     <SelectContent>
@@ -71,7 +75,10 @@
                         <p
                             class="mt-1 truncate font-mono text-xs text-muted-foreground"
                         >
-                            {{ publicPath(entry) ?? `(${entry.type}/${entry.slug})` }}
+                            {{
+                                publicPath(entry) ??
+                                `(${entry.type}/${entry.slug})`
+                            }}
                         </p>
                         <p class="mt-1 text-xs text-muted-foreground">
                             {{ $t(`content.types.${entry.type}`) }}
@@ -192,7 +199,10 @@
                     <InputError :message="form.errors.version" />
                 </div>
 
-                <div v-if="form.type === 'doc'" class="grid gap-4 sm:grid-cols-2">
+                <div
+                    v-if="form.type === 'doc'"
+                    class="grid gap-4 sm:grid-cols-2"
+                >
                     <div class="grid gap-1.5">
                         <Label for="entry-category">{{
                             $t('content.form.category.title')
@@ -437,7 +447,11 @@ function statusOf(entry: ContentEntry): string {
 
 function statusVariant(entry: ContentEntry) {
     return (
-        { published: 'success', scheduled: 'default', draft: 'outline' } as const
+        {
+            published: 'success',
+            scheduled: 'default',
+            draft: 'outline',
+        } as const
     )[statusOf(entry) as 'published' | 'scheduled' | 'draft'];
 }
 
@@ -517,7 +531,9 @@ function destroy() {
 
 defineOptions({
     layout: {
-        breadcrumbs: [{ title: trans('content.heading'), href: content.index() }],
+        breadcrumbs: [
+            { title: trans('content.heading'), href: content.index() },
+        ],
     },
 });
 </script>

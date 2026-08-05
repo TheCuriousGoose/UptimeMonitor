@@ -111,6 +111,39 @@ class PublicStatusPageTest extends TestCase
             ->assertDontSee('Database credentials rejected');
     }
 
+    public function test_it_renders_the_owners_house_style(): void
+    {
+        StatusPage::factory()->themed()->create([
+            'user_id' => User::factory()->create()->id,
+            'slug' => 'acme',
+        ]);
+
+        $this->get(route('status.show', 'acme'))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('theme.brand_color', '#ff6600')
+                ->where('theme.radius', 12)
+                ->where('theme.logo_url', 'https://acme.test/logo.svg')
+                ->where('theme.links.0.label', 'Website')
+                // Built on the server so the first painted frame is already in
+                // the owner's colours rather than the app's defaults.
+                ->where('themeCss', fn (string $css) => str_contains($css, '--sp-bg:#101820'))
+            );
+    }
+
+    public function test_an_untouched_page_still_gets_a_complete_theme(): void
+    {
+        $this->page();
+
+        $this->get(route('status.show', 'acme'))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('theme.brand_color', '#4f46e5')
+                ->where('theme.links', [])
+                ->where('themeCss', fn (string $css) => str_contains($css, '.sp-theme{'))
+            );
+    }
+
     public function test_a_page_with_no_monitors_reports_pending(): void
     {
         $this->page();

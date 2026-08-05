@@ -30,7 +30,9 @@ const search = ref('');
 const groups = computed<PermissionGroup[]>(() => {
     const query = search.value.trim().toLowerCase();
     const filtered = query
-        ? props.permissions.filter((permission) => permission.name.toLowerCase().includes(query))
+        ? props.permissions.filter((permission) =>
+              permission.name.toLowerCase().includes(query),
+          )
         : props.permissions;
 
     const map = new Map<string, Permission[]>();
@@ -60,13 +62,18 @@ function isChecked(id: number) {
 }
 
 function toggle(id: number) {
-    emit('update:modelValue', isChecked(id)
-        ? props.modelValue.filter((value) => value !== id)
-        : [...props.modelValue, id]);
+    emit(
+        'update:modelValue',
+        isChecked(id)
+            ? props.modelValue.filter((value) => value !== id)
+            : [...props.modelValue, id],
+    );
 }
 
 function groupState(group: PermissionGroup): boolean | 'indeterminate' {
-    const checkedCount = group.permissions.filter((permission) => isChecked(permission.id)).length;
+    const checkedCount = group.permissions.filter((permission) =>
+        isChecked(permission.id),
+    ).length;
 
     if (checkedCount === 0) {
         return false;
@@ -78,9 +85,12 @@ function groupState(group: PermissionGroup): boolean | 'indeterminate' {
 function toggleGroup(group: PermissionGroup) {
     const ids = group.permissions.map((permission) => permission.id);
 
-    emit('update:modelValue', groupState(group) === true
-        ? props.modelValue.filter((value) => !ids.includes(value))
-        : [...new Set([...props.modelValue, ...ids])]);
+    emit(
+        'update:modelValue',
+        groupState(group) === true
+            ? props.modelValue.filter((value) => !ids.includes(value))
+            : [...new Set([...props.modelValue, ...ids])],
+    );
 }
 </script>
 
@@ -99,27 +109,43 @@ function toggleGroup(group: PermissionGroup) {
         </p>
 
         <div v-else class="grid gap-3 sm:grid-cols-2">
-            <div v-for="group in groups" :key="group.key" class="rounded-md border">
-                <div class="flex items-center gap-2 border-b bg-muted/40 px-3 py-2">
+            <div
+                v-for="group in groups"
+                :key="group.key"
+                class="rounded-md border"
+            >
+                <div
+                    class="flex items-center gap-2 border-b bg-muted/40 px-3 py-2"
+                >
                     <Checkbox
                         :id="`perm-group-${group.key}`"
                         :checked="groupState(group)"
                         :disabled="disabled"
                         @update:checked="toggleGroup(group)"
                     />
-                    <Label :for="`perm-group-${group.key}`" class="cursor-pointer text-sm font-semibold">
+                    <Label
+                        :for="`perm-group-${group.key}`"
+                        class="cursor-pointer text-sm font-semibold"
+                    >
                         {{ group.label }}
                     </Label>
                 </div>
                 <div class="grid gap-2 p-3">
-                    <div v-for="permission in group.permissions" :key="permission.id" class="flex items-center gap-2">
+                    <div
+                        v-for="permission in group.permissions"
+                        :key="permission.id"
+                        class="flex items-center gap-2"
+                    >
                         <Checkbox
                             :id="`perm-${permission.id}`"
                             :checked="isChecked(permission.id)"
                             :disabled="disabled"
                             @update:checked="toggle(permission.id)"
                         />
-                        <Label :for="`perm-${permission.id}`" class="cursor-pointer text-sm font-normal">
+                        <Label
+                            :for="`perm-${permission.id}`"
+                            class="cursor-pointer text-sm font-normal"
+                        >
                             {{ actionLabel(permission) }}
                         </Label>
                     </div>

@@ -17,7 +17,8 @@ export function groupByCategory(entries: ContentEntry[]): ContentGroup[] {
     const groups: ContentGroup[] = [];
 
     for (const entry of entries) {
-        const category = entry.category ?? trans('content.public.uncategorised');
+        const category =
+            entry.category ?? trans('content.public.uncategorised');
         const last = groups[groups.length - 1];
 
         if (last && last.category === category) {

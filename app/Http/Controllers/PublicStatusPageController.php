@@ -35,6 +35,8 @@ class PublicStatusPageController extends Controller
             'daily' => $stats->dailyUptime($monitor, 90),
         ])->values();
 
+        $theme = $page->resolvedTheme();
+
         return Inertia::render('status/Show', [
             'page' => [
                 'title' => $page->title,
@@ -43,6 +45,11 @@ class PublicStatusPageController extends Controller
             'monitors' => $monitors,
             'overall' => $this->overallStatus($monitors->pluck('status')->all()),
             'updatedAt' => now()->toIso8601String(),
+            'theme' => $theme->toArray(),
+            // Built here rather than in the browser so the page renders in the
+            // owner's colours on the server-rendered pass, with no flash of the
+            // default look while the client hydrates.
+            'themeCss' => $theme->css(),
         ]);
     }
 

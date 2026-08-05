@@ -22,7 +22,7 @@
             <!-- A retry countdown is only meaningful for a throttle. -->
             <p
                 v-if="retryAfter"
-                class="mt-4 font-mono text-sm tabular-nums text-muted-foreground"
+                class="mt-4 font-mono text-sm text-muted-foreground tabular-nums"
             >
                 {{ remaining }}s
             </p>

@@ -11,20 +11,27 @@
         </p>
 
         <ul v-else class="divide-y">
-            <li v-for="entry in entries" :key="entry.uuid" class="py-6 first:pt-0">
-                <Link :href="show({ segment: 'changelog', slug: entry.slug }).url" class="block group">
+            <li
+                v-for="entry in entries"
+                :key="entry.uuid"
+                class="py-6 first:pt-0"
+            >
+                <Link
+                    :href="show({ segment: 'changelog', slug: entry.slug }).url"
+                    class="group block"
+                >
                     <div class="flex flex-wrap items-center gap-2">
                         <Badge v-if="entry.version" variant="outline">{{
                             entry.version
                         }}</Badge>
                         <span
-                            class="font-mono text-xs tabular-nums text-muted-foreground"
+                            class="font-mono text-xs text-muted-foreground tabular-nums"
                         >
                             {{ formatDateTime(entry.published_at) }}
                         </span>
                     </div>
                     <h2
-                        class="mt-2 font-medium group-hover:underline underline-offset-4"
+                        class="mt-2 font-medium underline-offset-4 group-hover:underline"
                     >
                         {{ entry.title }}
                     </h2>

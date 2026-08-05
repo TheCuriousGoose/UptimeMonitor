@@ -18,12 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Role } from '@/types/admin';
 import type { User } from '@/types/auth';
 
@@ -50,7 +45,9 @@ const filteredRoles = computed(() => {
         return props.allRoles ?? [];
     }
 
-    return (props.allRoles ?? []).filter((role) => role.name.toLowerCase().includes(query));
+    return (props.allRoles ?? []).filter((role) =>
+        role.name.toLowerCase().includes(query),
+    );
 });
 
 function toggleRole(id: number) {
@@ -64,15 +61,19 @@ function toggleRole(id: number) {
 }
 
 function submitEdit() {
-    router.put(UserController.update(props.user).url, {
-        name: editName.value,
-        email: editEmail.value,
-        roles: editRoles.value,
-    }, {
-        onSuccess: () => {
-            editOpen.value = false;
+    router.put(
+        UserController.update(props.user).url,
+        {
+            name: editName.value,
+            email: editEmail.value,
+            roles: editRoles.value,
         },
-    });
+        {
+            onSuccess: () => {
+                editOpen.value = false;
+            },
+        },
+    );
 }
 
 // ---- Password ----
@@ -93,12 +94,16 @@ const sendingResetLink = ref(false);
 function sendResetLink() {
     sendingResetLink.value = true;
 
-    router.post(UserController.sendPasswordResetLink(props.user).url, {}, {
-        preserveScroll: true,
-        onFinish: () => {
-            sendingResetLink.value = false;
+    router.post(
+        UserController.sendPasswordResetLink(props.user).url,
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                sendingResetLink.value = false;
+            },
         },
-    });
+    );
 }
 
 function openEdit(user: UserWithRoles) {
@@ -139,21 +144,36 @@ function openEdit(user: UserWithRoles) {
                 <TabsContent value="details" class="space-y-4 py-1">
                     <div class="grid gap-1.5">
                         <Label :for="`user-${user.id}-name`">Name</Label>
-                        <Input :id="`user-${user.id}-name`" v-model="editName" />
+                        <Input
+                            :id="`user-${user.id}-name`"
+                            v-model="editName"
+                        />
                     </div>
                     <div class="grid gap-1.5">
                         <Label :for="`user-${user.id}-email`">Email</Label>
-                        <Input :id="`user-${user.id}-email`" v-model="editEmail" type="email" />
+                        <Input
+                            :id="`user-${user.id}-email`"
+                            v-model="editEmail"
+                            type="email"
+                        />
                     </div>
                     <div class="flex flex-wrap gap-2 pt-1">
-                        <span class="text-xs text-muted-foreground">Current roles:</span>
+                        <span class="text-xs text-muted-foreground"
+                            >Current roles:</span
+                        >
                         <template v-if="user.roles.length === 0">
-                            <span class="text-xs text-muted-foreground">No roles assigned</span>
+                            <span class="text-xs text-muted-foreground"
+                                >No roles assigned</span
+                            >
                         </template>
                         <Badge
                             v-for="role in user.roles"
                             :key="role.id"
-                            :variant="role.name === 'Super Admin' ? 'default' : 'secondary'"
+                            :variant="
+                                role.name === 'Super Admin'
+                                    ? 'default'
+                                    : 'secondary'
+                            "
                             class="text-xs"
                         >
                             {{ role.name }}
@@ -169,11 +189,17 @@ function openEdit(user: UserWithRoles) {
                         class="sm:max-w-xs"
                     />
 
-                    <p v-if="!filteredRoles.length" class="text-sm text-muted-foreground">
+                    <p
+                        v-if="!filteredRoles.length"
+                        class="text-sm text-muted-foreground"
+                    >
                         No roles match "{{ roleSearch }}".
                     </p>
 
-                    <div v-else class="grid gap-2 max-h-72 overflow-y-auto pr-1">
+                    <div
+                        v-else
+                        class="grid max-h-72 gap-2 overflow-y-auto pr-1"
+                    >
                         <div
                             v-for="role in filteredRoles"
                             :key="role.id"
@@ -186,7 +212,7 @@ function openEdit(user: UserWithRoles) {
                             />
                             <Label
                                 :for="`user-${user.id}-role-${role.id}`"
-                                class="text-sm font-normal cursor-pointer"
+                                class="cursor-pointer text-sm font-normal"
                             >
                                 {{ role.name }}
                             </Label>
@@ -197,30 +223,47 @@ function openEdit(user: UserWithRoles) {
                 <TabsContent value="password" class="space-y-6 py-1">
                     <div class="space-y-3">
                         <div>
-                            <h4 class="text-sm font-semibold">Set new password</h4>
+                            <h4 class="text-sm font-semibold">
+                                Set new password
+                            </h4>
                             <p class="text-xs text-muted-foreground">
                                 Directly assign a new password for this user.
                             </p>
                         </div>
                         <div class="grid gap-1.5">
-                            <Label :for="`user-${user.id}-password`">New password</Label>
+                            <Label :for="`user-${user.id}-password`"
+                                >New password</Label
+                            >
                             <PasswordInput
                                 :id="`user-${user.id}-password`"
                                 v-model="passwordForm.password"
                                 autocomplete="new-password"
                             />
-                            <InputError :message="passwordForm.errors.password" />
+                            <InputError
+                                :message="passwordForm.errors.password"
+                            />
                         </div>
                         <div class="grid gap-1.5">
-                            <Label :for="`user-${user.id}-password-confirmation`">Confirm password</Label>
+                            <Label
+                                :for="`user-${user.id}-password-confirmation`"
+                                >Confirm password</Label
+                            >
                             <PasswordInput
                                 :id="`user-${user.id}-password-confirmation`"
                                 v-model="passwordForm.password_confirmation"
                                 autocomplete="new-password"
                             />
-                            <InputError :message="passwordForm.errors.password_confirmation" />
+                            <InputError
+                                :message="
+                                    passwordForm.errors.password_confirmation
+                                "
+                            />
                         </div>
-                        <Button size="sm" :disabled="passwordForm.processing" @click="submitPasswordReset">
+                        <Button
+                            size="sm"
+                            :disabled="passwordForm.processing"
+                            @click="submitPasswordReset"
+                        >
                             Set Password
                         </Button>
                     </div>
@@ -229,12 +272,20 @@ function openEdit(user: UserWithRoles) {
 
                     <div class="space-y-3">
                         <div>
-                            <h4 class="text-sm font-semibold">Email reset link</h4>
+                            <h4 class="text-sm font-semibold">
+                                Email reset link
+                            </h4>
                             <p class="text-xs text-muted-foreground">
-                                Send {{ user.email }} an email with a link to reset their password themselves.
+                                Send {{ user.email }} an email with a link to
+                                reset their password themselves.
                             </p>
                         </div>
-                        <Button size="sm" variant="outline" :disabled="sendingResetLink" @click="sendResetLink">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            :disabled="sendingResetLink"
+                            @click="sendResetLink"
+                        >
                             Send Reset Link
                         </Button>
                     </div>
@@ -242,7 +293,9 @@ function openEdit(user: UserWithRoles) {
             </Tabs>
 
             <DialogFooter v-if="activeTab !== 'password'">
-                <Button variant="ghost" @click="editOpen = false">Cancel</Button>
+                <Button variant="ghost" @click="editOpen = false"
+                    >Cancel</Button
+                >
                 <Button @click="submitEdit">Save Changes</Button>
             </DialogFooter>
         </DialogContent>

@@ -22,7 +22,9 @@
                 class="mb-4 flex flex-col gap-2 rounded-sm border border-primary/30 bg-primary/5 p-4"
             >
                 <p class="text-sm font-medium">
-                    {{ $t('api_tokens.reveal.created', { name: revealed.name }) }}
+                    {{
+                        $t('api_tokens.reveal.created', { name: revealed.name })
+                    }}
                 </p>
                 <p class="text-xs text-muted-foreground">
                     {{ $t('api_tokens.reveal.copy_now') }}
@@ -275,8 +277,9 @@ type RevealedToken = { name: string; token: string };
 // to explicitly clear it.
 const revealed = computed(
     () =>
-        (usePage().flash as Record<string, unknown>)
-            ?.apiToken as RevealedToken | undefined,
+        (usePage().flash as Record<string, unknown>)?.apiToken as
+            | RevealedToken
+            | undefined,
 );
 
 const { copy, copied } = useClipboard();

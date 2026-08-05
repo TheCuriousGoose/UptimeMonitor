@@ -6,6 +6,8 @@ use App\Content\MarkdownRenderer;
 use App\Enums\ContentType;
 use App\Models\ContentEntry;
 use App\Models\User;
+use Database\Seeders\ContentSeeder;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
@@ -18,7 +20,7 @@ class ContentTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed();
+        $this->seed(RolesAndPermissionsSeeder::class);
     }
 
     private function admin(): User
@@ -103,7 +105,7 @@ class ContentTest extends TestCase
 
     public function test_privacy_and_terms_render_from_content_entries(): void
     {
-        $this->seed(\Database\Seeders\ContentSeeder::class);
+        $this->seed(ContentSeeder::class);
 
         foreach (['privacy', 'terms'] as $slug) {
             $this->get(route($slug))
