@@ -434,7 +434,7 @@
                     </p>
                     <pre
                         class="mt-2 overflow-x-auto rounded-sm border bg-muted/40 p-4 font-mono text-xs leading-relaxed"
-                    ><code>{{ $t('marketing.home.transparency.api.sample') }}</code></pre>
+                    ><code>{{ apiSample }}</code></pre>
 
                     <p
                         class="mt-6 font-mono text-[10px] tracking-[0.12em] text-muted-foreground uppercase"
@@ -621,9 +621,31 @@ const statusPoints = computed(() =>
     tList('marketing.home.transparency.status.points'),
 );
 
-const abilities = computed(() =>
-    tList('marketing.home.transparency.api.abilities'),
-);
+/**
+ * Literal API syntax, deliberately not translated. It also must not go
+ * through vue-i18n at all: the compiler reads `{` as the start of a
+ * placeholder, and the `:placeholder` normalisation would turn `monitors:read`
+ * into `monitors{read}` — which renders as the bare word "monitors".
+ */
+const apiSample = `curl -X POST https://vigil.example.com/api/v1/monitors \\
+  -H "Authorization: Bearer $VIGIL_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "name": "Checkout",
+    "type": "keyword",
+    "url": "https://example.com/checkout",
+    "interval_seconds": 60,
+    "timeout": 10,
+    "confirmation_threshold": 3,
+    "config": { "keyword": "Place order" }
+  }'`;
+
+const abilities = [
+    'monitors:read',
+    'monitors:write',
+    'incidents:read',
+    'checks:trigger',
+];
 
 /**
  * A fixed 90-day pattern for the illustrative uptime bar. Hard-coded rather

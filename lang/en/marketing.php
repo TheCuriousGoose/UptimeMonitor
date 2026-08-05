@@ -188,15 +188,12 @@ return [
             'api' => [
                 'title' => 'Versioned REST API',
                 'body' => 'Create monitors from Terraform, pause them during a deploy, or pull incident history into your own reporting. Keys are scoped, and a key can never do more than the person who created it.',
+                // The request body and the scope names themselves are literal
+                // API syntax, not copy: they live in the component so they are
+                // never translated, and never reach the message compiler —
+                // which reads `{` as a placeholder and `:read` as one too.
                 'sample_label' => 'Create a monitor from CI',
-                'sample' => "curl -X POST https://vigil.example.com/api/v1/monitors \\\n  -H \"Authorization: Bearer \$VIGIL_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"name\": \"Checkout\",\n    \"type\": \"keyword\",\n    \"url\": \"https://example.com/checkout\",\n    \"interval_seconds\": 60,\n    \"timeout\": 10,\n    \"confirmation_threshold\": 3,\n    \"config\": { \"keyword\": \"Place order\" }\n  }'",
                 'abilities_label' => 'Scopes',
-                'abilities' => [
-                    'monitors:read',
-                    'monitors:write',
-                    'incidents:read',
-                    'checks:trigger',
-                ],
             ],
         ],
 
