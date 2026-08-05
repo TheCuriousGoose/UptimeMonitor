@@ -132,9 +132,13 @@
     </div>
 
     <Dialog v-model:open="formOpen">
-        <DialogContent class="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent class="sm:max-w-3xl">
             <DialogHeader>
-                <DialogTitle>
+                <DialogTitle class="flex items-center gap-2">
+                    <component
+                        :is="providerIcons[form.type]"
+                        class="size-4 shrink-0 text-muted-foreground"
+                    />
                     {{
                         editing
                             ? $t('integrations.form.edit')
@@ -146,183 +150,339 @@
                 </DialogDescription>
             </DialogHeader>
 
-            <div class="space-y-4 py-1">
-                <div class="grid gap-1.5">
-                    <Label for="integration-name">{{
-                        $t('integrations.form.name.title')
-                    }}</Label>
-                    <Input
-                        id="integration-name"
-                        v-model="form.name"
-                        :placeholder="$t('integrations.form.name.placeholder')"
-                    />
-                    <InputError :message="form.errors.name" />
-                </div>
+            <Tabs v-model="tab">
+                <TabsList>
+                    <TabsTrigger v-for="name in tabs" :key="name" :value="name">
+                        {{ $t(`integrations.form.tabs.${name}`) }}
+                        <span
+                            v-if="tabHasError[name]"
+                            class="size-1.5 rounded-full bg-destructive"
+                        />
+                    </TabsTrigger>
+                </TabsList>
 
-                <div class="grid gap-1.5">
-                    <Label for="integration-secret">{{
-                        $t(`integrations.providers.${form.type}.field`)
-                    }}</Label>
-                    <Input
-                        id="integration-secret"
-                        v-model="form.secret"
-                        :type="inputType"
-                        autocomplete="off"
-                        :placeholder="
-                            $t(
-                                `integrations.providers.${form.type}.placeholder`,
-                            )
-                        "
-                    />
-                    <p class="text-xs text-muted-foreground">
-                        {{ $t(`integrations.providers.${form.type}.hint`) }}
-                    </p>
-                    <InputError :message="secretError" />
-                </div>
+                <div class="max-h-[55vh] overflow-y-auto pt-4 pr-0.5">
+                    <TabsContent value="setup" class="space-y-4">
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div class="grid gap-1.5">
+                                <Label for="integration-name">{{
+                                    $t('integrations.form.name.title')
+                                }}</Label>
+                                <Input
+                                    id="integration-name"
+                                    v-model="form.name"
+                                    :placeholder="
+                                        $t('integrations.form.name.placeholder')
+                                    "
+                                />
+                                <InputError :message="form.errors.name" />
+                            </div>
 
-                <!-- Alert scope -->
-                <div class="grid gap-2 rounded-sm border p-3">
-                    <div>
-                        <p class="text-sm font-medium">
-                            {{ $t('integrations.form.scope.title') }}
-                        </p>
+                            <div class="grid gap-1.5">
+                                <Label for="integration-secret">{{
+                                    $t(
+                                        `integrations.providers.${form.type}.field`,
+                                    )
+                                }}</Label>
+                                <Input
+                                    id="integration-secret"
+                                    v-model="form.secret"
+                                    :type="inputType"
+                                    autocomplete="off"
+                                    :placeholder="
+                                        $t(
+                                            `integrations.providers.${form.type}.placeholder`,
+                                        )
+                                    "
+                                />
+                                <p class="text-xs text-muted-foreground">
+                                    {{
+                                        $t(
+                                            `integrations.providers.${form.type}.hint`,
+                                        )
+                                    }}
+                                </p>
+                                <InputError :message="secretError" />
+                            </div>
+                        </div>
+
+                        <div
+                            class="flex items-center justify-between gap-3 rounded-sm border p-3"
+                        >
+                            <div>
+                                <p class="text-sm font-medium">
+                                    {{
+                                        $t('integrations.form.is_active.title')
+                                    }}
+                                </p>
+                                <p class="text-xs text-muted-foreground">
+                                    {{
+                                        $t(
+                                            'integrations.form.is_active.description',
+                                        )
+                                    }}
+                                </p>
+                            </div>
+                            <Switch v-model:checked="form.is_active" />
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="scope" class="space-y-3">
                         <p class="text-xs text-muted-foreground">
                             {{ $t('integrations.form.scope.description') }}
                         </p>
-                    </div>
 
-                    <label
-                        v-for="scope in scopes"
-                        :key="scope"
-                        class="flex cursor-pointer items-start gap-2.5"
-                    >
-                        <input
-                            v-model="form.alert_scope"
-                            type="radio"
-                            :value="scope"
-                            class="mt-1 accent-primary"
-                        />
-                        <span>
-                            <span class="block text-sm">{{
-                                $t(`integrations.form.scope.${scope}`)
-                            }}</span>
-                            <span class="block text-xs text-muted-foreground">{{
-                                $t(`integrations.form.scope.${scope}_hint`)
-                            }}</span>
-                        </span>
-                    </label>
-
-                    <div v-if="form.alert_scope === 'selected'" class="mt-1">
-                        <p
-                            v-if="monitors.length === 0"
-                            class="text-xs text-muted-foreground"
-                        >
-                            {{ $t('integrations.form.scope.empty') }}
-                        </p>
-                        <div
-                            v-else
-                            class="max-h-48 divide-y overflow-y-auto rounded-sm border"
-                        >
+                        <div class="grid gap-2 sm:grid-cols-2">
                             <label
-                                v-for="monitor in monitors"
-                                :key="monitor.uuid"
-                                class="flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-muted/40"
+                                v-for="scope in scopes"
+                                :key="scope"
+                                class="flex cursor-pointer items-start gap-2.5 rounded-sm border p-3 transition-colors hover:bg-muted/40"
+                                :class="
+                                    form.alert_scope === scope
+                                        ? 'border-primary/50 bg-accent/40'
+                                        : ''
+                                "
                             >
-                                <Checkbox
-                                    :model-value="
-                                        form.monitors.includes(monitor.uuid)
-                                    "
-                                    @update:model-value="
-                                        toggleMonitor(monitor.uuid)
-                                    "
+                                <input
+                                    v-model="form.alert_scope"
+                                    type="radio"
+                                    :value="scope"
+                                    class="mt-0.5 accent-primary"
                                 />
-                                <span class="min-w-0">
+                                <span>
+                                    <span class="block text-sm">{{
+                                        $t(`integrations.form.scope.${scope}`)
+                                    }}</span>
                                     <span
-                                        class="block truncate text-sm font-medium"
-                                        >{{ monitor.name }}</span
-                                    >
-                                    <span
-                                        class="block truncate text-xs text-muted-foreground"
-                                        >{{ monitor.url }}</span
+                                        class="block text-xs text-muted-foreground"
+                                        >{{
+                                            $t(
+                                                `integrations.form.scope.${scope}_hint`,
+                                            )
+                                        }}</span
                                     >
                                 </span>
                             </label>
                         </div>
-                        <InputError :message="form.errors.monitors" />
-                    </div>
-                </div>
 
-                <!-- Custom message templates -->
-                <div class="grid gap-3 rounded-sm border p-3">
-                    <div>
-                        <p class="text-sm font-medium">
-                            {{ $t('integrations.form.templates.title') }}
-                        </p>
+                        <div v-if="form.alert_scope === 'selected'">
+                            <p
+                                v-if="monitors.length === 0"
+                                class="text-xs text-muted-foreground"
+                            >
+                                {{ $t('integrations.form.scope.empty') }}
+                            </p>
+                            <template v-else>
+                                <div
+                                    class="mb-2 flex items-center justify-between gap-2"
+                                >
+                                    <p class="text-xs text-muted-foreground">
+                                        {{
+                                            $t(
+                                                'integrations.attached',
+                                                {
+                                                    count: form.monitors.length,
+                                                },
+                                                form.monitors.length,
+                                            )
+                                        }}
+                                    </p>
+                                    <div class="flex gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            @click="selectAllMonitors"
+                                            >{{
+                                                $t(
+                                                    'integrations.form.scope.select_all',
+                                                )
+                                            }}</Button
+                                        >
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            @click="form.monitors = []"
+                                            >{{
+                                                $t(
+                                                    'integrations.form.scope.clear',
+                                                )
+                                            }}</Button
+                                        >
+                                    </div>
+                                </div>
+                                <div
+                                    class="grid max-h-64 overflow-y-auto rounded-sm border sm:grid-cols-2"
+                                >
+                                    <label
+                                        v-for="monitor in monitors"
+                                        :key="monitor.uuid"
+                                        class="flex cursor-pointer items-center gap-3 border-b px-3 py-2 transition-colors last:border-b-0 hover:bg-muted/40 sm:[&:nth-last-child(2):nth-child(odd)]:border-b-0"
+                                    >
+                                        <Checkbox
+                                            :model-value="
+                                                form.monitors.includes(
+                                                    monitor.uuid,
+                                                )
+                                            "
+                                            @update:model-value="
+                                                toggleMonitor(monitor.uuid)
+                                            "
+                                        />
+                                        <span class="min-w-0">
+                                            <span
+                                                class="block truncate text-sm font-medium"
+                                                >{{ monitor.name }}</span
+                                            >
+                                            <span
+                                                class="block truncate text-xs text-muted-foreground"
+                                                >{{ monitor.url }}</span
+                                            >
+                                        </span>
+                                    </label>
+                                </div>
+                            </template>
+                            <InputError :message="form.errors.monitors" />
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="message" class="space-y-4">
                         <p class="text-xs text-muted-foreground">
                             {{ $t('integrations.form.templates.description') }}
                         </p>
-                    </div>
 
-                    <div
-                        v-for="event in events"
-                        :key="event"
-                        class="grid gap-1.5"
-                    >
-                        <p class="text-xs font-medium">
-                            {{ $t(`integrations.form.templates.${event}`) }}
-                        </p>
-                        <Input
-                            v-model="form.templates[event].title"
-                            :placeholder="
-                                $t('integrations.form.templates.subject')
-                            "
-                        />
-                        <InputError :message="templateError(event, 'title')" />
-                        <textarea
-                            v-model="form.templates[event].body"
-                            rows="2"
-                            :placeholder="
-                                $t('integrations.form.templates.body')
-                            "
-                            class="w-full rounded-sm border border-input bg-transparent px-2.5 py-2 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring dark:bg-input/20"
-                        />
-                        <InputError :message="templateError(event, 'body')" />
-                    </div>
-
-                    <div>
-                        <p class="text-xs text-muted-foreground">
-                            {{ $t('integrations.form.templates.placeholders') }}
-                        </p>
-                        <div class="mt-1 flex flex-wrap gap-1">
-                            <code
-                                v-for="placeholder in placeholders"
-                                :key="placeholder"
-                                class="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[10px]"
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div
+                                v-for="event in events"
+                                :key="event"
+                                class="grid content-start gap-2 rounded-sm border p-3"
                             >
-                                {{ braced(placeholder) }}
-                            </code>
+                                <div
+                                    class="flex flex-wrap items-center justify-between gap-2"
+                                >
+                                    <p class="text-sm font-medium">
+                                        {{
+                                            $t(
+                                                `integrations.form.templates.${event}`,
+                                            )
+                                        }}
+                                    </p>
+                                    <div class="flex flex-wrap gap-1">
+                                        <Button
+                                            v-for="preset in presets[event]"
+                                            :key="preset.key"
+                                            variant="outline"
+                                            size="sm"
+                                            class="h-6 px-2 text-xs"
+                                            @click="applyPreset(event, preset)"
+                                        >
+                                            {{
+                                                $t(
+                                                    `integrations.form.templates.presets.${preset.key}`,
+                                                )
+                                            }}
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            class="h-6 px-2 text-xs"
+                                            @click="clearTemplate(event)"
+                                        >
+                                            {{
+                                                $t(
+                                                    'integrations.form.templates.presets.clear',
+                                                )
+                                            }}
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <Input
+                                    v-model="form.templates[event].title"
+                                    :placeholder="defaults[event].title"
+                                    class="font-mono text-xs"
+                                    @focus="
+                                        rememberField(event, 'title', $event)
+                                    "
+                                />
+                                <InputError
+                                    :message="templateError(event, 'title')"
+                                />
+
+                                <template v-if="!ignoresBody">
+                                    <textarea
+                                        v-model="form.templates[event].body"
+                                        rows="3"
+                                        :placeholder="defaults[event].body"
+                                        class="w-full rounded-sm border border-input bg-transparent px-2.5 py-2 font-mono text-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring dark:bg-input/20"
+                                        @focus="
+                                            rememberField(event, 'body', $event)
+                                        "
+                                    />
+                                    <InputError
+                                        :message="templateError(event, 'body')"
+                                    />
+                                </template>
+
+                                <div class="rounded-sm bg-muted/50 p-2.5">
+                                    <p
+                                        class="font-mono text-[10px] tracking-wide text-muted-foreground uppercase"
+                                    >
+                                        {{
+                                            $t(
+                                                'integrations.form.templates.preview',
+                                            )
+                                        }}
+                                    </p>
+                                    <p class="mt-1 text-sm font-medium">
+                                        {{ preview(event).title }}
+                                    </p>
+                                    <p
+                                        v-if="!ignoresBody"
+                                        class="mt-0.5 text-xs whitespace-pre-wrap text-muted-foreground"
+                                    >
+                                        {{ preview(event).body }}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <p v-if="ignoresBody" class="text-xs text-muted-foreground">
-                        {{ $t('integrations.form.templates.unsupported') }}
-                    </p>
-                </div>
+                        <div>
+                            <p class="text-xs text-muted-foreground">
+                                {{
+                                    $t(
+                                        'integrations.form.templates.placeholders',
+                                    )
+                                }}
+                                —
+                                {{
+                                    $t(
+                                        'integrations.form.templates.insert_hint',
+                                    )
+                                }}
+                            </p>
+                            <div class="mt-1.5 flex flex-wrap gap-1">
+                                <button
+                                    v-for="placeholder in placeholders"
+                                    :key="placeholder"
+                                    type="button"
+                                    class="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[10px] transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                                    @mousedown.prevent
+                                    @click="insertPlaceholder(placeholder)"
+                                >
+                                    {{ braced(placeholder) }}
+                                </button>
+                            </div>
+                        </div>
 
-                <div
-                    class="flex items-center justify-between gap-3 rounded-sm border p-3"
-                >
-                    <div>
-                        <p class="text-sm font-medium">
-                            {{ $t('integrations.form.is_active.title') }}
+                        <p
+                            v-if="ignoresBody"
+                            class="text-xs text-muted-foreground"
+                        >
+                            {{ $t('integrations.form.templates.unsupported') }}
                         </p>
-                        <p class="text-xs text-muted-foreground">
-                            {{ $t('integrations.form.is_active.description') }}
-                        </p>
-                    </div>
-                    <Switch v-model:checked="form.is_active" />
+                    </TabsContent>
                 </div>
-            </div>
+            </Tabs>
 
             <DialogFooter>
                 <Button variant="outline" @click="formOpen = false">{{
@@ -361,7 +521,7 @@ import {
     SirenIcon,
     Trash2Icon,
 } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import InputError from '@/components/InputError.vue';
@@ -389,11 +549,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { trans } from '@/lib/i18n';
 import * as integrationsRoute from '@/routes/integrations';
 import type { Monitor, NotificationChannel } from '@/types/monitors';
 
-defineProps<{
+const props = defineProps<{
     integrations: NotificationChannel[];
     providers: string[];
     scopes: string[];
@@ -404,6 +565,13 @@ defineProps<{
 const events = ['down', 'recovered'] as const;
 
 type AlertEvent = (typeof events)[number];
+type TemplateField = 'title' | 'body';
+type Template = { title: string; body: string };
+type Preset = Template & { key: string };
+
+const tabs = ['setup', 'scope', 'message'] as const;
+
+type Tab = (typeof tabs)[number];
 
 const providerIcons: Record<string, unknown> = {
     email: MailIcon,
@@ -435,10 +603,72 @@ const credentialTypes = ['pagerduty', 'opsgenie'];
 /** Neither carries free-form body text on the wire. */
 const bodylessTypes = ['pagerduty', 'opsgenie'];
 
+/**
+ * Template text lives here rather than in the locale files because a literal
+ * `{{ }}` is interpolation syntax to vue-i18n and would have to be escaped
+ * character by character.
+ *
+ * `defaults` mirrors the built-in wording in App\Monitoring\AlertMessage, so a
+ * blank field previews exactly what the server will send.
+ */
+const defaults: Record<AlertEvent, Template> = {
+    down: {
+        title: '{{monitor.name}} is DOWN',
+        body: '{{monitor.name}} ({{monitor.url}}) stopped responding: {{error}}',
+    },
+    recovered: {
+        title: '{{monitor.name}} is back UP',
+        body: '{{monitor.name}} ({{monitor.url}}) is responding again after {{incident.duration}}.',
+    },
+};
+
+const presets: Record<AlertEvent, Preset[]> = {
+    down: [
+        { key: 'default', ...defaults.down },
+        {
+            key: 'detailed',
+            title: '🔴 {{monitor.name}} is down',
+            body:
+                '{{monitor.name}} stopped responding at {{occurred_at}}.\n\n' +
+                'URL: {{monitor.url}}\n' +
+                'Error: {{error}}\n' +
+                'Details: {{monitor.link}}',
+        },
+        {
+            key: 'short',
+            title: 'DOWN: {{monitor.name}}',
+            body: '{{monitor.url}} — {{error}}',
+        },
+    ],
+    recovered: [
+        { key: 'default', ...defaults.recovered },
+        {
+            key: 'detailed',
+            title: '🟢 {{monitor.name}} has recovered',
+            body:
+                '{{monitor.name}} is responding again as of {{occurred_at}}.\n\n' +
+                'URL: {{monitor.url}}\n' +
+                'Downtime: {{incident.duration}}\n' +
+                'Details: {{monitor.link}}',
+        },
+        {
+            key: 'short',
+            title: 'UP: {{monitor.name}}',
+            body: '{{monitor.url}} — back after {{incident.duration}}',
+        },
+    ],
+};
+
 const formOpen = ref(false);
+const tab = ref<Tab>('setup');
 const editing = ref<NotificationChannel | null>(null);
 const confirmingDisconnect = ref(false);
 const pendingDisconnect = ref<NotificationChannel | null>(null);
+const lastField = ref<{
+    event: AlertEvent;
+    field: TemplateField;
+    el: HTMLInputElement | HTMLTextAreaElement;
+} | null>(null);
 
 const form = useForm({
     name: '',
@@ -472,7 +702,24 @@ const secretError = computed(() =>
     dottedError(`config.${secretKeys[form.type]}`),
 );
 
-function templateError(event: AlertEvent, field: 'title' | 'body') {
+/** Which tab owns each validation error, so a failure is never hidden. */
+const tabHasError = computed<Record<Tab, boolean>>(() => {
+    const keys = Object.keys(form.errors);
+
+    return {
+        setup: keys.some(
+            (key) =>
+                ['name', 'type', 'is_active'].includes(key) ||
+                key.startsWith('config'),
+        ),
+        scope: keys.some(
+            (key) => key === 'alert_scope' || key.startsWith('monitors'),
+        ),
+        message: keys.some((key) => key.startsWith('templates')),
+    };
+});
+
+function templateError(event: AlertEvent, field: TemplateField) {
     return dottedError(`templates.${event}.${field}`);
 }
 
@@ -482,7 +729,7 @@ function braced(placeholder: string) {
     return `{{${placeholder}}}`;
 }
 
-function emptyTemplates() {
+function emptyTemplates(): Record<AlertEvent, Template> {
     return {
         down: { title: '', body: '' },
         recovered: { title: '', body: '' },
@@ -500,10 +747,102 @@ function templatesFrom(integration: NotificationChannel) {
     return templates;
 }
 
+function applyPreset(event: AlertEvent, preset: Preset) {
+    form.templates[event].title = preset.title;
+    form.templates[event].body = preset.body;
+}
+
+function clearTemplate(event: AlertEvent) {
+    form.templates[event].title = '';
+    form.templates[event].body = '';
+}
+
+function rememberField(
+    event: AlertEvent,
+    field: TemplateField,
+    focus: FocusEvent,
+) {
+    lastField.value = {
+        event,
+        field,
+        el: focus.target as HTMLInputElement | HTMLTextAreaElement,
+    };
+}
+
+/**
+ * Drops a placeholder at the caret of the field the user last touched. The
+ * chip suppresses mousedown so the field keeps focus and its selection.
+ */
+function insertPlaceholder(placeholder: string) {
+    const target = lastField.value;
+    const event = target?.event ?? 'down';
+    const field = target?.field ?? 'title';
+    // Switching tabs unmounts the field, which leaves a detached node behind
+    // with a caret offset that no longer means anything.
+    const el = target?.el.isConnected ? target.el : null;
+    const text = braced(placeholder);
+    const current = form.templates[event][field];
+    const start = el?.selectionStart ?? current.length;
+    const end = el?.selectionEnd ?? current.length;
+
+    form.templates[event][field] =
+        current.slice(0, start) + text + current.slice(end);
+
+    if (!el) {
+        return;
+    }
+
+    const caret = start + text.length;
+
+    nextTick(() => {
+        el.focus();
+        el.setSelectionRange(caret, caret);
+    });
+}
+
+/** Mirrors AlertTemplate::apply — a whitelist lookup, nothing evaluated. */
+function render(template: string, event: AlertEvent) {
+    const values: Record<string, string> = {
+        'monitor.name': trans('integrations.test.sample_monitor'),
+        'monitor.url': 'https://example.com',
+        'monitor.type': 'http',
+        'monitor.uuid': '9f1c0e7a-5b2d-4c8e-9a3f-1d2b3c4d5e6f',
+        'monitor.link': `${typeof window === 'undefined' ? '' : window.location.origin}/monitors/9f1c0e7a`,
+        event,
+        error: 'Connection timed out after 10s',
+        occurred_at: new Date().toLocaleString(),
+        'incident.duration': '12m',
+    };
+
+    return template.replace(
+        /\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g,
+        (_match, key: string) => values[key] ?? '',
+    );
+}
+
+function preview(event: AlertEvent) {
+    const template = form.templates[event];
+
+    return {
+        title: render(template.title.trim() || defaults[event].title, event),
+        body: render(template.body.trim() || defaults[event].body, event),
+    };
+}
+
 function toggleMonitor(uuid: string) {
     form.monitors = form.monitors.includes(uuid)
         ? form.monitors.filter((value) => value !== uuid)
         : [...form.monitors, uuid];
+}
+
+function selectAllMonitors() {
+    form.monitors = props.monitors.map((monitor) => monitor.uuid);
+}
+
+function openForm() {
+    tab.value = 'setup';
+    lastField.value = null;
+    formOpen.value = true;
 }
 
 function openConnect(provider: string) {
@@ -516,7 +855,7 @@ function openConnect(provider: string) {
     form.alert_scope = 'all';
     form.monitors = [];
     form.templates = emptyTemplates();
-    formOpen.value = true;
+    openForm();
 }
 
 function openEdit(integration: NotificationChannel) {
@@ -534,7 +873,7 @@ function openEdit(integration: NotificationChannel) {
     form.alert_scope = integration.alert_scope;
     form.monitors = [...(integration.monitors ?? [])];
     form.templates = templatesFrom(integration);
-    formOpen.value = true;
+    openForm();
 }
 
 function payload() {
@@ -554,6 +893,11 @@ function submit() {
         preserveScroll: true,
         onSuccess: () => {
             formOpen.value = false;
+        },
+        // Errors can land on a tab the user is not looking at.
+        onError: () => {
+            tab.value =
+                tabs.find((name) => tabHasError.value[name]) ?? tab.value;
         },
     };
 
