@@ -4,12 +4,13 @@ namespace App\Monitoring\Notifiers;
 
 use App\Models\NotificationChannel;
 use App\Monitoring\AlertMessage;
+use App\Monitoring\RenderedAlert;
 use App\Notifications\MonitorAlertNotification;
 use Illuminate\Support\Facades\Notification;
 
 class MailNotifier implements Notifier
 {
-    public function send(NotificationChannel $channel, AlertMessage $message): void
+    public function send(NotificationChannel $channel, AlertMessage $message, RenderedAlert $text): void
     {
         $address = $channel->destination();
 
@@ -18,6 +19,6 @@ class MailNotifier implements Notifier
         }
 
         Notification::route('mail', $address)
-            ->notify(new MonitorAlertNotification($message));
+            ->notify(new MonitorAlertNotification($message, $text));
     }
 }

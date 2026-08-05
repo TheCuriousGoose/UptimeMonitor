@@ -5,6 +5,7 @@ namespace App\Monitoring\Notifiers;
 use App\Models\NotificationChannel;
 use App\Monitoring\AlertEvent;
 use App\Monitoring\AlertMessage;
+use App\Monitoring\RenderedAlert;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -14,7 +15,7 @@ use Illuminate\Support\Facades\Http;
  */
 class TeamsNotifier implements Notifier
 {
-    public function send(NotificationChannel $channel, AlertMessage $message): void
+    public function send(NotificationChannel $channel, AlertMessage $message, RenderedAlert $text): void
     {
         $url = $channel->destination();
 
@@ -28,9 +29,9 @@ class TeamsNotifier implements Notifier
             '@type' => 'MessageCard',
             '@context' => 'https://schema.org/extensions',
             'themeColor' => $isDown ? 'DC2626' : '16A34A',
-            'summary' => $message->title(),
-            'title' => $message->title(),
-            'text' => $message->body(),
+            'summary' => $text->title,
+            'title' => $text->title,
+            'text' => $text->body,
             'sections' => [[
                 'facts' => [
                     ['name' => 'Monitor', 'value' => $message->monitor->name],

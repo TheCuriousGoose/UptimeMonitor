@@ -86,6 +86,7 @@ return [
             'title' => 'Blog',
             'subtitle' => 'Product news and engineering notes.',
             'empty' => 'No posts have been published yet.',
+            'read' => 'Read post',
         ],
         'changelog' => [
             'title' => 'Changelog',

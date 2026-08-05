@@ -71,7 +71,7 @@
                         <p
                             class="mt-1 truncate font-mono text-xs text-muted-foreground"
                         >
-                            /{{ segments[entry.type] }}/{{ entry.slug }}
+                            {{ publicPath(entry) ?? `(${entry.type}/${entry.slug})` }}
                         </p>
                         <p class="mt-1 text-xs text-muted-foreground">
                             {{ $t(`content.types.${entry.type}`) }}
@@ -93,14 +93,9 @@
                                 {{ $t('content.actions.edit') }}
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                                v-if="entry.is_published"
+                                v-if="entry.is_published && publicPath(entry)"
                                 as="a"
-                                :href="
-                                    contentShow({
-                                        segment: segments[entry.type],
-                                        slug: entry.slug,
-                                    }).url
-                                "
+                                :href="publicPath(entry)!"
                                 target="_blank"
                                 rel="noopener"
                             >
@@ -354,6 +349,36 @@ const segments: Record<string, string> = {
     post: 'blog',
     changelog: 'changelog',
 };
+
+/**
+ * Legal pages are not served under /{segment}/{slug} like the rest — they have
+ * their own top-level routes, and only for the two slugs those routes define.
+ * Anything else has no public URL to link to.
+ */
+const legalPaths: Record<string, string> = {
+    privacy: '/privacy',
+    terms: '/terms',
+};
+
+/**
+ * The public URL for an entry, or null when it has none. Returning null rather
+ * than building a URL from an undefined segment is the point: passing one to
+ * the route helper throws while the dropdown is rendering, taking the whole
+ * menu down with it.
+ */
+function publicPath(entry: ContentEntry): string | null {
+    if (entry.type === 'legal') {
+        return legalPaths[entry.slug] ?? null;
+    }
+
+    const segment = segments[entry.type];
+
+    if (!segment) {
+        return null;
+    }
+
+    return contentShow({ segment, slug: entry.slug }).url;
+}
 
 const search = ref(props.filters.search ?? '');
 const type = ref(props.filters.type ?? ALL);

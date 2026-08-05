@@ -1,9 +1,9 @@
 <?php
 
 return [
-    'title' => 'Integrations',
+    'title' => 'Alerts',
     'heading' => 'Integrations',
-    'subtitle' => 'Send alerts to the on-call tools your team already uses.',
+    'subtitle' => 'Where we send alerts when a monitor goes down or recovers.',
     'breadcrumbs' => [
         'index' => 'Integrations',
     ],
@@ -11,9 +11,48 @@ return [
     'connected' => 'Connected',
     'empty' => [
         'title' => 'Nothing connected yet',
-        'description' => 'Connect an on-call tool to route outages to whoever is on duty.',
+        'description' => 'Add an email address, a webhook, or an on-call tool so you hear about outages.',
+    ],
+    'types' => [
+        'email' => 'Email',
+        'webhook' => 'Webhook',
+        'slack' => 'Slack',
+        'discord' => 'Discord',
+        'pagerduty' => 'PagerDuty',
+        'opsgenie' => 'Opsgenie',
+        'teams' => 'Microsoft Teams',
     ],
     'providers' => [
+        'email' => [
+            'name' => 'Email',
+            'description' => 'Sends a plain email when a monitor goes down or recovers.',
+            'field' => 'Email address',
+            'hint' => 'We send a plain email to this address.',
+            // vue-i18n reads a bare "@" as linked-message syntax, so it must
+            // be escaped or the whole message fails to compile at render time.
+            'placeholder' => 'ops{\'@\'}example.com',
+        ],
+        'webhook' => [
+            'name' => 'Webhook',
+            'description' => 'POSTs a JSON payload, so anything that accepts a webhook can consume alerts.',
+            'field' => 'Webhook URL',
+            'hint' => 'We POST a JSON payload to this URL.',
+            'placeholder' => 'https://hooks.example.com/uptime',
+        ],
+        'slack' => [
+            'name' => 'Slack',
+            'description' => 'Posts a message to a Slack channel on failure and recovery.',
+            'field' => 'Webhook URL',
+            'hint' => 'Paste a Slack incoming webhook URL.',
+            'placeholder' => 'https://hooks.slack.com/services/...',
+        ],
+        'discord' => [
+            'name' => 'Discord',
+            'description' => 'Posts an embed to a Discord channel on failure and recovery.',
+            'field' => 'Webhook URL',
+            'hint' => 'Paste a Discord webhook URL.',
+            'placeholder' => 'https://discord.com/api/webhooks/...',
+        ],
         'pagerduty' => [
             'name' => 'PagerDuty',
             'description' => 'Opens an incident when a monitor fails and resolves it on recovery.',
@@ -39,15 +78,38 @@ return [
     ],
     'form' => [
         'connect' => 'Connect',
+        'create' => 'Add integration',
         'edit' => 'Edit integration',
         'submit' => 'Save integration',
         'name' => [
             'title' => 'Name',
             'placeholder' => 'Primary on-call',
         ],
+        'type' => [
+            'title' => 'Type',
+        ],
         'is_active' => [
             'title' => 'Active',
             'description' => 'Inactive integrations are skipped when alerting.',
+        ],
+        'scope' => [
+            'title' => 'Alerts on',
+            'description' => 'Which monitors send their alerts here.',
+            'all' => 'All monitors',
+            'all_hint' => 'Includes monitors you create later.',
+            'selected' => 'Selected monitors',
+            'selected_hint' => 'Only the monitors you tick below.',
+            'empty' => 'You have no monitors yet.',
+        ],
+        'templates' => [
+            'title' => 'Custom message',
+            'description' => 'Leave blank to use the default wording.',
+            'down' => 'When a monitor goes down',
+            'recovered' => 'When a monitor recovers',
+            'subject' => 'Title',
+            'body' => 'Message',
+            'placeholders' => 'Available placeholders',
+            'unsupported' => 'PagerDuty and Opsgenie use the title as the alert summary. A resolve carries no text.',
         ],
     ],
     'actions' => [
@@ -57,9 +119,18 @@ return [
         'confirm_disconnect' => 'Disconnect this integration? Monitors using it will stop alerting here.',
     ],
     'attached' => ':count monitor|:count monitors',
+    'all_monitors' => 'All monitors',
+    'test' => [
+        'sample_monitor' => 'Example monitor',
+        'sample_error' => 'This is a test alert — nothing is actually down.',
+    ],
+    'validation' => [
+        'unknown_placeholder' => 'Unknown placeholder: :placeholders',
+    ],
     'messages' => [
         'connected' => ['success' => 'Integration connected'],
         'updated' => ['success' => 'Integration updated'],
         'disconnected' => ['success' => 'Integration disconnected'],
+        'tested' => ['success' => 'Test alert sent'],
     ],
 ];

@@ -83,7 +83,21 @@ interface DashboardSummary {
     avg_response_ms: number | null;
 }
 
-type ChannelType = 'email' | 'webhook' | 'slack' | 'discord';
+type ChannelType =
+    | 'email'
+    | 'webhook'
+    | 'slack'
+    | 'discord'
+    | 'pagerduty'
+    | 'opsgenie'
+    | 'teams';
+
+type AlertScope = 'all' | 'selected';
+
+interface AlertTemplate {
+    title?: string | null;
+    body?: string | null;
+}
 
 interface NotificationChannel {
     uuid: string;
@@ -91,7 +105,10 @@ interface NotificationChannel {
     type: ChannelType;
     destination: string;
     is_active: boolean;
+    alert_scope: AlertScope;
+    templates?: Record<'down' | 'recovered', AlertTemplate> | null;
     monitors_count?: number;
+    monitors?: string[];
 }
 
 interface StatusPage {
@@ -106,6 +123,8 @@ interface StatusPage {
 }
 
 export type {
+    AlertScope,
+    AlertTemplate,
     ChannelType,
     DashboardSummary,
     Incident,

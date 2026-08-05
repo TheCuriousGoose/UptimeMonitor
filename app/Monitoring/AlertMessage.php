@@ -41,18 +41,9 @@ final readonly class AlertMessage
         }
 
         $downtime = $this->incident
-            ? ' after '.$this->humanDowntime($this->incident->durationSeconds())
+            ? ' after '.AlertTemplate::humanDuration($this->incident->durationSeconds())
             : '';
 
         return "{$this->monitor->name} ({$this->monitor->url}) is responding again{$downtime}.";
-    }
-
-    private function humanDowntime(int $seconds): string
-    {
-        return match (true) {
-            $seconds < 60 => "{$seconds}s",
-            $seconds < 3600 => floor($seconds / 60).'m',
-            default => floor($seconds / 3600).'h '.floor(($seconds % 3600) / 60).'m',
-        };
     }
 }

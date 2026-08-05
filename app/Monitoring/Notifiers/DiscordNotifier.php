@@ -5,11 +5,12 @@ namespace App\Monitoring\Notifiers;
 use App\Models\NotificationChannel;
 use App\Monitoring\AlertEvent;
 use App\Monitoring\AlertMessage;
+use App\Monitoring\RenderedAlert;
 use Illuminate\Support\Facades\Http;
 
 class DiscordNotifier implements Notifier
 {
-    public function send(NotificationChannel $channel, AlertMessage $message): void
+    public function send(NotificationChannel $channel, AlertMessage $message, RenderedAlert $text): void
     {
         $url = $channel->destination();
 
@@ -21,8 +22,8 @@ class DiscordNotifier implements Notifier
 
         Http::timeout(10)->post($url, [
             'embeds' => [[
-                'title' => $message->title(),
-                'description' => $message->body(),
+                'title' => $text->title,
+                'description' => $text->body,
                 // Discord wants a decimal colour value.
                 'color' => $isDown ? 0xDC2626 : 0x16A34A,
                 'timestamp' => $message->occurredAt->toIso8601String(),

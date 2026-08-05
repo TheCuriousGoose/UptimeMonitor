@@ -79,10 +79,15 @@
                                     `integrations.providers.${integration.type}.name`,
                                 )
                             }}
+                            ·
+                            <template v-if="integration.alert_scope === 'all'">
+                                {{ $t('integrations.all_monitors') }}
+                            </template>
                             <template
-                                v-if="integration.monitors_count !== undefined"
+                                v-else-if="
+                                    integration.monitors_count !== undefined
+                                "
                             >
-                                ·
                                 {{
                                     $t(
                                         'integrations.attached',
@@ -125,7 +130,7 @@
     </div>
 
     <Dialog v-model:open="formOpen">
-        <DialogContent class="sm:max-w-lg">
+        <DialogContent class="max-h-[85vh] overflow-y-auto sm:max-w-lg">
             <DialogHeader>
                 <DialogTitle>
                     {{
@@ -159,7 +164,7 @@
                     <Input
                         id="integration-secret"
                         v-model="form.secret"
-                        :type="form.type === 'teams' ? 'url' : 'text'"
+                        :type="inputType"
                         autocomplete="off"
                         :placeholder="
                             $t(`integrations.providers.${form.type}.placeholder`)
@@ -169,6 +174,134 @@
                         {{ $t(`integrations.providers.${form.type}.hint`) }}
                     </p>
                     <InputError :message="secretError" />
+                </div>
+
+                <!-- Alert scope -->
+                <div class="grid gap-2 rounded-sm border p-3">
+                    <div>
+                        <p class="text-sm font-medium">
+                            {{ $t('integrations.form.scope.title') }}
+                        </p>
+                        <p class="text-xs text-muted-foreground">
+                            {{ $t('integrations.form.scope.description') }}
+                        </p>
+                    </div>
+
+                    <label
+                        v-for="scope in scopes"
+                        :key="scope"
+                        class="flex cursor-pointer items-start gap-2.5"
+                    >
+                        <input
+                            v-model="form.alert_scope"
+                            type="radio"
+                            :value="scope"
+                            class="mt-1 accent-primary"
+                        />
+                        <span>
+                            <span class="block text-sm">{{
+                                $t(`integrations.form.scope.${scope}`)
+                            }}</span>
+                            <span class="block text-xs text-muted-foreground">{{
+                                $t(`integrations.form.scope.${scope}_hint`)
+                            }}</span>
+                        </span>
+                    </label>
+
+                    <div v-if="form.alert_scope === 'selected'" class="mt-1">
+                        <p
+                            v-if="monitors.length === 0"
+                            class="text-xs text-muted-foreground"
+                        >
+                            {{ $t('integrations.form.scope.empty') }}
+                        </p>
+                        <div
+                            v-else
+                            class="max-h-48 divide-y overflow-y-auto rounded-sm border"
+                        >
+                            <label
+                                v-for="monitor in monitors"
+                                :key="monitor.uuid"
+                                class="flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-muted/40"
+                            >
+                                <Checkbox
+                                    :model-value="
+                                        form.monitors.includes(monitor.uuid)
+                                    "
+                                    @update:model-value="
+                                        toggleMonitor(monitor.uuid)
+                                    "
+                                />
+                                <span class="min-w-0">
+                                    <span
+                                        class="block truncate text-sm font-medium"
+                                        >{{ monitor.name }}</span
+                                    >
+                                    <span
+                                        class="block truncate text-xs text-muted-foreground"
+                                        >{{ monitor.url }}</span
+                                    >
+                                </span>
+                            </label>
+                        </div>
+                        <InputError :message="form.errors.monitors" />
+                    </div>
+                </div>
+
+                <!-- Custom message templates -->
+                <div class="grid gap-3 rounded-sm border p-3">
+                    <div>
+                        <p class="text-sm font-medium">
+                            {{ $t('integrations.form.templates.title') }}
+                        </p>
+                        <p class="text-xs text-muted-foreground">
+                            {{ $t('integrations.form.templates.description') }}
+                        </p>
+                    </div>
+
+                    <div v-for="event in events" :key="event" class="grid gap-1.5">
+                        <p class="text-xs font-medium">
+                            {{ $t(`integrations.form.templates.${event}`) }}
+                        </p>
+                        <Input
+                            v-model="form.templates[event].title"
+                            :placeholder="
+                                $t('integrations.form.templates.subject')
+                            "
+                        />
+                        <InputError
+                            :message="templateError(event, 'title')"
+                        />
+                        <textarea
+                            v-model="form.templates[event].body"
+                            rows="2"
+                            :placeholder="$t('integrations.form.templates.body')"
+                            class="w-full rounded-sm border border-input bg-transparent px-2.5 py-2 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring dark:bg-input/20"
+                        />
+                        <InputError :message="templateError(event, 'body')" />
+                    </div>
+
+                    <div>
+                        <p class="text-xs text-muted-foreground">
+                            {{ $t('integrations.form.templates.placeholders') }}
+                        </p>
+                        <div class="mt-1 flex flex-wrap gap-1">
+                            <code
+                                v-for="placeholder in placeholders"
+                                :key="placeholder"
+                                class="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-[10px]"
+                            >
+                                {{ braced(placeholder) }}
+                            </code>
+                        </div>
+                    </div>
+
+                    <p
+                        v-if="ignoresBody"
+                        class="text-xs text-muted-foreground"
+                    >
+                        {{ $t('integrations.form.templates.unsupported') }}
+                    </p>
                 </div>
 
                 <div
@@ -211,6 +344,10 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
 import {
+    BellIcon,
+    GlobeIcon,
+    HashIcon,
+    MailIcon,
     MessageSquareIcon,
     MoreHorizontalIcon,
     PencilIcon,
@@ -227,6 +364,7 @@ import PageHeader from '@/components/PageHeader.vue';
 import Section from '@/components/Section.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -248,25 +386,49 @@ import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { trans } from '@/lib/i18n';
 import * as integrationsRoute from '@/routes/integrations';
-import type { NotificationChannel } from '@/types/monitors';
+import type { Monitor, NotificationChannel } from '@/types/monitors';
 
 defineProps<{
     integrations: NotificationChannel[];
     providers: string[];
+    scopes: string[];
+    placeholders: string[];
+    monitors: Monitor[];
 }>();
 
+const events = ['down', 'recovered'] as const;
+
+type AlertEvent = (typeof events)[number];
+
 const providerIcons: Record<string, unknown> = {
+    email: MailIcon,
+    webhook: GlobeIcon,
+    slack: HashIcon,
+    discord: MessageSquareIcon,
     pagerduty: SirenIcon,
-    opsgenie: PlugIcon,
+    opsgenie: BellIcon,
     teams: MessageSquareIcon,
 };
 
-/** The config key each provider stores its credential under. */
+/** The config key each provider stores its destination under. */
 const secretKeys: Record<string, string> = {
+    email: 'email',
+    webhook: 'url',
+    slack: 'url',
+    discord: 'url',
     pagerduty: 'routing_key',
     opsgenie: 'api_key',
     teams: 'url',
 };
+
+/**
+ * These store a credential rather than an address, so the server masks it and
+ * never sends it back — editing means re-entering it.
+ */
+const credentialTypes = ['pagerduty', 'opsgenie'];
+
+/** Neither carries free-form body text on the wire. */
+const bodylessTypes = ['pagerduty', 'opsgenie'];
 
 const formOpen = ref(false);
 const editing = ref<NotificationChannel | null>(null);
@@ -275,18 +437,69 @@ const pendingDisconnect = ref<NotificationChannel | null>(null);
 
 const form = useForm({
     name: '',
-    type: 'pagerduty',
+    type: 'email',
     secret: '',
     is_active: true,
+    alert_scope: 'all',
+    monitors: [] as string[],
+    templates: emptyTemplates(),
 });
 
-// The server validates the nested config payload, so its error keys are
-// dotted and sit outside the flat shape useForm infers.
-const secretError = computed(() => {
+const inputType = computed(() => {
+    if (form.type === 'email') {
+        return 'email';
+    }
+
+    return credentialTypes.includes(form.type) ? 'text' : 'url';
+});
+
+const ignoresBody = computed(() => bodylessTypes.includes(form.type));
+
+// The server validates nested payloads, so its error keys are dotted and sit
+// outside the flat shape useForm infers.
+function dottedError(key: string) {
     const errors = form.errors as unknown as Record<string, string | undefined>;
 
-    return errors[`config.${secretKeys[form.type]}`];
-});
+    return errors[key];
+}
+
+const secretError = computed(() =>
+    dottedError(`config.${secretKeys[form.type]}`),
+);
+
+function templateError(event: AlertEvent, field: 'title' | 'body') {
+    return dottedError(`templates.${event}.${field}`);
+}
+
+// Built here rather than inline: a literal `{{` inside a template expression
+// is a Vue parsing error.
+function braced(placeholder: string) {
+    return `{{${placeholder}}}`;
+}
+
+function emptyTemplates() {
+    return {
+        down: { title: '', body: '' },
+        recovered: { title: '', body: '' },
+    };
+}
+
+function templatesFrom(integration: NotificationChannel) {
+    const templates = emptyTemplates();
+
+    for (const event of events) {
+        templates[event].title = integration.templates?.[event]?.title ?? '';
+        templates[event].body = integration.templates?.[event]?.body ?? '';
+    }
+
+    return templates;
+}
+
+function toggleMonitor(uuid: string) {
+    form.monitors = form.monitors.includes(uuid)
+        ? form.monitors.filter((value) => value !== uuid)
+        : [...form.monitors, uuid];
+}
 
 function openConnect(provider: string) {
     editing.value = null;
@@ -295,6 +508,9 @@ function openConnect(provider: string) {
     form.type = provider;
     form.secret = '';
     form.is_active = true;
+    form.alert_scope = 'all';
+    form.monitors = [];
+    form.templates = emptyTemplates();
     formOpen.value = true;
 }
 
@@ -303,10 +519,16 @@ function openEdit(integration: NotificationChannel) {
     form.clearErrors();
     form.name = integration.name;
     form.type = integration.type;
-    // Credentials are masked server-side and never sent back, so editing
-    // always means re-entering the secret rather than revealing the stored one.
-    form.secret = '';
+    // Addresses and webhook URLs come back intact and can be edited in place.
+    // Credentials are masked server-side, so those start blank and must be
+    // re-entered rather than round-tripping the mask back as the new value.
+    form.secret = credentialTypes.includes(integration.type)
+        ? ''
+        : integration.destination;
     form.is_active = integration.is_active;
+    form.alert_scope = integration.alert_scope;
+    form.monitors = [...(integration.monitors ?? [])];
+    form.templates = templatesFrom(integration);
     formOpen.value = true;
 }
 
@@ -316,6 +538,9 @@ function payload() {
         type: form.type,
         is_active: form.is_active,
         config: { [secretKeys[form.type]]: form.secret },
+        alert_scope: form.alert_scope,
+        monitors: form.monitors,
+        templates: form.templates,
     };
 }
 

@@ -5,6 +5,7 @@ namespace App\Monitoring\Notifiers;
 use App\Models\NotificationChannel;
 use App\Monitoring\AlertEvent;
 use App\Monitoring\AlertMessage;
+use App\Monitoring\RenderedAlert;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -17,7 +18,7 @@ class OpsgenieNotifier implements Notifier
 {
     private const BASE = 'https://api.opsgenie.com/v2/alerts';
 
-    public function send(NotificationChannel $channel, AlertMessage $message): void
+    public function send(NotificationChannel $channel, AlertMessage $message, RenderedAlert $text): void
     {
         $apiKey = $channel->destination();
 
@@ -32,9 +33,9 @@ class OpsgenieNotifier implements Notifier
 
         if ($message->event === AlertEvent::Down) {
             $request->post(self::BASE, [
-                'message' => $message->title(),
+                'message' => $text->title,
                 'alias' => $alias,
-                'description' => $message->body(),
+                'description' => $text->body,
                 'priority' => 'P2',
                 'source' => config('app.name'),
                 'details' => [
@@ -50,7 +51,7 @@ class OpsgenieNotifier implements Notifier
 
         $request->post(self::BASE.'/'.urlencode($alias).'/close?identifierType=alias', [
             'source' => config('app.name'),
-            'note' => $message->body(),
+            'note' => $text->body,
         ])->throw();
     }
 }
