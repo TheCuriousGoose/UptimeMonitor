@@ -467,7 +467,7 @@
                 class="text-sm text-muted-foreground"
             >
                 {{ $t('monitors.form.channels.empty') }}
-                <Link :href="channelsRoute.index()" class="underline">
+                <Link :href="integrationsRoute.index()" class="underline">
                     {{ $t('monitors.form.channels.manage') }}
                 </Link>
             </p>
@@ -475,10 +475,22 @@
                 <label
                     v-for="channel in channels"
                     :key="channel.uuid"
-                    class="flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/40"
+                    class="flex items-center gap-3 px-3 py-2.5 transition-colors"
+                    :class="
+                        coversEverything(channel)
+                            ? 'cursor-default'
+                            : 'cursor-pointer hover:bg-muted/40'
+                    "
                 >
+                    <!-- A channel scoped to every monitor already covers this
+                         one, so it is shown ticked and locked rather than
+                         implying a coverage gap that does not exist. -->
                     <Checkbox
-                        :model-value="selectedChannels.includes(channel.uuid)"
+                        :model-value="
+                            coversEverything(channel) ||
+                            selectedChannels.includes(channel.uuid)
+                        "
+                        :disabled="coversEverything(channel)"
                         @update:model-value="toggleChannel(channel.uuid)"
                     />
                     <span class="min-w-0">
@@ -488,8 +500,11 @@
                         <span
                             class="block truncate text-xs text-muted-foreground"
                         >
-                            {{ $t(`channels.types.${channel.type}`) }} ·
+                            {{ $t(`integrations.types.${channel.type}`) }} ·
                             {{ channel.destination }}
+                            <template v-if="coversEverything(channel)">
+                                · {{ $t('monitors.form.channels.covers_all') }}
+                            </template>
                         </span>
                     </span>
                 </label>
@@ -555,7 +570,7 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
-import * as channelsRoute from '@/routes/channels';
+import * as integrationsRoute from '@/routes/integrations';
 import * as monitorsRoute from '@/routes/monitors';
 import type {
     Monitor,
@@ -663,7 +678,19 @@ const selectedChannels = ref<string[]>(
     ),
 );
 
+// Alerts on every monitor its owner has, so this form cannot detach it — that
+// is a decision made on the integration itself.
+function coversEverything(channel: NotificationChannel) {
+    return channel.alert_scope === 'all';
+}
+
 function toggleChannel(uuid: string) {
+    const channel = props.channels.find((item) => item.uuid === uuid);
+
+    if (channel && coversEverything(channel)) {
+        return;
+    }
+
     selectedChannels.value = selectedChannels.value.includes(uuid)
         ? selectedChannels.value.filter((value) => value !== uuid)
         : [...selectedChannels.value, uuid];

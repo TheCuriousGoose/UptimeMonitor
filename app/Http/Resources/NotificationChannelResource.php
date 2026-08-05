@@ -20,7 +20,15 @@ class NotificationChannelResource extends JsonResource
             // an API credential, and this resource is serialised into the page.
             'destination' => $this->maskedDestination(),
             'is_active' => $this->is_active,
+            'alert_scope' => $this->alert_scope->value,
+            // Not secret, unlike the destination: templates are wording the
+            // user typed and the form needs them back to edit.
+            'templates' => $this->templates,
             'monitors_count' => $this->whenCounted('monitors'),
+            'monitors' => $this->whenLoaded(
+                'monitors',
+                fn () => $this->monitors->pluck('uuid')->all(),
+            ),
         ];
     }
 }

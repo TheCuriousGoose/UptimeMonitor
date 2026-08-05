@@ -60,12 +60,12 @@ class RateLimitTest extends TestCase
 
         for ($i = 0; $i < 3; $i++) {
             $this->actingAs($user)
-                ->post(route('channels.test', $channel))
+                ->post(route('integrations.test', $channel))
                 ->assertRedirect();
         }
 
         $this->actingAs($user)
-            ->post(route('channels.test', $channel))
+            ->post(route('integrations.test', $channel))
             ->assertStatus(429);
     }
 
@@ -88,7 +88,7 @@ class RateLimitTest extends TestCase
 
         // A second tenant sharing the same egress IP keeps a full budget.
         $this->actingAs($second)
-            ->post(route('channels.test', NotificationChannel::factory()->for($second, 'user')->create()))
+            ->post(route('integrations.test', NotificationChannel::factory()->for($second, 'user')->create()))
             ->assertRedirect();
 
         $this->actingAs($second)

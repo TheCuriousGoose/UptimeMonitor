@@ -6,7 +6,6 @@ import {
     Globe,
     LayoutGrid,
     Monitor,
-    Plug,
     Settings2,
     ShieldCheck,
     Siren,
@@ -32,7 +31,6 @@ import adminContent from '@/routes/admin/content';
 import adminRoles from '@/routes/admin/roles';
 import adminSettings from '@/routes/admin/settings';
 import adminUsers from '@/routes/admin/users';
-import channels from '@/routes/channels';
 import incidents from '@/routes/incidents';
 import integrations from '@/routes/integrations';
 import monitors from '@/routes/monitors';
@@ -63,14 +61,9 @@ const mainNavItems: NavItem[] = [
         icon: Siren,
     },
     {
-        title: trans('channels.title'),
-        href: channels.index(),
-        icon: Bell,
-    },
-    {
         title: trans('integrations.title'),
         href: integrations.index(),
-        icon: Plug,
+        icon: Bell,
     },
     {
         title: trans('status_pages.title'),

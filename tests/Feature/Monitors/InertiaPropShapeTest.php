@@ -87,15 +87,15 @@ class InertiaPropShapeTest extends TestCase
         $this->assertSame($monitor->uuid, $props['monitor']['uuid']);
     }
 
-    public function test_the_channels_page_props_are_flat(): void
+    public function test_the_integrations_page_props_are_flat(): void
     {
         $user = $this->user();
         NotificationChannel::factory()->create(['user_id' => $user->id, 'name' => 'Ops email']);
 
-        $props = $this->props($this->actingAs($user)->get(route('channels.index')));
+        $props = $this->props($this->actingAs($user)->get(route('integrations.index')));
 
-        $this->assertUnwrapped($props['channels'], 'channels');
-        $this->assertSame('Ops email', $props['channels'][0]['name']);
+        $this->assertUnwrapped($props['integrations'], 'integrations');
+        $this->assertSame('Ops email', $props['integrations'][0]['name']);
     }
 
     public function test_the_status_pages_props_are_flat_and_include_selected_monitors(): void

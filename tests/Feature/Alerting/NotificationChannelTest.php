@@ -27,7 +27,7 @@ class NotificationChannelTest extends TestCase
 
     public function test_guests_are_redirected(): void
     {
-        $this->get(route('channels.index'))->assertRedirect(route('login'));
+        $this->get(route('integrations.index'))->assertRedirect(route('login'));
     }
 
     public function test_a_user_only_sees_their_own_channels(): void
@@ -39,7 +39,7 @@ class NotificationChannelTest extends TestCase
             'name' => 'Their email',
         ]);
 
-        $this->actingAs($user)->get(route('channels.index'))
+        $this->actingAs($user)->get(route('integrations.index'))
             ->assertOk()
             ->assertSee($mine->name)
             ->assertDontSee($theirs->name);
@@ -49,18 +49,18 @@ class NotificationChannelTest extends TestCase
     {
         $user = $this->user();
 
-        $this->actingAs($user)->post(route('channels.store'), [
+        $this->actingAs($user)->post(route('integrations.store'), [
             'name' => 'Ops email',
             'type' => 'email',
             'config' => ['email' => 'ops@example.com'],
-        ])->assertRedirect(route('channels.index'));
+        ])->assertRedirect(route('integrations.index'));
 
         $this->assertSame('ops@example.com', NotificationChannel::first()->destination());
     }
 
     public function test_an_email_channel_requires_a_valid_address(): void
     {
-        $this->actingAs($this->user())->post(route('channels.store'), [
+        $this->actingAs($this->user())->post(route('integrations.store'), [
             'name' => 'Ops email',
             'type' => 'email',
             'config' => ['email' => 'not-an-email'],
@@ -69,7 +69,7 @@ class NotificationChannelTest extends TestCase
 
     public function test_a_webhook_channel_requires_a_valid_url(): void
     {
-        $this->actingAs($this->user())->post(route('channels.store'), [
+        $this->actingAs($this->user())->post(route('integrations.store'), [
             'name' => 'Hook',
             'type' => 'webhook',
             'config' => ['url' => 'nope'],
@@ -78,7 +78,7 @@ class NotificationChannelTest extends TestCase
 
     public function test_config_keys_for_another_channel_type_are_discarded(): void
     {
-        $this->actingAs($this->user())->post(route('channels.store'), [
+        $this->actingAs($this->user())->post(route('integrations.store'), [
             'name' => 'Hook',
             'type' => 'webhook',
             'config' => ['url' => 'https://hooks.example.com', 'email' => 'leak@example.com'],
@@ -92,11 +92,11 @@ class NotificationChannelTest extends TestCase
         $user = $this->user();
         $channel = NotificationChannel::factory()->create(['user_id' => $user->id]);
 
-        $this->actingAs($user)->put(route('channels.update', $channel), [
+        $this->actingAs($user)->put(route('integrations.update', $channel), [
             'name' => 'Renamed',
             'type' => 'email',
             'config' => ['email' => 'new@example.com'],
-        ])->assertRedirect(route('channels.index'));
+        ])->assertRedirect(route('integrations.index'));
 
         $this->assertSame('Renamed', $channel->fresh()->name);
         $this->assertSame('new@example.com', $channel->fresh()->destination());
@@ -108,7 +108,7 @@ class NotificationChannelTest extends TestCase
             'user_id' => User::factory()->create()->id,
         ]);
 
-        $this->actingAs($this->user())->put(route('channels.update', $channel), [
+        $this->actingAs($this->user())->put(route('integrations.update', $channel), [
             'name' => 'Hijacked',
             'type' => 'email',
             'config' => ['email' => 'attacker@example.com'],
@@ -120,8 +120,8 @@ class NotificationChannelTest extends TestCase
         $user = $this->user();
         $channel = NotificationChannel::factory()->create(['user_id' => $user->id]);
 
-        $this->actingAs($user)->delete(route('channels.destroy', $channel))
-            ->assertRedirect(route('channels.index'));
+        $this->actingAs($user)->delete(route('integrations.destroy', $channel))
+            ->assertRedirect(route('integrations.index'));
 
         $this->assertSame(0, NotificationChannel::count());
     }
@@ -132,7 +132,7 @@ class NotificationChannelTest extends TestCase
             'user_id' => User::factory()->create()->id,
         ]);
 
-        $this->actingAs($this->user())->delete(route('channels.destroy', $channel))->assertForbidden();
+        $this->actingAs($this->user())->delete(route('integrations.destroy', $channel))->assertForbidden();
         $this->assertSame(1, NotificationChannel::count());
     }
 
@@ -143,7 +143,7 @@ class NotificationChannelTest extends TestCase
         $user = $this->user();
         $channel = NotificationChannel::factory()->create(['user_id' => $user->id]);
 
-        $this->actingAs($user)->post(route('channels.test', $channel))->assertRedirect();
+        $this->actingAs($user)->post(route('integrations.test', $channel))->assertRedirect();
 
         Queue::assertPushed(SendAlert::class, fn ($job) => $job->channel->is($channel));
     }
@@ -156,7 +156,7 @@ class NotificationChannelTest extends TestCase
             'user_id' => User::factory()->create()->id,
         ]);
 
-        $this->actingAs($this->user())->post(route('channels.test', $channel))->assertForbidden();
+        $this->actingAs($this->user())->post(route('integrations.test', $channel))->assertForbidden();
 
         Queue::assertNothingPushed();
     }

@@ -5,6 +5,7 @@ namespace App\Monitoring\Notifiers;
 use App\Models\NotificationChannel;
 use App\Monitoring\AlertEvent;
 use App\Monitoring\AlertMessage;
+use App\Monitoring\RenderedAlert;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -17,7 +18,7 @@ class PagerDutyNotifier implements Notifier
 {
     private const ENDPOINT = 'https://events.pagerduty.com/v2/enqueue';
 
-    public function send(NotificationChannel $channel, AlertMessage $message): void
+    public function send(NotificationChannel $channel, AlertMessage $message, RenderedAlert $text): void
     {
         $routingKey = $channel->destination();
 
@@ -36,11 +37,12 @@ class PagerDutyNotifier implements Notifier
         // PagerDuty rejects a resolve that carries a payload block.
         if ($isDown) {
             $payload['payload'] = [
-                'summary' => $message->title(),
+                'summary' => $text->title,
                 'source' => $message->monitor->url,
                 'severity' => 'error',
                 'timestamp' => $message->occurredAt->toIso8601String(),
                 'custom_details' => [
+                    'message' => $text->body,
                     'monitor' => $message->monitor->name,
                     'type' => $message->monitor->type->value,
                     'error' => $message->error,

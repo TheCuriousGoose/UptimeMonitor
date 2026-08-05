@@ -20,12 +20,12 @@ class NotificationChannelTestController extends Controller
         $this->authorize('update', $channel);
 
         $sample = Auth::user()->monitors()->first() ?? new Monitor([
-            'name' => __('channels.test.sample_monitor'),
+            'name' => __('integrations.test.sample_monitor'),
             'url' => config('app.url'),
         ]);
 
-        SendAlert::dispatch($channel, AlertMessage::down($sample, __('channels.test.sample_error')));
+        SendAlert::dispatch($channel, AlertMessage::down($sample, __('integrations.test.sample_error')));
 
-        return back()->with('success', __('channels.messages.tested.success'));
+        return back()->with('success', __('integrations.messages.tested.success'));
     }
 }

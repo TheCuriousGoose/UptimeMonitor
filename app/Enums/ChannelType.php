@@ -13,19 +13,6 @@ enum ChannelType: string
     case Teams = 'teams';
 
     /**
-     * Integrations are alerting products with their own incident lifecycle —
-     * a recovery closes the alert the outage opened — rather than a
-     * fire-and-forget message sink. They get their own page for that reason.
-     */
-    public function isIntegration(): bool
-    {
-        return match ($this) {
-            self::PagerDuty, self::Opsgenie, self::Teams => true,
-            default => false,
-        };
-    }
-
-    /**
      * The config key holding this channel's delivery target.
      */
     public function destinationKey(): string
@@ -80,31 +67,5 @@ enum ChannelType: string
     public static function values(): array
     {
         return array_column(self::cases(), 'value');
-    }
-
-    /**
-     * Types offered on the notification-channels page.
-     *
-     * @return array<int, string>
-     */
-    public static function basicValues(): array
-    {
-        return array_values(array_map(
-            fn (self $type) => $type->value,
-            array_filter(self::cases(), fn (self $type) => ! $type->isIntegration()),
-        ));
-    }
-
-    /**
-     * Types offered on the integrations page.
-     *
-     * @return array<int, string>
-     */
-    public static function integrationValues(): array
-    {
-        return array_values(array_map(
-            fn (self $type) => $type->value,
-            array_filter(self::cases(), fn (self $type) => $type->isIntegration()),
-        ));
     }
 }

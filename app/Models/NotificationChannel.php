@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AlertScope;
 use App\Enums\ChannelType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-#[Fillable(['user_id', 'name', 'type', 'config', 'is_active'])]
+#[Fillable(['user_id', 'name', 'type', 'config', 'is_active', 'alert_scope', 'templates'])]
 class NotificationChannel extends Model
 {
     use HasFactory, HasUuids;
@@ -22,6 +23,8 @@ class NotificationChannel extends Model
             'type' => ChannelType::class,
             'config' => 'array',
             'is_active' => 'boolean',
+            'alert_scope' => AlertScope::class,
+            'templates' => 'array',
         ];
     }
 
@@ -48,6 +51,22 @@ class NotificationChannel extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Channels that should alert for this monitor: the owner's channels that
+     * either cover every monitor or name this one explicitly.
+     *
+     * Scoping to the monitor's owner rather than the acting user is what stops
+     * an admin's own channels firing on someone else's monitor.
+     */
+    public function scopeForMonitor(Builder $query, Monitor $monitor): Builder
+    {
+        return $query
+            ->where('user_id', $monitor->created_by)
+            ->where(fn (Builder $scope) => $scope
+                ->where('alert_scope', AlertScope::All->value)
+                ->orWhereHas('monitors', fn (Builder $attached) => $attached->whereKey($monitor->getKey())));
     }
 
     /**

@@ -171,10 +171,11 @@ return [
             'description' => 'Turn off to create the monitor paused.',
         ],
         'channels' => [
-            'title' => 'Alert these channels',
+            'title' => 'Alert these integrations',
             'description' => 'Who to notify when this monitor goes down and recovers.',
-            'empty' => 'No notification channels yet. Add one to get alerted.',
-            'manage' => 'Manage channels',
+            'empty' => 'No integrations yet. Add one to get alerted.',
+            'manage' => 'Manage integrations',
+            'covers_all' => 'alerts on all monitors',
         ],
         'sections' => [
             'what' => 'What to check',

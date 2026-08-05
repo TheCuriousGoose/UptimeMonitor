@@ -1,5 +1,6 @@
 <template>
     <MarketingPage
+        width="wide"
         :title="$t('content.public.blog.title')"
         :subtitle="$t('content.public.blog.subtitle')"
     >
@@ -10,11 +11,11 @@
             {{ $t('content.public.blog.empty') }}
         </p>
 
-        <ul v-else class="divide-y">
-            <li v-for="entry in entries" :key="entry.uuid" class="py-6 first:pt-0">
+        <ul v-else class="grid gap-4 sm:grid-cols-2">
+            <li v-for="entry in entries" :key="entry.uuid" class="flex">
                 <Link
                     :href="show({ segment: 'blog', slug: entry.slug }).url"
-                    class="block group"
+                    class="group flex w-full flex-col rounded-sm border p-5 transition-colors hover:border-foreground/25 hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                 >
                     <p
                         class="font-mono text-xs tabular-nums text-muted-foreground"
@@ -22,16 +23,21 @@
                         {{ formatDateTime(entry.published_at) }}
                     </p>
                     <h2
-                        class="mt-1 font-medium group-hover:underline underline-offset-4"
+                        class="mt-2 text-lg font-medium tracking-tight underline-offset-4 group-hover:underline"
                     >
                         {{ entry.title }}
                     </h2>
                     <p
                         v-if="entry.excerpt"
-                        class="mt-1.5 text-sm text-muted-foreground"
+                        class="mt-2 text-sm text-muted-foreground"
                     >
                         {{ entry.excerpt }}
                     </p>
+                    <span
+                        class="mt-4 font-mono text-[10px] tracking-wide text-primary uppercase"
+                    >
+                        {{ $t('content.public.blog.read') }}
+                    </span>
                 </Link>
             </li>
         </ul>
