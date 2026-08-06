@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'name', 'url', 'created_by', 'timeout', 'interval_seconds', 'type', 'config',
     'confirmation_threshold', 'recovery_threshold', 'next_check_at', 'latest_is_up',
     'is_active', 'failure_streak', 'success_streak', 'last_checked_at', 'status_changed_at',
+    'degraded_response_ms', 'is_degraded', 'degraded_streak',
 ])]
 class Monitor extends Model
 {
@@ -37,6 +38,9 @@ class Monitor extends Model
             'interval_seconds' => 'integer',
             'confirmation_threshold' => 'integer',
             'recovery_threshold' => 'integer',
+            'degraded_response_ms' => 'integer',
+            'is_degraded' => 'boolean',
+            'degraded_streak' => 'integer',
             'failure_streak' => 'integer',
             'success_streak' => 'integer',
         ];
@@ -107,8 +111,9 @@ class Monitor extends Model
         return match (true) {
             ! $this->is_active => MonitorStatus::Paused,
             $this->latest_is_up === null => MonitorStatus::Pending,
-            $this->latest_is_up => MonitorStatus::Up,
-            default => MonitorStatus::Down,
+            $this->latest_is_up === false => MonitorStatus::Down,
+            (bool) $this->is_degraded => MonitorStatus::Degraded,
+            default => MonitorStatus::Up,
         };
     }
 
@@ -130,7 +135,14 @@ class Monitor extends Model
     public function scopeStatus(Builder $query, ?MonitorStatus $status): Builder
     {
         return match ($status) {
-            MonitorStatus::Up => $query->where('is_active', true)->where('latest_is_up', true),
+            // Degraded is carved out of Up so the filters partition rather
+            // than overlap — a monitor is in exactly one of them.
+            MonitorStatus::Up => $query->where('is_active', true)
+                ->where('latest_is_up', true)
+                ->where('is_degraded', false),
+            MonitorStatus::Degraded => $query->where('is_active', true)
+                ->where('latest_is_up', true)
+                ->where('is_degraded', true),
             MonitorStatus::Down => $query->where('is_active', true)->where('latest_is_up', false),
             MonitorStatus::Paused => $query->where('is_active', false),
             MonitorStatus::Pending => $query->where('is_active', true)->whereNull('latest_is_up'),

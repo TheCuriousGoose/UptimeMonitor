@@ -696,6 +696,27 @@
                     }}</FieldDescription>
                 </Field>
 
+                <Field>
+                    <FieldLabel for="degraded_response_ms">{{
+                        $t('monitors.form.degraded_response_ms.title')
+                    }}</FieldLabel>
+                    <Input
+                        id="degraded_response_ms"
+                        v-model="degradedMs"
+                        name="degraded_response_ms"
+                        type="number"
+                        min="1"
+                        class="sm:w-72"
+                        :placeholder="
+                            $t('monitors.form.degraded_response_ms.placeholder')
+                        "
+                    />
+                    <FieldError>{{ errors.degraded_response_ms }}</FieldError>
+                    <FieldDescription>{{
+                        $t('monitors.form.degraded_response_ms.description')
+                    }}</FieldDescription>
+                </Field>
+
                 <Field orientation="horizontal">
                     <FieldContent>
                         <FieldLabel for="is_active">{{
@@ -993,6 +1014,9 @@ const timeoutValue = computed(() =>
 
 const confirmation = ref(props.defaults?.confirmation_threshold ?? 1);
 const recovery = ref(props.defaults?.recovery_threshold ?? 1);
+const degradedMs = ref<number | string>(
+    props.defaults?.degraded_response_ms ?? '',
+);
 const isActive = ref(props.defaults?.is_active ?? true);
 
 const selectedChannels = ref<string[]>(

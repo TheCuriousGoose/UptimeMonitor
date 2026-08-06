@@ -53,7 +53,7 @@ class UptimeStats
      * Headline numbers for the dashboard.
      *
      * @return array{
-     *     total: int, up: int, down: int, paused: int, pending: int,
+     *     total: int, up: int, degraded: int, down: int, paused: int, pending: int,
      *     ongoing_incidents: int, uptime_percentage: float|null, avg_response_ms: int|null
      * }
      */
@@ -63,7 +63,8 @@ class UptimeStats
             ->forUser($user)
             ->selectRaw('COUNT(*) as total')
             ->selectRaw('SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as paused')
-            ->selectRaw('SUM(CASE WHEN is_active = 1 AND latest_is_up = 1 THEN 1 ELSE 0 END) as up_count')
+            ->selectRaw('SUM(CASE WHEN is_active = 1 AND latest_is_up = 1 AND is_degraded = 0 THEN 1 ELSE 0 END) as up_count')
+            ->selectRaw('SUM(CASE WHEN is_active = 1 AND latest_is_up = 1 AND is_degraded = 1 THEN 1 ELSE 0 END) as degraded_count')
             ->selectRaw('SUM(CASE WHEN is_active = 1 AND latest_is_up = 0 THEN 1 ELSE 0 END) as down_count')
             ->selectRaw('SUM(CASE WHEN is_active = 1 AND latest_is_up IS NULL THEN 1 ELSE 0 END) as pending')
             ->first();
@@ -82,6 +83,9 @@ class UptimeStats
         return [
             'total' => (int) ($counts->total ?? 0),
             'up' => (int) ($counts->up_count ?? 0),
+            // Carved out of "up" rather than added alongside it, so the
+            // counters still sum to total.
+            'degraded' => (int) ($counts->degraded_count ?? 0),
             'down' => (int) ($counts->down_count ?? 0),
             'paused' => (int) ($counts->paused ?? 0),
             'pending' => (int) ($counts->pending ?? 0),

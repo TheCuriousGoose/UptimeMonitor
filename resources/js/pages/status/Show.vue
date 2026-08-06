@@ -189,6 +189,7 @@ import {
     AlertTriangleIcon,
     CheckCircle2Icon,
     ClockIcon,
+    TrendingDownIcon,
 } from 'lucide-vue-next';
 import type { CSSProperties } from 'vue';
 import { computed } from 'vue';
@@ -242,6 +243,14 @@ const overallTone = computed(() => {
         };
     }
 
+    if (props.overall === 'degraded') {
+        return {
+            icon: TrendingDownIcon,
+            label: trans('status_pages.public.slow'),
+            style: tone('var(--sp-warning)'),
+        };
+    }
+
     if (props.overall === 'up') {
         return {
             icon: CheckCircle2Icon,
@@ -264,6 +273,10 @@ const overallTone = computed(() => {
 function statusTone(status: MonitorStatus) {
     if (status === 'down') {
         return { icon: AlertTriangleIcon, color: 'var(--sp-down)' };
+    }
+
+    if (status === 'degraded') {
+        return { icon: TrendingDownIcon, color: 'var(--sp-warning)' };
     }
 
     if (status === 'up') {

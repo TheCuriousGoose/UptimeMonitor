@@ -66,6 +66,12 @@ class PublicStatusPageController extends Controller
             return MonitorStatus::Down->value;
         }
 
+        // Degraded outranks up: a page that says "all systems operational"
+        // while something is crawling is worse than saying nothing.
+        if (in_array(MonitorStatus::Degraded->value, $statuses, true)) {
+            return MonitorStatus::Degraded->value;
+        }
+
         return in_array(MonitorStatus::Up->value, $statuses, true)
             ? MonitorStatus::Up->value
             : MonitorStatus::Pending->value;

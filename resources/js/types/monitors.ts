@@ -2,7 +2,7 @@ import type { User } from './auth';
 
 type MonitorType = 'http' | 'keyword' | 'port' | 'ping' | 'dns' | 'ssl';
 
-type MonitorStatus = 'up' | 'down' | 'paused' | 'pending';
+type MonitorStatus = 'up' | 'down' | 'degraded' | 'paused' | 'pending';
 
 type MonitorConfig = {
     method?: string;
@@ -39,6 +39,8 @@ interface Monitor {
     interval_seconds: number;
     confirmation_threshold: number;
     recovery_threshold: number;
+    degraded_response_ms: number | null;
+    is_degraded: boolean;
     config: MonitorConfig;
     last_checked_at: string | null;
     status_changed_at: string | null;
@@ -88,6 +90,7 @@ interface SeriesPoint {
 interface DashboardSummary {
     total: number;
     up: number;
+    degraded: number;
     down: number;
     paused: number;
     pending: number;

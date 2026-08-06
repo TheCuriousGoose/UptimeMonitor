@@ -27,6 +27,7 @@ return [
     'status' => [
         'up' => 'Up',
         'down' => 'Down',
+        'degraded' => 'Slow',
         'paused' => 'Paused',
         'pending' => 'Awaiting first check',
     ],
@@ -217,6 +218,11 @@ return [
                 '3' => 'After 3 successes',
                 '5' => 'After 5 successes',
             ],
+        ],
+        'degraded_response_ms' => [
+            'title' => 'Flag as slow above',
+            'placeholder' => 'Milliseconds, e.g. 2000',
+            'description' => 'Leave empty to ignore response time. A monitor that stays above this is reported as slow, but still counts as up.',
         ],
         'is_active' => [
             'title' => 'Start checking right away',

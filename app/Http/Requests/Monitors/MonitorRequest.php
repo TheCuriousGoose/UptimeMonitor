@@ -56,6 +56,11 @@ abstract class MonitorRequest extends FormRequest
             ],
             'confirmation_threshold' => ['sometimes', 'integer', 'min:1', 'max:10'],
             'recovery_threshold' => ['sometimes', 'integer', 'min:1', 'max:10'],
+            // Above the timeout it could never fire, so that is the ceiling.
+            'degraded_response_ms' => [
+                'sometimes', 'nullable', 'integer', 'min:1',
+                'max:'.(config('monitoring.max_timeout_seconds', 300) * 1000),
+            ],
             'config' => ['sometimes', 'array'],
             'notification_channels' => ['sometimes', 'array'],
             'notification_channels.*' => [

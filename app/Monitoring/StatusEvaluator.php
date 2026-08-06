@@ -30,26 +30,48 @@ class StatusEvaluator
     {
         $checkedAt ??= now();
 
-        [$check, $transition, $incident] = DB::transaction(
+        $evaluation = DB::transaction(
             fn () => $this->persist($monitor, $result, $checkedAt),
             self::TRANSACTION_ATTEMPTS,
         );
 
-        if ($transition === Transition::WentDown) {
-            $this->alerts->dispatch($monitor, AlertMessage::down($monitor, $result->error, $incident));
-        }
+        $this->announce($monitor, $result, $evaluation);
 
-        if ($transition === Transition::Recovered) {
-            $this->alerts->dispatch($monitor, AlertMessage::recovered($monitor, $incident));
-        }
-
-        return $check;
+        return $evaluation->check;
     }
 
     /**
-     * @return array{0: MonitorCheck, 1: Transition, 2: ?Incident}
+     * Fired outside the transaction: a queued job must never be visible to a
+     * worker before the rows it describes are committed.
      */
-    private function persist(Monitor $monitor, CheckResult $result, CarbonInterface $checkedAt): array
+    private function announce(Monitor $monitor, CheckResult $result, Evaluation $evaluation): void
+    {
+        match ($evaluation->transition) {
+            Transition::WentDown => $this->alerts->dispatch(
+                $monitor,
+                AlertMessage::down($monitor, $result->error, $evaluation->incident),
+            ),
+            Transition::Recovered => $this->alerts->dispatch(
+                $monitor,
+                AlertMessage::recovered($monitor, $evaluation->incident),
+            ),
+            Transition::None => null,
+        };
+
+        match ($evaluation->degradation) {
+            Degradation::Began => $this->alerts->dispatch(
+                $monitor,
+                AlertMessage::degraded($monitor, $result->responseMs, (int) $monitor->degraded_response_ms),
+            ),
+            Degradation::Ended => $this->alerts->dispatch(
+                $monitor,
+                AlertMessage::improved($monitor, $result->responseMs),
+            ),
+            Degradation::None => null,
+        };
+    }
+
+    private function persist(Monitor $monitor, CheckResult $result, CarbonInterface $checkedAt): Evaluation
     {
         // Take the monitor row lock FIRST, before touching monitor_checks or
         // incidents. Every writer that reaches this table now acquires locks
@@ -81,6 +103,7 @@ class StatusEvaluator
 
         $confirmed = $this->confirmedStatus($monitor, $result, $previous);
         $transition = $this->transitionFor($previous, $confirmed);
+        $degradation = $this->applyDegradation($monitor, $result, $confirmed);
 
         $monitor->latest_is_up = $confirmed;
         $monitor->last_checked_at = $checkedAt;
@@ -98,7 +121,45 @@ class StatusEvaluator
             Transition::None => $this->touchOngoingIncident($monitor, $result),
         };
 
-        return [$check, $transition, $incident];
+        return new Evaluation($check, $transition, $degradation, $incident);
+    }
+
+    /**
+     * Latency is monitor policy, not a checker concern: every checker reports
+     * a duration, and the streak arithmetic needs the same row lock the status
+     * does. So it is decided here rather than inside the checker, and
+     * CheckResult keeps its four fields.
+     *
+     * Only evaluated while the monitor is confirmed up — a down monitor's
+     * slowness is noise, and its degradation state is cleared silently so the
+     * Began/Ended edges stay balanced.
+     */
+    private function applyDegradation(Monitor $monitor, CheckResult $result, bool $confirmed): Degradation
+    {
+        $threshold = $monitor->degraded_response_ms;
+        $wasDegraded = (bool) $monitor->is_degraded;
+
+        if ($threshold === null || ! $confirmed || ! $result->isUp) {
+            $monitor->is_degraded = false;
+            $monitor->degraded_streak = 0;
+
+            return Degradation::None;
+        }
+
+        if ($result->responseMs > $threshold) {
+            $monitor->degraded_streak++;
+
+            // Reuses confirmation_threshold rather than adding a second knob:
+            // one slow sample is as unreliable as one failed one.
+            $monitor->is_degraded = $monitor->degraded_streak >= max(1, $monitor->confirmation_threshold);
+
+            return $monitor->is_degraded && ! $wasDegraded ? Degradation::Began : Degradation::None;
+        }
+
+        $monitor->degraded_streak = 0;
+        $monitor->is_degraded = false;
+
+        return $wasDegraded ? Degradation::Ended : Degradation::None;
     }
 
     /**
