@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['monitor_id', 'started_at', 'resolved_at', 'cause', 'failed_checks'])]
 class Incident extends Model
@@ -37,6 +38,23 @@ class Incident extends Model
     public function monitor(): BelongsTo
     {
         return $this->belongsTo(Monitor::class);
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(IncidentNotification::class);
+    }
+
+    /**
+     * Whether anyone was ever told about this outage.
+     *
+     * The gate that keeps a suppressed incident quiet on both edges: an
+     * outage nobody was told about must not produce a "recovered" alert out
+     * of nowhere.
+     */
+    public function wasAnnounced(): bool
+    {
+        return $this->notifications()->where('notify_count', '>', 0)->exists();
     }
 
     public function isOngoing(): bool

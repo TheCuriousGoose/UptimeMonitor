@@ -22,6 +22,11 @@ abstract class ChannelRequest extends FormRequest
             'is_active' => ['sometimes', 'boolean'],
             'config' => ['required', 'array'],
             'alert_scope' => ['sometimes', Rule::enum(AlertScope::class)],
+            'renotify_minutes' => ['sometimes', 'nullable', 'integer', 'min:5', 'max:1440'],
+            'renotify_limit' => ['sometimes', 'integer', 'min:1', 'max:20'],
+            'quiet_hours_start' => ['sometimes', 'nullable', 'date_format:H:i', 'required_with:quiet_hours_end'],
+            'quiet_hours_end' => ['sometimes', 'nullable', 'date_format:H:i', 'required_with:quiet_hours_start'],
+            'quiet_hours_timezone' => ['sometimes', 'nullable', 'timezone', 'required_with:quiet_hours_start'],
             'monitors' => ['sometimes', 'array'],
             'monitors.*' => ['string', 'uuid'],
             'templates' => ['sometimes', 'nullable', 'array'],
@@ -68,7 +73,13 @@ abstract class ChannelRequest extends FormRequest
      */
     public function channelAttributes(): array
     {
-        $data = $this->safe()->only(['name', 'type', 'is_active', 'config', 'alert_scope']);
+        // only() is an allowlist — a new column that is not named here is
+        // silently dropped rather than saved.
+        $data = $this->safe()->only([
+            'name', 'type', 'is_active', 'config', 'alert_scope',
+            'renotify_minutes', 'renotify_limit',
+            'quiet_hours_start', 'quiet_hours_end', 'quiet_hours_timezone',
+        ]);
         $type = ChannelType::tryFrom((string) $this->input('type'));
 
         // Keep only the config key this channel type actually uses, so a

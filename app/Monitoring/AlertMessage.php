@@ -28,6 +28,16 @@ final readonly class AlertMessage
         return new self($monitor, AlertEvent::Recovered, now(), null, $incident);
     }
 
+    /**
+     * A repeat of an outage that is still open. A distinct event rather than
+     * re-sending Down, so channels can word it differently and PagerDuty
+     * re-triggers on the same dedup_key instead of opening a second page.
+     */
+    public static function reminder(Monitor $monitor, Incident $incident): self
+    {
+        return new self($monitor, AlertEvent::Reminder, now(), $incident->cause, $incident);
+    }
+
     public static function degraded(Monitor $monitor, int $responseMs, int $thresholdMs): self
     {
         return new self(
@@ -49,6 +59,7 @@ final readonly class AlertMessage
         return match ($this->event) {
             AlertEvent::Down => "{$this->monitor->name} is DOWN",
             AlertEvent::Recovered => "{$this->monitor->name} is back UP",
+            AlertEvent::Reminder => "{$this->monitor->name} is STILL DOWN",
             AlertEvent::Degraded => "{$this->monitor->name} is SLOW",
             AlertEvent::Improved => "{$this->monitor->name} is back to normal speed",
         };
@@ -59,6 +70,10 @@ final readonly class AlertMessage
         return match ($this->event) {
             AlertEvent::Down => "{$this->monitor->name} ({$this->monitor->url}) stopped responding: "
                 .($this->error ?: 'the check failed.'),
+
+            AlertEvent::Reminder => "{$this->monitor->name} ({$this->monitor->url}) has been down for "
+                .($this->incident ? AlertTemplate::humanDuration($this->incident->durationSeconds()) : 'a while')
+                .'. '.($this->error ?: 'The check is still failing.'),
 
             AlertEvent::Recovered => "{$this->monitor->name} ({$this->monitor->url}) is responding again"
                 .($this->incident

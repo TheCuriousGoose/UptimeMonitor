@@ -51,10 +51,16 @@ class StatusEvaluator
                 $monitor,
                 AlertMessage::down($monitor, $result->error, $evaluation->incident),
             ),
-            Transition::Recovered => $this->alerts->dispatch(
-                $monitor,
-                AlertMessage::recovered($monitor, $evaluation->incident),
-            ),
+            // An outage nobody was told about must not produce a "recovered"
+            // alert out of nowhere. A null incident means there was nothing
+            // to suppress in the first place, so that still announces.
+            Transition::Recovered => $evaluation->incident === null
+                || $evaluation->incident->wasAnnounced()
+                    ? $this->alerts->dispatch(
+                        $monitor,
+                        AlertMessage::recovered($monitor, $evaluation->incident),
+                    )
+                    : null,
             Transition::None => null,
         };
 
