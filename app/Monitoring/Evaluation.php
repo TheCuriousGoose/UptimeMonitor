@@ -19,5 +19,6 @@ final readonly class Evaluation
         public Transition $transition,
         public Degradation $degradation,
         public ?Incident $incident = null,
+        public bool $underMaintenance = false,
     ) {}
 }

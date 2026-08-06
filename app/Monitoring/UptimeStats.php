@@ -53,20 +53,30 @@ class UptimeStats
      * Headline numbers for the dashboard.
      *
      * @return array{
-     *     total: int, up: int, degraded: int, down: int, paused: int, pending: int,
+     *     total: int, up: int, degraded: int, down: int, maintenance: int,
+     *     paused: int, pending: int,
      *     ongoing_incidents: int, uptime_percentage: float|null, avg_response_ms: int|null
      * }
      */
     public function summaryForUser(User $user, CarbonInterface $since): array
     {
+        // Monitors inside a window are counted as maintenance and nothing
+        // else, so the buckets still sum to total.
+        //
+        // The moment is bound from PHP rather than using SQL NOW(): the
+        // column holds UTC, and NOW() is the database server's local clock.
+        $moment = now();
+        $awake = 'SUM(CASE WHEN is_active = 1 AND (maintenance_until IS NULL OR maintenance_until <= ?)';
+
         $counts = Monitor::query()
             ->forUser($user)
             ->selectRaw('COUNT(*) as total')
             ->selectRaw('SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as paused')
-            ->selectRaw('SUM(CASE WHEN is_active = 1 AND latest_is_up = 1 AND is_degraded = 0 THEN 1 ELSE 0 END) as up_count')
-            ->selectRaw('SUM(CASE WHEN is_active = 1 AND latest_is_up = 1 AND is_degraded = 1 THEN 1 ELSE 0 END) as degraded_count')
-            ->selectRaw('SUM(CASE WHEN is_active = 1 AND latest_is_up = 0 THEN 1 ELSE 0 END) as down_count')
-            ->selectRaw('SUM(CASE WHEN is_active = 1 AND latest_is_up IS NULL THEN 1 ELSE 0 END) as pending')
+            ->selectRaw('SUM(CASE WHEN is_active = 1 AND maintenance_until > ? THEN 1 ELSE 0 END) as maintenance', [$moment])
+            ->selectRaw($awake.' AND latest_is_up = 1 AND is_degraded = 0 THEN 1 ELSE 0 END) as up_count', [$moment])
+            ->selectRaw($awake.' AND latest_is_up = 1 AND is_degraded = 1 THEN 1 ELSE 0 END) as degraded_count', [$moment])
+            ->selectRaw($awake.' AND latest_is_up = 0 THEN 1 ELSE 0 END) as down_count', [$moment])
+            ->selectRaw($awake.' AND latest_is_up IS NULL THEN 1 ELSE 0 END) as pending', [$moment])
             ->first();
 
         $checks = MonitorCheck::query()
@@ -87,6 +97,7 @@ class UptimeStats
             // counters still sum to total.
             'degraded' => (int) ($counts->degraded_count ?? 0),
             'down' => (int) ($counts->down_count ?? 0),
+            'maintenance' => (int) ($counts->maintenance ?? 0),
             'paused' => (int) ($counts->paused ?? 0),
             'pending' => (int) ($counts->pending ?? 0),
             'ongoing_incidents' => Incident::query()
@@ -160,6 +171,8 @@ class UptimeStats
     {
         return Incident::query()
             ->where('monitor_id', $monitor->id)
+            // Scheduled work is not downtime.
+            ->where('is_maintenance', false)
             ->where(fn ($q) => $q->whereNull('resolved_at')->orWhere('resolved_at', '>=', $since));
     }
 

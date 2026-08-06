@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'name', 'url', 'created_by', 'timeout', 'interval_seconds', 'type', 'config',
     'confirmation_threshold', 'recovery_threshold', 'next_check_at', 'latest_is_up',
     'is_active', 'failure_streak', 'success_streak', 'last_checked_at', 'status_changed_at',
-    'degraded_response_ms', 'is_degraded', 'degraded_streak',
+    'degraded_response_ms', 'is_degraded', 'degraded_streak', 'maintenance_until',
 ])]
 class Monitor extends Model
 {
@@ -33,6 +33,7 @@ class Monitor extends Model
             'next_check_at' => 'immutable_datetime',
             'last_checked_at' => 'immutable_datetime',
             'status_changed_at' => 'immutable_datetime',
+            'maintenance_until' => 'immutable_datetime',
             'is_active' => 'boolean',
             'latest_is_up' => 'boolean',
             'interval_seconds' => 'integer',
@@ -110,6 +111,10 @@ class Monitor extends Model
     {
         return match (true) {
             ! $this->is_active => MonitorStatus::Paused,
+            // A cache refreshed by the sweep, never the source of truth for
+            // suppression — StatusEvaluator always asks the schedule live.
+            $this->maintenance_until !== null
+                && $this->maintenance_until->isFuture() => MonitorStatus::Maintenance,
             $this->latest_is_up === null => MonitorStatus::Pending,
             $this->latest_is_up === false => MonitorStatus::Down,
             (bool) $this->is_degraded => MonitorStatus::Degraded,
@@ -132,20 +137,29 @@ class Monitor extends Model
         return $query->where('is_active', true)->where('next_check_at', '<=', now());
     }
 
+    public function maintenanceWindows(): BelongsToMany
+    {
+        return $this->belongsToMany(MaintenanceWindow::class);
+    }
+
     public function scopeStatus(Builder $query, ?MonitorStatus $status): Builder
     {
+        $awake = fn (Builder $q) => $q->where('is_active', true)
+            ->where(fn (Builder $inner) => $inner
+                ->whereNull('maintenance_until')
+                ->orWhere('maintenance_until', '<=', now()));
+
         return match ($status) {
             // Degraded is carved out of Up so the filters partition rather
             // than overlap — a monitor is in exactly one of them.
-            MonitorStatus::Up => $query->where('is_active', true)
-                ->where('latest_is_up', true)
-                ->where('is_degraded', false),
-            MonitorStatus::Degraded => $query->where('is_active', true)
-                ->where('latest_is_up', true)
-                ->where('is_degraded', true),
-            MonitorStatus::Down => $query->where('is_active', true)->where('latest_is_up', false),
+            MonitorStatus::Up => $awake($query)->where('latest_is_up', true)->where('is_degraded', false),
+            MonitorStatus::Degraded => $awake($query)->where('latest_is_up', true)->where('is_degraded', true),
+            MonitorStatus::Down => $awake($query)->where('latest_is_up', false),
+            MonitorStatus::Maintenance => $query->where('is_active', true)
+                ->whereNotNull('maintenance_until')
+                ->where('maintenance_until', '>', now()),
             MonitorStatus::Paused => $query->where('is_active', false),
-            MonitorStatus::Pending => $query->where('is_active', true)->whereNull('latest_is_up'),
+            MonitorStatus::Pending => $awake($query)->whereNull('latest_is_up'),
             null => $query,
         };
     }

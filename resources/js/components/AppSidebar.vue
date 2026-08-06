@@ -10,6 +10,7 @@ import {
     ShieldCheck,
     Siren,
     Users,
+    Wrench,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
@@ -33,6 +34,7 @@ import adminSettings from '@/routes/admin/settings';
 import adminUsers from '@/routes/admin/users';
 import incidents from '@/routes/incidents';
 import integrations from '@/routes/integrations';
+import maintenanceWindows from '@/routes/maintenance-windows';
 import monitors from '@/routes/monitors';
 import statusPages from '@/routes/status-pages';
 import type { Auth } from '@/types';
@@ -69,6 +71,11 @@ const mainNavItems: NavItem[] = [
         title: trans('status_pages.title'),
         href: statusPages.index(),
         icon: Globe,
+    },
+    {
+        title: trans('maintenance.title'),
+        href: maintenanceWindows.index(),
+        icon: Wrench,
     },
 ];
 

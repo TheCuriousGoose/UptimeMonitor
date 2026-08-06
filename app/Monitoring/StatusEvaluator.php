@@ -16,7 +16,10 @@ use Illuminate\Support\Facades\DB;
  */
 class StatusEvaluator
 {
-    public function __construct(private readonly AlertDispatcher $alerts) {}
+    public function __construct(
+        private readonly AlertDispatcher $alerts,
+        private readonly MaintenanceSchedule $maintenance,
+    ) {}
 
     /**
      * Deadlocks here used to lose the check entirely: the job runs with
@@ -47,10 +50,12 @@ class StatusEvaluator
     private function announce(Monitor $monitor, CheckResult $result, Evaluation $evaluation): void
     {
         match ($evaluation->transition) {
-            Transition::WentDown => $this->alerts->dispatch(
-                $monitor,
-                AlertMessage::down($monitor, $result->error, $evaluation->incident),
-            ),
+            Transition::WentDown => $evaluation->incident?->is_maintenance
+                ? null
+                : $this->alerts->dispatch(
+                    $monitor,
+                    AlertMessage::down($monitor, $result->error, $evaluation->incident),
+                ),
             // An outage nobody was told about must not produce a "recovered"
             // alert out of nowhere. A null incident means there was nothing
             // to suppress in the first place, so that still announces.
@@ -93,6 +98,12 @@ class StatusEvaluator
             $monitor->setRawAttributes($locked->getAttributes(), sync: true);
         }
 
+        // Decided here, not in AlertDispatcher: the window applies to the
+        // monitor, and only this scope holds the check time, the transition
+        // and the incident together atomically. Suppressing downstream would
+        // still create an unflagged incident polluting downtime figures.
+        $underMaintenance = $this->maintenance->covers($monitor, $checkedAt);
+
         $check = MonitorCheck::create([
             'monitor_id' => $monitor->id,
             'is_up' => $result->isUp,
@@ -109,7 +120,7 @@ class StatusEvaluator
 
         $confirmed = $this->confirmedStatus($monitor, $result, $previous);
         $transition = $this->transitionFor($previous, $confirmed);
-        $degradation = $this->applyDegradation($monitor, $result, $confirmed);
+        $degradation = $this->applyDegradation($monitor, $result, $confirmed, $underMaintenance);
 
         $monitor->latest_is_up = $confirmed;
         $monitor->last_checked_at = $checkedAt;
@@ -122,12 +133,12 @@ class StatusEvaluator
         $monitor->save();
 
         $incident = match ($transition) {
-            Transition::WentDown => $this->openIncident($monitor, $result, $checkedAt),
+            Transition::WentDown => $this->openIncident($monitor, $result, $checkedAt, $underMaintenance),
             Transition::Recovered => $this->resolveIncident($monitor, $checkedAt),
             Transition::None => $this->touchOngoingIncident($monitor, $result),
         };
 
-        return new Evaluation($check, $transition, $degradation, $incident);
+        return new Evaluation($check, $transition, $degradation, $incident, $underMaintenance);
     }
 
     /**
@@ -140,10 +151,20 @@ class StatusEvaluator
      * slowness is noise, and its degradation state is cleared silently so the
      * Began/Ended edges stay balanced.
      */
-    private function applyDegradation(Monitor $monitor, CheckResult $result, bool $confirmed): Degradation
-    {
+    private function applyDegradation(
+        Monitor $monitor,
+        CheckResult $result,
+        bool $confirmed,
+        bool $underMaintenance,
+    ): Degradation {
         $threshold = $monitor->degraded_response_ms;
         $wasDegraded = (bool) $monitor->is_degraded;
+
+        // Frozen, not cleared: latency during a deploy is meaningless, and
+        // clearing would emit an unpaired Ended when the window closes.
+        if ($underMaintenance) {
+            return Degradation::None;
+        }
 
         if ($threshold === null || ! $confirmed || ! $result->isUp) {
             $monitor->is_degraded = false;
@@ -205,13 +226,21 @@ class StatusEvaluator
         };
     }
 
-    private function openIncident(Monitor $monitor, CheckResult $result, CarbonInterface $checkedAt): Incident
-    {
+    private function openIncident(
+        Monitor $monitor,
+        CheckResult $result,
+        CarbonInterface $checkedAt,
+        bool $underMaintenance,
+    ): Incident {
+        // Flagged rather than skipped. With no row, latest_is_up sits at false
+        // with no open incident, the recovery edge resolves nothing, and an
+        // outage spanning the end of the window is never alerted at all.
         return Incident::create([
             'monitor_id' => $monitor->id,
             'started_at' => $this->outageStartedAt($monitor, $checkedAt),
             'cause' => $result->error ? mb_substr($result->error, 0, 255) : null,
             'failed_checks' => $monitor->failure_streak,
+            'is_maintenance' => $underMaintenance,
         ]);
     }
 

@@ -28,6 +28,7 @@ return [
         'up' => 'Up',
         'down' => 'Down',
         'degraded' => 'Slow',
+        'maintenance' => 'Maintenance',
         'paused' => 'Paused',
         'pending' => 'Awaiting first check',
     ],

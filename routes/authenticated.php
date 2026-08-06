@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\IntegrationController;
+use App\Http\Controllers\MaintenanceWindowController;
 use App\Http\Controllers\MonitorBulkController;
 use App\Http\Controllers\MonitorCheckController;
 use App\Http\Controllers\MonitorController;
@@ -38,6 +39,10 @@ Route::resource('integrations', IntegrationController::class)
 Route::post('integrations/{channel}/test', [NotificationChannelTestController::class, 'store'])
     ->middleware('throttle:channel-test')
     ->name('integrations.test');
+
+Route::resource('maintenance-windows', MaintenanceWindowController::class)
+    ->only(['index', 'store', 'update', 'destroy'])
+    ->parameters(['maintenance-windows' => 'maintenance_window']);
 
 Route::resource('status-pages', StatusPageController::class)
     ->only(['index', 'store', 'update', 'destroy'])

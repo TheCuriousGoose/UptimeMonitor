@@ -2,11 +2,15 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\MaintenanceRecurrence;
 use App\Models\Incident;
 use App\Models\IncidentNotification;
+use App\Models\MaintenanceWindow;
+use App\Models\Monitor;
 use App\Models\NotificationChannel;
 use App\Monitoring\AlertDispatcher;
 use App\Monitoring\AlertMessage;
+use App\Monitoring\MaintenanceSchedule;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 
@@ -24,6 +28,11 @@ class SweepAlerts extends Command
 
     protected $description = 'Deliver deferred alerts and remind about ongoing incidents';
 
+    public function __construct(private readonly MaintenanceSchedule $maintenance)
+    {
+        parent::__construct();
+    }
+
     public function handle(AlertDispatcher $dispatcher): int
     {
         $lock = Cache::lock('monitors:sweep-alerts', 55);
@@ -35,15 +44,80 @@ class SweepAlerts extends Command
         }
 
         try {
+            $this->refreshMaintenance();
+            $released = $this->releaseMaintained($dispatcher);
             $delivered = $this->deliverDeferred($dispatcher);
             $reminded = $this->remind($dispatcher);
         } finally {
             $lock->release();
         }
 
-        $this->info("Delivered {$delivered} deferred alert(s), sent {$reminded} reminder(s).");
+        $this->info(
+            "Released {$released} outage(s), delivered {$delivered} deferred alert(s), "
+            ."sent {$reminded} reminder(s).",
+        );
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Recompute monitors.maintenance_until, the cache the badge and the
+     * status filters read so they need no per-row schedule lookup.
+     */
+    private function refreshMaintenance(): void
+    {
+        $now = now();
+
+        MaintenanceWindow::query()->active()->with('monitors')->cursor()
+            ->each(function (MaintenanceWindow $window) use ($now): void {
+                if (! $window->coversAt($now)) {
+                    return;
+                }
+
+                $until = $window->recurrence === MaintenanceRecurrence::Once
+                    ? $window->ends_at
+                    : $now->copy()->addMinutes((int) $window->duration_minutes);
+
+                Monitor::query()
+                    ->whereKey($window->monitors->modelKeys())
+                    ->where(fn ($q) => $q->whereNull('maintenance_until')
+                        ->orWhere('maintenance_until', '<', $until))
+                    ->update(['maintenance_until' => $until]);
+            });
+    }
+
+    /**
+     * An outage that outlived its window is a real one. This is why the
+     * incident is flagged rather than not created.
+     */
+    private function releaseMaintained(AlertDispatcher $dispatcher): int
+    {
+        $released = 0;
+
+        Incident::query()
+            ->ongoing()
+            ->where('is_maintenance', true)
+            ->with('monitor')
+            ->cursor()
+            ->each(function (Incident $incident) use ($dispatcher, &$released): void {
+                $monitor = $incident->monitor;
+
+                if ($monitor === null || $this->maintenance->covers($monitor, now())) {
+                    return;
+                }
+
+                $incident->update(['is_maintenance' => false]);
+
+                $dispatcher->dispatch($monitor, AlertMessage::down(
+                    $monitor,
+                    $incident->cause,
+                    $incident,
+                ));
+
+                $released++;
+            });
+
+        return $released;
     }
 
     private function deliverDeferred(AlertDispatcher $dispatcher): int

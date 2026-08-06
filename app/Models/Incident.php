@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['monitor_id', 'started_at', 'resolved_at', 'cause', 'failed_checks'])]
+#[Fillable(['monitor_id', 'started_at', 'resolved_at', 'cause', 'failed_checks', 'is_maintenance'])]
 class Incident extends Model
 {
     use HasFactory, HasUuids;
@@ -21,6 +21,7 @@ class Incident extends Model
         return [
             'started_at' => 'immutable_datetime',
             'resolved_at' => 'immutable_datetime',
+            'is_maintenance' => 'boolean',
             'failed_checks' => 'integer',
         ];
     }
