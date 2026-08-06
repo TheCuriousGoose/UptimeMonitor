@@ -16,6 +16,7 @@ use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -91,5 +92,46 @@ return Application::configure(basePath: dirname(__DIR__))
                 'status' => 429,
                 'retryAfter' => $retryAfter,
             ])->toResponse($request)->setStatusCode(429)->withHeaders($headers);
+        });
+
+        // Everything else that a browser can actually land on. Anything not
+        // listed keeps Laravel's own response — a redirect, or a bare status
+        // for the codes no user ever reads.
+        //
+        // 503 is deliberately absent. Maintenance mode is exactly the moment
+        // Inertia cannot be relied on: the request is refused before the app
+        // is fully up, and built assets may be mid-swap. It is served by the
+        // self-contained resources/views/errors/503.blade.php instead.
+        $errorPageStatuses = [403, 404, 419, 500];
+
+        $exceptions->respond(function (Response $response, Throwable $e, Request $request) use ($errorPageStatuses) {
+            // JSON clients already got a JSON body from shouldRenderJsonWhen()
+            // above; re-rendering it as a page would break them.
+            if ($request->is('api/*') || ($request->expectsJson() && ! $request->header('X-Inertia'))) {
+                return $response;
+            }
+
+            // 429 is handled by the render() callback above, which turns an
+            // in-app write into a toast rather than a full-page error. render()
+            // callbacks run first, so without this guard that work is undone.
+            if ($response->getStatusCode() === 429) {
+                return $response;
+            }
+
+            if (! in_array($response->getStatusCode(), $errorPageStatuses, true)) {
+                return $response;
+            }
+
+            // With debug on, the stack trace is worth more than a branded page.
+            if (config('app.debug') && $response->getStatusCode() === 500) {
+                return $response;
+            }
+
+            // A 404 for an unmatched URI is thrown before the "web" group runs,
+            // so HandleInertiaRequests never shares auth/settings/flash. The
+            // page has to treat every shared prop as optional.
+            return Inertia::render('Error', ['status' => $response->getStatusCode()])
+                ->toResponse($request)
+                ->setStatusCode($response->getStatusCode());
         });
     })->create();
