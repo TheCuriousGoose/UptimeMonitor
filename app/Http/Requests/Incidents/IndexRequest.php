@@ -20,7 +20,21 @@ class IndexRequest extends FormRequest
         return [
             'search' => ['nullable', 'string', 'max:100'],
             'status' => ['nullable', Rule::in(self::STATUSES)],
+            'sort' => ['nullable', Rule::in(array_keys(Incident::SORTS))],
+            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
         ];
+    }
+
+    public function sort(): ?string
+    {
+        $sort = (string) $this->input('sort');
+
+        return array_key_exists($sort, Incident::SORTS) ? $sort : null;
+    }
+
+    public function direction(): string
+    {
+        return $this->input('direction') === 'desc' ? 'desc' : 'asc';
     }
 
     public function search(): ?string

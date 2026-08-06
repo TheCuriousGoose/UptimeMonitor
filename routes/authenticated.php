@@ -3,14 +3,20 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\IntegrationController;
+use App\Http\Controllers\MonitorBulkController;
 use App\Http\Controllers\MonitorCheckController;
 use App\Http\Controllers\MonitorController;
+use App\Http\Controllers\MonitorSearchController;
 use App\Http\Controllers\MonitorStateController;
 use App\Http\Controllers\NotificationChannelTestController;
 use App\Http\Controllers\StatusPageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+// Declared before the resource so these are not swallowed by {monitor}.
+Route::post('monitors/bulk', [MonitorBulkController::class, 'store'])->name('monitors.bulk');
+Route::get('monitors/search', [MonitorSearchController::class, 'index'])->name('monitors.search');
 
 Route::resource('monitors', MonitorController::class);
 Route::patch('monitors/{monitor}/state', [MonitorStateController::class, 'update'])->name('monitors.state');

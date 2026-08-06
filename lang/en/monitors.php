@@ -30,6 +30,10 @@ return [
         'paused' => 'Paused',
         'pending' => 'Awaiting first check',
     ],
+    'empty' => [
+        'title' => 'Add your first monitor',
+        'description' => 'Point us at a URL, host or port and we will tell you the moment it stops responding.',
+    ],
     'is_up' => 'Up',
     'is_down' => 'Down',
     'no_data' => 'No data',
@@ -56,6 +60,7 @@ return [
         'resume' => 'Resume',
         'check_now' => 'Check now',
         'confirm_delete' => 'Delete this monitor and all of its history? This cannot be undone.',
+        'confirm_bulk_delete' => 'Delete :count monitors and all of their history? This cannot be undone.',
     ],
     'form' => [
         'submit' => 'Save monitor',
@@ -245,6 +250,12 @@ return [
         ],
         'check_queued' => [
             'success' => 'Check queued — results appear in a moment',
+        ],
+        'bulk' => [
+            'pause' => ':count monitors paused',
+            'resume' => ':count monitors resumed',
+            'delete' => ':count monitors deleted',
+            'none' => 'Nothing was changed — you cannot act on the selected monitors',
         ],
     ],
     'uptime_timeline_for' => 'Uptime timeline for :name',

@@ -29,8 +29,7 @@ class MonitorController extends Controller
             ->search($request->search())
             ->status($request->status())
             ->with(['createdBy'])
-            ->orderByRaw('CASE WHEN is_active = 0 THEN 2 WHEN latest_is_up = 0 THEN 0 ELSE 1 END')
-            ->orderBy('name')
+            ->sort($request->sort(), $request->direction())
             ->paginate(15)
             ->withQueryString();
 
@@ -39,6 +38,8 @@ class MonitorController extends Controller
             'filters' => [
                 'search' => $request->search(),
                 'status' => $request->status(),
+                'sort' => $request->sort(),
+                'direction' => $request->direction(),
             ],
         ]);
     }

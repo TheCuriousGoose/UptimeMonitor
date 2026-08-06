@@ -59,6 +59,21 @@ final class SqlDialect
         };
     }
 
+    /**
+     * Elapsed seconds between two timestamp columns, treating a null end as
+     * "still running" — an open incident is still growing, so it must sort as
+     * the longest rather than to whichever end nulls happen to land on.
+     */
+    public static function openEndedSeconds(string $start, string $end, ?string $driver = null): string
+    {
+        return match ($driver ??= self::driver()) {
+            'mysql', 'mariadb' => "TIMESTAMPDIFF(SECOND, {$start}, COALESCE({$end}, NOW()))",
+            'sqlite' => "(strftime('%s', COALESCE({$end}, 'now')) - strftime('%s', {$start}))",
+            'pgsql' => "EXTRACT(EPOCH FROM (COALESCE({$end}, NOW()) - {$start}))",
+            default => self::unsupported($driver),
+        };
+    }
+
     private static function driver(): string
     {
         return DB::connection()->getDriverName();

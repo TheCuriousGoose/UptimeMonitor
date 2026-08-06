@@ -138,6 +138,43 @@ class Monitor extends Model
         };
     }
 
+    /**
+     * The columns a client may order by, keyed by the name the table sends.
+     *
+     * An allowlist rather than a passthrough: `direction` is validated, but
+     * the column would otherwise be interpolated straight into orderBy.
+     */
+    public const SORTS = [
+        'name' => 'name',
+        'type' => 'type',
+        'interval' => 'interval_seconds',
+        'last_checked' => 'last_checked_at',
+        'status' => null, // Ranked, not a column — see scopeSort().
+    ];
+
+    public function scopeSort(Builder $query, ?string $sort, string $direction = 'asc'): Builder
+    {
+        $direction = $direction === 'desc' ? 'desc' : 'asc';
+
+        if ($sort === null || ! array_key_exists($sort, self::SORTS)) {
+            // Down first, then pending and up, with paused last. Someone
+            // opening this page is looking for what is broken.
+            return $query
+                ->orderByRaw('CASE WHEN is_active = 0 THEN 2 WHEN latest_is_up = 0 THEN 0 ELSE 1 END')
+                ->orderBy('name');
+        }
+
+        if ($sort === 'status') {
+            return $query
+                ->orderByRaw(
+                    'CASE WHEN is_active = 0 THEN 2 WHEN latest_is_up = 0 THEN 0 ELSE 1 END '.$direction,
+                )
+                ->orderBy('name');
+        }
+
+        return $query->orderBy(self::SORTS[$sort], $direction)->orderBy('name');
+    }
+
     public function scopeSearch(Builder $query, ?string $search): Builder
     {
         if (! $search) {

@@ -4,10 +4,12 @@ import IncidentStatusBadge from '@/components/incidents/IncidentStatusBadge.vue'
 import { formatDateTime, formatDuration } from '@/lib/format';
 import { trans } from '@/lib/i18n';
 import type { Incident } from '@/types/monitors';
+import type { ColumnMeta } from '@/types/tables';
 
 export const columns: ColumnDef<Incident>[] = [
     {
         accessorKey: 'monitor',
+        meta: { sortable: true } satisfies ColumnMeta,
         header: () => trans('incidents.table.columns.monitor'),
         cell: ({ row }) =>
             h('div', { class: 'flex min-w-0 flex-col' }, [
@@ -25,12 +27,14 @@ export const columns: ColumnDef<Incident>[] = [
     },
     {
         accessorKey: 'status',
+        meta: { sortable: true } satisfies ColumnMeta,
         header: () => trans('incidents.table.columns.status'),
         cell: ({ row }) =>
             h(IncidentStatusBadge, { isOngoing: row.original.is_ongoing }),
     },
     {
         accessorKey: 'cause',
+        meta: { sortable: true, hideOnMobile: true } satisfies ColumnMeta,
         header: () => trans('incidents.table.columns.cause'),
         cell: ({ row }) =>
             h(
@@ -41,6 +45,7 @@ export const columns: ColumnDef<Incident>[] = [
     },
     {
         accessorKey: 'started',
+        meta: { sortable: true, hideOnMobile: true } satisfies ColumnMeta,
         header: () => trans('incidents.table.columns.started'),
         cell: ({ row }) =>
             h(
@@ -53,6 +58,7 @@ export const columns: ColumnDef<Incident>[] = [
     },
     {
         accessorKey: 'duration',
+        meta: { sortable: true } satisfies ColumnMeta,
         header: () => trans('incidents.table.columns.duration'),
         cell: ({ row }) =>
             h(
@@ -67,6 +73,7 @@ export const columns: ColumnDef<Incident>[] = [
     },
     {
         accessorKey: 'failed_checks',
+        meta: { sortable: true, hideOnMobile: true } satisfies ColumnMeta,
         header: () => trans('incidents.table.columns.failed_checks'),
         cell: ({ row }) =>
             h(

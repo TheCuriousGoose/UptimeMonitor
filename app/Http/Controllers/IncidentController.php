@@ -34,9 +34,7 @@ class IncidentController extends Controller
                 $request->status() === 'resolved',
                 fn (Builder $query) => $query->whereNotNull('resolved_at'),
             )
-            // Open incidents first — they are the ones that need someone.
-            ->orderByRaw('CASE WHEN resolved_at IS NULL THEN 0 ELSE 1 END')
-            ->orderByDesc('started_at')
+            ->sort($request->sort(), $request->direction())
             ->paginate(20)
             ->withQueryString();
 
@@ -45,6 +43,8 @@ class IncidentController extends Controller
             'filters' => [
                 'search' => $request->search(),
                 'status' => $request->status(),
+                'sort' => $request->sort(),
+                'direction' => $request->direction(),
             ],
             'summary' => $this->summary(),
         ]);

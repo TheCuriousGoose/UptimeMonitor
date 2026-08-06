@@ -5,11 +5,13 @@ import MonitorStatusBadge from '@/components/monitors/MonitorStatusBadge.vue';
 import { formatInterval, formatRelative } from '@/lib/format';
 import { trans } from '@/lib/i18n';
 import type { Monitor } from '@/types/monitors';
+import type { ColumnMeta } from '@/types/tables';
 import TableRowActions from './TableRowActions.vue';
 
 export const columns: ColumnDef<Monitor>[] = [
     {
         accessorKey: 'name',
+        meta: { sortable: true } satisfies ColumnMeta,
         header: () => trans('monitors.table.columns.name'),
         cell: ({ row }) =>
             h('div', { class: 'flex min-w-0 flex-col' }, [
@@ -27,12 +29,14 @@ export const columns: ColumnDef<Monitor>[] = [
     },
     {
         accessorKey: 'status',
+        meta: { sortable: true } satisfies ColumnMeta,
         header: () => trans('monitors.table.columns.status'),
         cell: ({ row }) =>
             h(MonitorStatusBadge, { status: row.original.status }),
     },
     {
         accessorKey: 'type',
+        meta: { sortable: true, hideOnMobile: true } satisfies ColumnMeta,
         header: () => trans('monitors.table.columns.type'),
         cell: ({ row }) =>
             h(
@@ -43,6 +47,7 @@ export const columns: ColumnDef<Monitor>[] = [
     },
     {
         accessorKey: 'interval',
+        meta: { sortable: true, hideOnMobile: true } satisfies ColumnMeta,
         header: () => trans('monitors.table.columns.interval'),
         cell: ({ row }) =>
             h(
@@ -60,6 +65,7 @@ export const columns: ColumnDef<Monitor>[] = [
     },
     {
         accessorKey: 'last_checked',
+        meta: { sortable: true, hideOnMobile: true } satisfies ColumnMeta,
         header: () => trans('monitors.table.columns.last_checked'),
         cell: ({ row }) =>
             h(
