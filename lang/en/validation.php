@@ -180,6 +180,11 @@ return [
     |
     */
 
+    'header_name' => 'That is not a valid HTTP header name.',
+    'header_name_reserved' => 'The :name header is set by the client and cannot be overridden.',
+    'header_value' => 'Header values cannot contain line breaks.',
+    'public_url' => 'A monitor that sends headers, a body or credentials must point at a public address.',
+
     'custom' => [
         'attribute-name' => [
             'rule-name' => 'custom-message',

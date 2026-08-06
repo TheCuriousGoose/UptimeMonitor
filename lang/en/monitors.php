@@ -116,6 +116,43 @@ return [
                 'description' => 'Leave empty to accept any successful response.',
                 'placeholder' => 'Any success',
             ],
+            'expected_status_codes' => [
+                'title' => 'Accepted status codes',
+                'placeholder' => '200, 2xx, 301-304',
+                'description' => 'Comma separated. Use an exact code, a range, or a class. Leave empty to accept anything below 400.',
+            ],
+            'follow_redirects' => [
+                'title' => 'Follow redirects',
+                'description' => 'Check where the redirect lands rather than the redirect itself.',
+            ],
+            'advanced' => [
+                'title' => 'Headers, body and authentication',
+            ],
+            'secret_masked' => 'Stored credentials are hidden. Leave the masked value alone to keep the current one.',
+            'auth' => [
+                'title' => 'Authentication',
+                'description' => 'Sent with every check. A monitor that authenticates must point at a public address.',
+                'username' => 'Username',
+                'password' => 'Password',
+                'token' => 'Token',
+                'options' => [
+                    'none' => 'None',
+                    'basic' => 'Basic',
+                    'bearer' => 'Bearer token',
+                ],
+            ],
+            'headers' => [
+                'title' => 'Request headers',
+                'placeholder' => 'Accept: application/json',
+                'description' => 'One per line, as "Name: value". Up to 20.',
+            ],
+            'body' => [
+                'title' => 'Request body',
+                'description' => 'Sent with methods that accept one.',
+            ],
+            'content_type' => [
+                'title' => 'Content type',
+            ],
             'verify_ssl' => [
                 'title' => 'Verify TLS certificate',
                 'description' => 'Turn off for internal services using self-signed certificates.',

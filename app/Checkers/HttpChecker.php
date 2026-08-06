@@ -2,34 +2,37 @@
 
 namespace App\Checkers;
 
+use App\Checkers\Support\OutboundGuard;
+use App\Checkers\Support\ResolvedTarget;
 use App\Models\Monitor;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
 class HttpChecker implements Checker
 {
+    public function __construct(protected readonly OutboundGuard $guard) {}
+
     public function check(Monitor $monitor): CheckResult
     {
         $config = $monitor->resolvedConfig();
         $start = hrtime(true);
 
         try {
-            $request = Http::timeout($monitor->timeout)->withUserAgent($this->userAgent());
-
-            // Tolerate "0"/"false" from monitors saved before config values
-            // were cast, so an existing opt-out is still honoured.
-            if (! filter_var($config['verify_ssl'] ?? true, FILTER_VALIDATE_BOOLEAN)) {
-                $request = $request->withoutVerifying();
-            }
-
-            $response = $request->send(strtoupper($config['method'] ?? 'GET'), $monitor->url);
+            [$response, $url] = $this->send($monitor, $config);
             $ms = $this->elapsedMs($start);
 
             $meta = [
                 'status_code' => $response->status(),
                 'checker' => $monitor->type->value,
             ];
+
+            // Only recorded when it differs, so an ordinary check keeps the
+            // meta shape it has always had.
+            if ($url !== $monitor->url) {
+                $meta['final_url'] = $url;
+            }
 
             if ($statusError = $this->assertStatus($response, $config)) {
                 return CheckResult::down($statusError, $ms, $meta);
@@ -55,19 +58,137 @@ class HttpChecker implements Checker
     }
 
     /**
+     * Follow the redirect chain by hand, vetting each hop.
+     *
+     * Guzzle's own follower would resolve and connect without the guard ever
+     * seeing the intermediate URLs, so a public host that 302s to
+     * 169.254.169.254 would walk straight through. Doing it here also makes
+     * follow_redirects and max_redirects mean exactly what they say.
+     *
+     * @param  array<string, mixed>  $config
+     * @return array{0: Response, 1: string}
+     */
+    private function send(Monitor $monitor, array $config): array
+    {
+        $carriesSecrets = $this->carriesSecrets($config);
+        $follow = filter_var($config['follow_redirects'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $maxHops = (int) ($config['max_redirects'] ?? 5);
+
+        $url = $monitor->url;
+        $method = strtoupper($config['method'] ?? 'GET');
+
+        for ($hop = 0; ; $hop++) {
+            $target = $this->guard->resolve($url, requirePublic: $carriesSecrets);
+
+            $response = $this->request($monitor, $config, $target)
+                ->withoutRedirecting()
+                ->send($method, $url);
+
+            $location = $response->header('Location');
+
+            if (! $follow || ! $response->redirect() || $location === '' || $hop >= $maxHops) {
+                return [$response, $url];
+            }
+
+            $url = $this->absoluteUrl($location, $url);
+
+            // A redirect to another resource is a GET, except for the two
+            // codes that exist to preserve the method.
+            if (! in_array($response->status(), [307, 308], true)) {
+                $method = $method === 'HEAD' ? 'HEAD' : 'GET';
+            }
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     */
+    private function request(Monitor $monitor, array $config, ResolvedTarget $target): PendingRequest
+    {
+        $request = Http::timeout($monitor->timeout)
+            ->withUserAgent($this->userAgent())
+            // Pre-seed cURL's resolver with the address the guard vetted, so
+            // the connection cannot land somewhere the check did not approve.
+            ->withOptions(['curl' => [CURLOPT_RESOLVE => [$target->curlResolveEntry()]]]);
+
+        // Tolerate "0"/"false" from monitors saved before config values
+        // were cast, so an existing opt-out is still honoured.
+        if (! filter_var($config['verify_ssl'] ?? true, FILTER_VALIDATE_BOOLEAN)) {
+            $request = $request->withoutVerifying();
+        }
+
+        $headers = array_filter(
+            (array) ($config['headers'] ?? []),
+            fn ($value, $name) => is_string($name) && is_string($value),
+            ARRAY_FILTER_USE_BOTH,
+        );
+
+        if ($headers !== []) {
+            $request = $request->withHeaders($headers);
+        }
+
+        $request = match ($config['auth_type'] ?? 'none') {
+            'basic' => $request->withBasicAuth(
+                (string) ($config['auth_username'] ?? ''),
+                (string) ($config['auth_password'] ?? ''),
+            ),
+            'bearer' => $request->withToken((string) ($config['auth_token'] ?? '')),
+            default => $request,
+        };
+
+        $body = $config['body'] ?? null;
+
+        if (is_string($body) && $body !== '') {
+            $request = $request->withBody($body, (string) ($config['content_type'] ?? 'text/plain'));
+        }
+
+        return $request;
+    }
+
+    /**
+     * Whether this monitor sends anything that must never reach a private
+     * address, whatever the allow_private_targets setting says.
+     *
+     * @param  array<string, mixed>  $config
+     */
+    private function carriesSecrets(array $config): bool
+    {
+        return ($config['headers'] ?? []) !== []
+            || ($config['auth_type'] ?? 'none') !== 'none'
+            || is_string($config['body'] ?? null) && $config['body'] !== '';
+    }
+
+    private function absoluteUrl(string $location, string $base): string
+    {
+        if (str_contains($location, '://')) {
+            return $location;
+        }
+
+        $parts = parse_url($base);
+        $origin = ($parts['scheme'] ?? 'http').'://'.($parts['host'] ?? '')
+            .(isset($parts['port']) ? ':'.$parts['port'] : '');
+
+        return str_starts_with($location, '/')
+            ? $origin.$location
+            : $origin.'/'.ltrim($location, '/');
+    }
+
+    /**
      * @param  array<string, mixed>  $config
      */
     protected function assertStatus(Response $response, array $config): ?string
     {
-        $expected = $config['expected_status'] ?? null;
+        $matcher = StatusMatcher::fromConfig($config);
 
-        if ($expected !== null) {
-            return $response->status() === (int) $expected
-                ? null
-                : "Expected HTTP {$expected}, got {$response->status()}";
+        if ($matcher->matches($response->status())) {
+            return null;
         }
 
-        return $response->status() < 400 ? null : "HTTP {$response->status()}";
+        // With no expectation configured the status speaks for itself, and
+        // this string is what an incident's cause reads as.
+        return $matcher->isExplicit()
+            ? "Expected {$matcher->describe()}, got {$response->status()}"
+            : "HTTP {$response->status()}";
     }
 
     /**

@@ -6,8 +6,20 @@ type MonitorStatus = 'up' | 'down' | 'paused' | 'pending';
 
 type MonitorConfig = {
     method?: string;
+    /** Superseded by expected_status_codes, kept for monitors saved before it. */
     expected_status?: number | null;
+    expected_status_codes?: string[];
     verify_ssl?: boolean;
+    follow_redirects?: boolean;
+    max_redirects?: number;
+    /** Values may come back as the mask rather than the credential. */
+    headers?: Record<string, string>;
+    body?: string | null;
+    content_type?: string | null;
+    auth_type?: 'none' | 'basic' | 'bearer';
+    auth_username?: string | null;
+    auth_password?: string | null;
+    auth_token?: string | null;
     keyword?: string;
     invert?: boolean;
     port?: number;
