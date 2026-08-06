@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Incidents\IndexRequest;
+use App\Http\Resources\IncidentResource;
 use App\Models\Incident;
 use App\Models\Monitor;
 use App\Policies\IncidentPolicy;
+use App\Support\SqlDialect;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +25,7 @@ class IncidentController extends Controller
                 $request->search(),
                 fn (Builder $query, string $search) => $query->whereHas(
                     'monitor',
-                    fn (Builder $monitor) => $monitor->where('name', 'LIKE', "%{$search}%"),
+                    fn (Builder $monitor) => $monitor->where('name', SqlDialect::like(), "%{$search}%"),
                 ),
             )
             ->when(
@@ -34,9 +36,7 @@ class IncidentController extends Controller
                 $request->status() === 'resolved',
                 fn (Builder $query) => $query->whereNotNull('resolved_at'),
             )
-            // Open incidents first — they are the ones that need someone.
-            ->orderByRaw('CASE WHEN resolved_at IS NULL THEN 0 ELSE 1 END')
-            ->orderByDesc('started_at')
+            ->sort($request->sort(), $request->direction())
             ->paginate(20)
             ->withQueryString();
 
@@ -45,8 +45,21 @@ class IncidentController extends Controller
             'filters' => [
                 'search' => $request->search(),
                 'status' => $request->status(),
+                'sort' => $request->sort(),
+                'direction' => $request->direction(),
             ],
             'summary' => $this->summary(),
+        ]);
+    }
+
+    public function show(Incident $incident)
+    {
+        $this->authorize('view', $incident);
+
+        $incident->load(['monitor', 'acknowledgedBy', 'updates.author']);
+
+        return Inertia::render('incidents/Show', [
+            'incident' => (new IncidentResource($incident))->resolve(),
         ]);
     }
 

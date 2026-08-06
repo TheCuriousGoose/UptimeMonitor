@@ -44,4 +44,30 @@ return [
 
     'max_timeout_seconds' => 300,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Outbound Requests
+    |--------------------------------------------------------------------------
+    |
+    | Checks fetch a URL the user supplied, which makes them a server-side
+    | request forgery primitive. Self-hosted installs legitimately monitor
+    | their own private network, so private targets are allowed by default —
+    | set this to false on a shared or multi-tenant deployment.
+    |
+    | Regardless of this setting, a monitor carrying credentials (request
+    | headers, a body, or auth) is never permitted to point at a private
+    | address. That is enforced at save time and again at check time.
+    |
+    */
+
+    'outbound' => [
+
+        'allow_private_targets' => (bool) env('MONITORING_ALLOW_PRIVATE_TARGETS', true),
+
+        'denied_hosts' => array_filter(
+            explode(',', (string) env('MONITORING_DENIED_HOSTS', '')),
+        ),
+
+    ],
+
 ];

@@ -17,6 +17,7 @@ enum ApiAbility: string
     case MonitorsRead = 'monitors:read';
     case MonitorsWrite = 'monitors:write';
     case IncidentsRead = 'incidents:read';
+    case IncidentsWrite = 'incidents:write';
     case ChecksTrigger = 'checks:trigger';
 
     /**

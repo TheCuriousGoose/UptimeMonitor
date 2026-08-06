@@ -46,6 +46,9 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'locale' => app()->getLocale(),
+            // Empty on a self-hosted instance, which hides the support links
+            // rather than pointing them at someone else's donation page.
+            'supportUrl' => config('app.support_url') ?: null,
             'auth' => [
                 'user' => $request->user(),
                 'roles' => $request->user()?->getRoleNames() ?? [],

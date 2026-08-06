@@ -19,7 +19,21 @@ class IndexRequest extends FormRequest
         return [
             'search' => ['nullable', 'string', 'max:100'],
             'status' => ['nullable', Rule::enum(MonitorStatus::class)],
+            'sort' => ['nullable', Rule::in(array_keys(Monitor::SORTS))],
+            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
         ];
+    }
+
+    public function sort(): ?string
+    {
+        $sort = (string) $this->input('sort');
+
+        return array_key_exists($sort, Monitor::SORTS) ? $sort : null;
+    }
+
+    public function direction(): string
+    {
+        return $this->input('direction') === 'desc' ? 'desc' : 'asc';
     }
 
     public function search(): ?string

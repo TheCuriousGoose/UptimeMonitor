@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\SqlDialect;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -19,8 +20,8 @@ class UserController extends Controller
         $users = User::query()
             ->with('roles')
             ->when($request->filled('search'), fn ($q) => $q
-                ->where('name', 'like', "%{$request->input('search')}%")
-                ->orWhere('email', 'like', "%{$request->input('search')}%")
+                ->where('name', SqlDialect::like(), "%{$request->input('search')}%")
+                ->orWhere('email', SqlDialect::like(), "%{$request->input('search')}%")
             )
             ->orderBy('name')
             ->paginate(15);

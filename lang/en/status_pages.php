@@ -132,6 +132,7 @@ return [
     'public' => [
         'all_operational' => 'All systems operational',
         'degraded' => 'Some systems are down',
+        'slow' => 'Some systems are slow',
         'pending' => 'Awaiting first checks',
         'uptime_90d' => '90-day uptime',
         'updated' => 'Updated :time',

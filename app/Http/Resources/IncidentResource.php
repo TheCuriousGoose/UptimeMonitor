@@ -20,6 +20,17 @@ class IncidentResource extends JsonResource
             'failed_checks' => $this->failed_checks,
             'duration_seconds' => $this->durationSeconds(),
             'is_ongoing' => $this->isOngoing(),
+            'is_maintenance' => (bool) $this->is_maintenance,
+            'acknowledged_at' => $this->acknowledged_at?->toIso8601String(),
+            'is_acknowledged' => $this->isAcknowledged(),
+            'acknowledged_by' => $this->whenLoaded(
+                'acknowledgedBy',
+                fn () => (new UserResource($this->acknowledgedBy))->resolve(),
+            ),
+            'updates' => $this->whenLoaded(
+                'updates',
+                fn () => IncidentUpdateResource::collection($this->updates)->resolve(),
+            ),
             // Nested resources are resolved here: left as resource objects they
             // would each pick up their own "data" envelope when serialised.
             'monitor' => $this->whenLoaded(

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ContentType;
+use App\Support\SqlDialect;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -77,9 +78,11 @@ class ContentEntry extends Model
             return $query;
         }
 
-        return $query->where(function (Builder $q) use ($search) {
-            $q->where('title', 'LIKE', "%{$search}%")
-                ->orWhere('slug', 'LIKE', "%{$search}%");
+        $like = SqlDialect::like();
+
+        return $query->where(function (Builder $q) use ($search, $like) {
+            $q->where('title', $like, "%{$search}%")
+                ->orWhere('slug', $like, "%{$search}%");
         });
     }
 }

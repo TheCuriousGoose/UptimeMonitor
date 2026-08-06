@@ -35,7 +35,13 @@
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
         <meta name="theme-color" content="#4F46E5">
 
-        <meta name="robots" content="noindex, nofollow" />
+        {{-- Public pages are the ones customers link to, so they are the ones
+             that must be findable. Everything behind auth stays out. --}}
+        @if ($indexable ?? false)
+            <link rel="canonical" href="{{ $canonical ?? url()->current() }}">
+        @else
+            <meta name="robots" content="noindex, nofollow" />
+        @endif
         @fonts
 
         @vite(['resources/css/app.css', 'resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])

@@ -27,8 +27,14 @@ return [
     'status' => [
         'up' => 'Up',
         'down' => 'Down',
+        'degraded' => 'Slow',
+        'maintenance' => 'Maintenance',
         'paused' => 'Paused',
         'pending' => 'Awaiting first check',
+    ],
+    'empty' => [
+        'title' => 'Add your first monitor',
+        'description' => 'Point us at a URL, host or port and we will tell you the moment it stops responding.',
     ],
     'is_up' => 'Up',
     'is_down' => 'Down',
@@ -56,6 +62,7 @@ return [
         'resume' => 'Resume',
         'check_now' => 'Check now',
         'confirm_delete' => 'Delete this monitor and all of its history? This cannot be undone.',
+        'confirm_bulk_delete' => 'Delete :count monitors and all of their history? This cannot be undone.',
     ],
     'form' => [
         'submit' => 'Save monitor',
@@ -111,6 +118,43 @@ return [
                 'description' => 'Leave empty to accept any successful response.',
                 'placeholder' => 'Any success',
             ],
+            'expected_status_codes' => [
+                'title' => 'Accepted status codes',
+                'placeholder' => '200, 2xx, 301-304',
+                'description' => 'Comma separated. Use an exact code, a range, or a class. Leave empty to accept anything below 400.',
+            ],
+            'follow_redirects' => [
+                'title' => 'Follow redirects',
+                'description' => 'Check where the redirect lands rather than the redirect itself.',
+            ],
+            'advanced' => [
+                'title' => 'Headers, body and authentication',
+            ],
+            'secret_masked' => 'Stored credentials are hidden. Leave the masked value alone to keep the current one.',
+            'auth' => [
+                'title' => 'Authentication',
+                'description' => 'Sent with every check. A monitor that authenticates must point at a public address.',
+                'username' => 'Username',
+                'password' => 'Password',
+                'token' => 'Token',
+                'options' => [
+                    'none' => 'None',
+                    'basic' => 'Basic',
+                    'bearer' => 'Bearer token',
+                ],
+            ],
+            'headers' => [
+                'title' => 'Request headers',
+                'placeholder' => 'Accept: application/json',
+                'description' => 'One per line, as "Name: value". Up to 20.',
+            ],
+            'body' => [
+                'title' => 'Request body',
+                'description' => 'Sent with methods that accept one.',
+            ],
+            'content_type' => [
+                'title' => 'Content type',
+            ],
             'verify_ssl' => [
                 'title' => 'Verify TLS certificate',
                 'description' => 'Turn off for internal services using self-signed certificates.',
@@ -165,6 +209,21 @@ return [
                 '3' => 'After 3 failures',
                 '5' => 'After 5 failures',
             ],
+        ],
+        'recovery_threshold' => [
+            'title' => 'Confirm recoveries',
+            'description' => 'How many successes in a row before we call it resolved. Higher values stop a flapping service announcing itself fixed too early.',
+            'options' => [
+                '1' => 'Resolve on the first success',
+                '2' => 'After 2 successes',
+                '3' => 'After 3 successes',
+                '5' => 'After 5 successes',
+            ],
+        ],
+        'degraded_response_ms' => [
+            'title' => 'Flag as slow above',
+            'placeholder' => 'Milliseconds, e.g. 2000',
+            'description' => 'Leave empty to ignore response time. A monitor that stays above this is reported as slow, but still counts as up.',
         ],
         'is_active' => [
             'title' => 'Start checking right away',
@@ -235,6 +294,12 @@ return [
         ],
         'check_queued' => [
             'success' => 'Check queued — results appear in a moment',
+        ],
+        'bulk' => [
+            'pause' => ':count monitors paused',
+            'resume' => ':count monitors resumed',
+            'delete' => ':count monitors deleted',
+            'none' => 'Nothing was changed — you cannot act on the selected monitors',
         ],
     ],
     'uptime_timeline_for' => 'Uptime timeline for :name',

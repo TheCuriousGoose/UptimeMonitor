@@ -24,6 +24,10 @@
                 :description="$t('dashboards.subtitle')"
             >
                 <template #actions>
+                    <LiveIndicator
+                        :interval="30000"
+                        :only="['summary', 'attention', 'recentIncidents']"
+                    />
                     <Button
                         :as="Link"
                         variant="outline"
@@ -171,6 +175,7 @@ import {
     XCircleIcon,
 } from 'lucide-vue-next';
 import EmptyState from '@/components/EmptyState.vue';
+import LiveIndicator from '@/components/LiveIndicator.vue';
 import MonitorStatusBadge from '@/components/monitors/MonitorStatusBadge.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import Section from '@/components/Section.vue';

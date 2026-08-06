@@ -3,7 +3,6 @@
 namespace App\Monitoring\Notifiers;
 
 use App\Models\NotificationChannel;
-use App\Monitoring\AlertEvent;
 use App\Monitoring\AlertMessage;
 use App\Monitoring\RenderedAlert;
 use Illuminate\Support\Facades\Http;
@@ -26,20 +25,23 @@ class PagerDutyNotifier implements Notifier
             return;
         }
 
-        $isDown = $message->event === AlertEvent::Down;
+        // Branching on isResolution() rather than comparing against Down:
+        // with an identity check, a "degraded" alert resolved the live page
+        // for an outage that was still ongoing.
+        $resolving = $message->event->isResolution();
 
         $payload = [
             'routing_key' => $routingKey,
-            'event_action' => $isDown ? 'trigger' : 'resolve',
+            'event_action' => $resolving ? 'resolve' : 'trigger',
             'dedup_key' => 'monitor-'.$message->monitor->uuid,
         ];
 
         // PagerDuty rejects a resolve that carries a payload block.
-        if ($isDown) {
+        if (! $resolving) {
             $payload['payload'] = [
                 'summary' => $text->title,
                 'source' => $message->monitor->url,
-                'severity' => 'error',
+                'severity' => $message->event->severity(),
                 'timestamp' => $message->occurredAt->toIso8601String(),
                 'custom_details' => [
                     'message' => $text->body,

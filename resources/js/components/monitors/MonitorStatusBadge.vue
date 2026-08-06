@@ -17,6 +17,7 @@ import {
     CheckCircle2Icon,
     ClockIcon,
     PauseIcon,
+    TrendingDownIcon,
     XCircleIcon,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -38,6 +39,10 @@ const tones = {
     down: {
         icon: XCircleIcon,
         classes: 'text-red-700 dark:text-red-400',
+    },
+    degraded: {
+        icon: TrendingDownIcon,
+        classes: 'text-amber-700 dark:text-amber-400',
     },
     paused: {
         icon: PauseIcon,

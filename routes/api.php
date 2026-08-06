@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\IncidentController;
 use App\Http\Controllers\Api\V1\MonitorCheckController;
 use App\Http\Controllers\Api\V1\MonitorController;
 use App\Http\Controllers\Api\V1\MonitorStateController;
+use App\Http\Controllers\IncidentAcknowledgementController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum', 'throttle:api'])
@@ -44,4 +45,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])
         Route::get('incidents/{incident}', [IncidentController::class, 'show'])
             ->middleware('abilities:incidents:read')
             ->name('incidents.show');
+        Route::post('incidents/{incident}/acknowledge', [IncidentAcknowledgementController::class, 'store'])
+            ->middleware('abilities:incidents:write')
+            ->name('incidents.acknowledge');
     });

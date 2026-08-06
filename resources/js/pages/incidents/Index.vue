@@ -6,12 +6,14 @@ import {
     CalendarIcon,
     SirenIcon,
 } from 'lucide-vue-next';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import EmptyState from '@/components/EmptyState.vue';
+import LiveIndicator from '@/components/LiveIndicator.vue';
 import StatTile from '@/components/StatTile.vue';
 import IncidentsTable from '@/components/tables/incidents/IncidentsTable.vue';
 import TableColumnFilter from '@/components/tables/TableColumnFilter.vue';
 import TableFilterBar from '@/components/tables/TableFilterBar.vue';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -24,6 +26,7 @@ import { trans } from '@/lib/i18n';
 import * as incidentsRoute from '@/routes/incidents';
 import type { Incident } from '@/types/monitors';
 import type { Pagination } from '@/types/pagination';
+import type { SortDirection } from '@/types/tables';
 import debounce from '@/util/debounce';
 
 const props = defineProps<{
@@ -31,6 +34,8 @@ const props = defineProps<{
     filters: {
         search: string | null;
         status: string | null;
+        sort: string | null;
+        direction: SortDirection;
     };
     summary: {
         ongoing: number;
@@ -44,8 +49,18 @@ const ALL = 'all';
 
 const search = ref<string>(props.filters.search ?? '');
 const status = ref<string>(props.filters.status ?? ALL);
+const loading = ref(false);
 
 const statuses = ['ongoing', 'resolved'];
+
+const hasFilters = computed(
+    () => search.value.trim() !== '' || status.value !== ALL,
+);
+
+function clearFilters() {
+    search.value = '';
+    status.value = ALL;
+}
 
 function reload() {
     router.get(
@@ -53,11 +68,16 @@ function reload() {
         {
             search: search.value.trim() || undefined,
             status: status.value === ALL ? undefined : status.value,
+            // Re-filtering must not silently throw away the chosen ordering.
+            sort: props.filters.sort ?? undefined,
+            direction: props.filters.sort ? props.filters.direction : undefined,
         },
         {
             preserveState: true,
             replace: true,
             only: ['incidents', 'filters'],
+            onStart: () => (loading.value = true),
+            onFinish: () => (loading.value = false),
         },
     );
 }
@@ -123,13 +143,13 @@ setLayoutProps({
                         v-model="search"
                         name="search"
                         type="search"
-                        class="w-64"
+                        class="w-full min-w-48 sm:w-64"
                         :placeholder="
                             $t('incidents.table.filters.search.placeholder')
                         "
                     />
                     <Select v-model="status">
-                        <SelectTrigger class="w-44">
+                        <SelectTrigger class="w-full min-w-40 sm:w-44">
                             <SelectValue
                                 :placeholder="
                                     $t('incidents.table.filters.status.label')
@@ -151,6 +171,12 @@ setLayoutProps({
                     </Select>
                 </template>
                 <template #actions>
+                    <!-- Slower than the monitor lists: an incident is already
+                         a confirmed outage, not a reading that moves. -->
+                    <LiveIndicator
+                        :interval="60000"
+                        :only="['incidents', 'summary']"
+                    />
                     <TableColumnFilter
                         table="incidents"
                         column-translations="incidents.table.columns"
@@ -158,7 +184,27 @@ setLayoutProps({
                 </template>
             </TableFilterBar>
 
-            <IncidentsTable :incidents="incidents" />
+            <!-- "No incidents ever" is handled above; this is the different
+                 problem of a filter that matched nothing. -->
+            <EmptyState
+                v-if="incidents.meta.total === 0 && hasFilters"
+                :title="$t('tables.empty.filtered.title')"
+                :description="$t('tables.empty.filtered.description')"
+            >
+                <template #actions>
+                    <Button variant="outline" @click="clearFilters">
+                        {{ $t('tables.empty.filtered.action') }}
+                    </Button>
+                </template>
+            </EmptyState>
+
+            <IncidentsTable
+                v-else
+                :incidents="incidents"
+                :sort="filters.sort"
+                :direction="filters.direction"
+                :loading="loading"
+            />
         </div>
     </div>
 </template>

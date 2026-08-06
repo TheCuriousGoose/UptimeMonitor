@@ -1,5 +1,9 @@
 <template>
-    <Head :title="entry.title" />
+    <SeoHead
+        :title="entry.title"
+        :description="entry.excerpt ?? undefined"
+        type="article"
+    />
 
     <div class="mx-auto w-full max-w-6xl px-4 py-16">
         <div class="grid gap-12 lg:grid-cols-[16rem_minmax(0,1fr)]">
@@ -82,9 +86,10 @@
 </template>
 
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { ArrowLeftIcon } from 'lucide-vue-next';
 import { computed } from 'vue';
+import SeoHead from '@/components/SeoHead.vue';
 import { Badge } from '@/components/ui/badge';
 import { groupByCategory } from '@/lib/content';
 import { formatDateTime } from '@/lib/format';

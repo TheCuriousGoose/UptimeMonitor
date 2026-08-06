@@ -30,6 +30,8 @@ class AlertTemplate
         'error',
         'occurred_at',
         'incident.duration',
+        'response_ms',
+        'threshold_ms',
     ];
 
     private const PATTERN = '/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/';
@@ -113,6 +115,10 @@ class AlertTemplate
             'incident.duration' => $message->incident
                 ? self::humanDuration($message->incident->durationSeconds())
                 : '',
+            // Empty rather than absent on a down or recovered message, so a
+            // template referencing them renders a gap instead of the raw tag.
+            'response_ms' => $message->responseMs !== null ? (string) $message->responseMs : '',
+            'threshold_ms' => $message->thresholdMs !== null ? (string) $message->thresholdMs : '',
         ];
     }
 

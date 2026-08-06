@@ -16,7 +16,10 @@ use Illuminate\Support\Facades\DB;
  */
 class StatusEvaluator
 {
-    public function __construct(private readonly AlertDispatcher $alerts) {}
+    public function __construct(
+        private readonly AlertDispatcher $alerts,
+        private readonly MaintenanceSchedule $maintenance,
+    ) {}
 
     /**
      * Deadlocks here used to lose the check entirely: the job runs with
@@ -30,26 +33,56 @@ class StatusEvaluator
     {
         $checkedAt ??= now();
 
-        [$check, $transition, $incident] = DB::transaction(
+        $evaluation = DB::transaction(
             fn () => $this->persist($monitor, $result, $checkedAt),
             self::TRANSACTION_ATTEMPTS,
         );
 
-        if ($transition === Transition::WentDown) {
-            $this->alerts->dispatch($monitor, AlertMessage::down($monitor, $result->error, $incident));
-        }
+        $this->announce($monitor, $result, $evaluation);
 
-        if ($transition === Transition::Recovered) {
-            $this->alerts->dispatch($monitor, AlertMessage::recovered($monitor, $incident));
-        }
-
-        return $check;
+        return $evaluation->check;
     }
 
     /**
-     * @return array{0: MonitorCheck, 1: Transition, 2: ?Incident}
+     * Fired outside the transaction: a queued job must never be visible to a
+     * worker before the rows it describes are committed.
      */
-    private function persist(Monitor $monitor, CheckResult $result, CarbonInterface $checkedAt): array
+    private function announce(Monitor $monitor, CheckResult $result, Evaluation $evaluation): void
+    {
+        match ($evaluation->transition) {
+            Transition::WentDown => $evaluation->incident?->is_maintenance
+                ? null
+                : $this->alerts->dispatch(
+                    $monitor,
+                    AlertMessage::down($monitor, $result->error, $evaluation->incident),
+                ),
+            // An outage nobody was told about must not produce a "recovered"
+            // alert out of nowhere. A null incident means there was nothing
+            // to suppress in the first place, so that still announces.
+            Transition::Recovered => $evaluation->incident === null
+                || $evaluation->incident->wasAnnounced()
+                    ? $this->alerts->dispatch(
+                        $monitor,
+                        AlertMessage::recovered($monitor, $evaluation->incident),
+                    )
+                    : null,
+            Transition::None => null,
+        };
+
+        match ($evaluation->degradation) {
+            Degradation::Began => $this->alerts->dispatch(
+                $monitor,
+                AlertMessage::degraded($monitor, $result->responseMs, (int) $monitor->degraded_response_ms),
+            ),
+            Degradation::Ended => $this->alerts->dispatch(
+                $monitor,
+                AlertMessage::improved($monitor, $result->responseMs),
+            ),
+            Degradation::None => null,
+        };
+    }
+
+    private function persist(Monitor $monitor, CheckResult $result, CarbonInterface $checkedAt): Evaluation
     {
         // Take the monitor row lock FIRST, before touching monitor_checks or
         // incidents. Every writer that reaches this table now acquires locks
@@ -64,6 +97,12 @@ class StatusEvaluator
         if ($locked !== null) {
             $monitor->setRawAttributes($locked->getAttributes(), sync: true);
         }
+
+        // Decided here, not in AlertDispatcher: the window applies to the
+        // monitor, and only this scope holds the check time, the transition
+        // and the incident together atomically. Suppressing downstream would
+        // still create an unflagged incident polluting downtime figures.
+        $underMaintenance = $this->maintenance->covers($monitor, $checkedAt);
 
         $check = MonitorCheck::create([
             'monitor_id' => $monitor->id,
@@ -81,6 +120,7 @@ class StatusEvaluator
 
         $confirmed = $this->confirmedStatus($monitor, $result, $previous);
         $transition = $this->transitionFor($previous, $confirmed);
+        $degradation = $this->applyDegradation($monitor, $result, $confirmed, $underMaintenance);
 
         $monitor->latest_is_up = $confirmed;
         $monitor->last_checked_at = $checkedAt;
@@ -93,22 +133,80 @@ class StatusEvaluator
         $monitor->save();
 
         $incident = match ($transition) {
-            Transition::WentDown => $this->openIncident($monitor, $result, $checkedAt),
+            Transition::WentDown => $this->openIncident($monitor, $result, $checkedAt, $underMaintenance),
             Transition::Recovered => $this->resolveIncident($monitor, $checkedAt),
             Transition::None => $this->touchOngoingIncident($monitor, $result),
         };
 
-        return [$check, $transition, $incident];
+        return new Evaluation($check, $transition, $degradation, $incident, $underMaintenance);
+    }
+
+    /**
+     * Latency is monitor policy, not a checker concern: every checker reports
+     * a duration, and the streak arithmetic needs the same row lock the status
+     * does. So it is decided here rather than inside the checker, and
+     * CheckResult keeps its four fields.
+     *
+     * Only evaluated while the monitor is confirmed up — a down monitor's
+     * slowness is noise, and its degradation state is cleared silently so the
+     * Began/Ended edges stay balanced.
+     */
+    private function applyDegradation(
+        Monitor $monitor,
+        CheckResult $result,
+        bool $confirmed,
+        bool $underMaintenance,
+    ): Degradation {
+        $threshold = $monitor->degraded_response_ms;
+        $wasDegraded = (bool) $monitor->is_degraded;
+
+        // Frozen, not cleared: latency during a deploy is meaningless, and
+        // clearing would emit an unpaired Ended when the window closes.
+        if ($underMaintenance) {
+            return Degradation::None;
+        }
+
+        if ($threshold === null || ! $confirmed || ! $result->isUp) {
+            $monitor->is_degraded = false;
+            $monitor->degraded_streak = 0;
+
+            return Degradation::None;
+        }
+
+        if ($result->responseMs > $threshold) {
+            $monitor->degraded_streak++;
+
+            // Reuses confirmation_threshold rather than adding a second knob:
+            // one slow sample is as unreliable as one failed one.
+            $monitor->is_degraded = $monitor->degraded_streak >= max(1, $monitor->confirmation_threshold);
+
+            return $monitor->is_degraded && ! $wasDegraded ? Degradation::Began : Degradation::None;
+        }
+
+        $monitor->degraded_streak = 0;
+        $monitor->is_degraded = false;
+
+        return $wasDegraded ? Degradation::Ended : Degradation::None;
     }
 
     /**
      * A monitor only flips to down once it has failed `confirmation_threshold`
-     * checks in a row, which keeps a single blip from paging anyone.
+     * checks in a row, which keeps a single blip from paging anyone, and only
+     * flips back up after `recovery_threshold` successes. The recovery side is
+     * what stops a flapping target from being announced down, up, and down
+     * again within a couple of minutes.
      */
     private function confirmedStatus(Monitor $monitor, CheckResult $result, ?bool $previous): bool
     {
         if ($result->isUp) {
-            return true;
+            if ($monitor->success_streak >= max(1, $monitor->recovery_threshold)) {
+                return true;
+            }
+
+            // Holding "up" for a monitor that has never reported keeps a new
+            // monitor's first success flipping it out of Pending immediately —
+            // there is no outage to confirm a recovery from.
+            return $previous ?? true;
         }
 
         if ($monitor->failure_streak >= max(1, $monitor->confirmation_threshold)) {
@@ -128,13 +226,21 @@ class StatusEvaluator
         };
     }
 
-    private function openIncident(Monitor $monitor, CheckResult $result, CarbonInterface $checkedAt): Incident
-    {
+    private function openIncident(
+        Monitor $monitor,
+        CheckResult $result,
+        CarbonInterface $checkedAt,
+        bool $underMaintenance,
+    ): Incident {
+        // Flagged rather than skipped. With no row, latest_is_up sits at false
+        // with no open incident, the recovery edge resolves nothing, and an
+        // outage spanning the end of the window is never alerted at all.
         return Incident::create([
             'monitor_id' => $monitor->id,
             'started_at' => $this->outageStartedAt($monitor, $checkedAt),
             'cause' => $result->error ? mb_substr($result->error, 0, 255) : null,
             'failed_checks' => $monitor->failure_streak,
+            'is_maintenance' => $underMaintenance,
         ]);
     }
 

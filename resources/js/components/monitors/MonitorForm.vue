@@ -254,30 +254,34 @@
                                 }}</FieldError>
                             </Field>
                             <Field>
-                                <FieldLabel for="expected_status">{{
+                                <FieldLabel for="expected_status_codes">{{
                                     $t(
-                                        'monitors.form.config.expected_status.title',
+                                        'monitors.form.config.expected_status_codes.title',
                                     )
                                 }}</FieldLabel>
                                 <Input
-                                    id="expected_status"
-                                    name="config[expected_status]"
-                                    type="number"
-                                    min="100"
-                                    max="599"
+                                    id="expected_status_codes"
+                                    v-model="expectedStatusCodes"
                                     :placeholder="
                                         $t(
-                                            'monitors.form.config.expected_status.placeholder',
+                                            'monitors.form.config.expected_status_codes.placeholder',
                                         )
                                     "
-                                    v-model="expectedStatus"
+                                />
+                                <input
+                                    v-for="(code, index) in statusCodeList"
+                                    :key="code"
+                                    type="hidden"
+                                    :name="`config[expected_status_codes][${index}]`"
+                                    :value="code"
                                 />
                                 <FieldError>{{
-                                    errors['config.expected_status']
+                                    errors['config.expected_status_codes'] ??
+                                    errors['config.expected_status_codes.0']
                                 }}</FieldError>
                                 <FieldDescription>{{
                                     $t(
-                                        'monitors.form.config.expected_status.description',
+                                        'monitors.form.config.expected_status_codes.description',
                                     )
                                 }}</FieldDescription>
                             </Field>
@@ -303,6 +307,227 @@
                                 :value="verifySsl ? '1' : '0'"
                             />
                         </Field>
+
+                        <Field orientation="horizontal">
+                            <FieldContent>
+                                <FieldLabel for="follow_redirects">{{
+                                    $t(
+                                        'monitors.form.config.follow_redirects.title',
+                                    )
+                                }}</FieldLabel>
+                                <FieldDescription>{{
+                                    $t(
+                                        'monitors.form.config.follow_redirects.description',
+                                    )
+                                }}</FieldDescription>
+                            </FieldContent>
+                            <Switch
+                                id="follow_redirects"
+                                v-model:checked="followRedirects"
+                            />
+                            <input
+                                type="hidden"
+                                name="config[follow_redirects]"
+                                :value="followRedirects ? '1' : '0'"
+                            />
+                        </Field>
+
+                        <!-- Collapsed by default: most monitors are a bare
+                             GET, and a wall of credential fields makes the
+                             common case look harder than it is. -->
+                        <Collapsible v-model:open="advancedOpen">
+                            <CollapsibleTrigger
+                                class="flex items-center gap-1.5 text-sm font-medium"
+                            >
+                                <ChevronRightIcon
+                                    class="size-4 transition-transform"
+                                    :class="advancedOpen && 'rotate-90'"
+                                    aria-hidden="true"
+                                />
+                                {{ $t('monitors.form.config.advanced.title') }}
+                            </CollapsibleTrigger>
+                            <CollapsibleContent
+                                class="mt-4 flex flex-col gap-5 border-l pl-4"
+                            >
+                                <Field>
+                                    <FieldLabel for="auth_type">{{
+                                        $t('monitors.form.config.auth.title')
+                                    }}</FieldLabel>
+                                    <Select v-model="authType">
+                                        <SelectTrigger
+                                            id="auth_type"
+                                            class="sm:w-72"
+                                            ><SelectValue
+                                        /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem
+                                                v-for="option in authTypes"
+                                                :key="option"
+                                                :value="option"
+                                            >
+                                                {{
+                                                    $t(
+                                                        `monitors.form.config.auth.options.${option}`,
+                                                    )
+                                                }}
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <input
+                                        type="hidden"
+                                        name="config[auth_type]"
+                                        :value="authType"
+                                    />
+                                    <FieldDescription>{{
+                                        $t(
+                                            'monitors.form.config.auth.description',
+                                        )
+                                    }}</FieldDescription>
+                                </Field>
+
+                                <div
+                                    v-if="authType === 'basic'"
+                                    class="grid gap-4 sm:grid-cols-2"
+                                >
+                                    <Field>
+                                        <FieldLabel for="auth_username">{{
+                                            $t(
+                                                'monitors.form.config.auth.username',
+                                            )
+                                        }}</FieldLabel>
+                                        <Input
+                                            id="auth_username"
+                                            v-model="authUsername"
+                                            name="config[auth_username]"
+                                            autocomplete="off"
+                                        />
+                                        <FieldError>{{
+                                            errors['config.auth_username']
+                                        }}</FieldError>
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel for="auth_password">{{
+                                            $t(
+                                                'monitors.form.config.auth.password',
+                                            )
+                                        }}</FieldLabel>
+                                        <Input
+                                            id="auth_password"
+                                            v-model="authPassword"
+                                            name="config[auth_password]"
+                                            type="password"
+                                            autocomplete="off"
+                                        />
+                                        <FieldError>{{
+                                            errors['config.auth_password']
+                                        }}</FieldError>
+                                    </Field>
+                                </div>
+
+                                <Field v-if="authType === 'bearer'">
+                                    <FieldLabel for="auth_token">{{
+                                        $t('monitors.form.config.auth.token')
+                                    }}</FieldLabel>
+                                    <Input
+                                        id="auth_token"
+                                        v-model="authToken"
+                                        name="config[auth_token]"
+                                        type="password"
+                                        autocomplete="off"
+                                    />
+                                    <FieldError>{{
+                                        errors['config.auth_token']
+                                    }}</FieldError>
+                                    <FieldDescription>{{
+                                        $t('monitors.form.config.secret_masked')
+                                    }}</FieldDescription>
+                                </Field>
+
+                                <Field>
+                                    <FieldLabel for="headers">{{
+                                        $t('monitors.form.config.headers.title')
+                                    }}</FieldLabel>
+                                    <textarea
+                                        id="headers"
+                                        v-model="headersText"
+                                        rows="3"
+                                        spellcheck="false"
+                                        class="w-full rounded-sm border bg-transparent px-3 py-2 font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        :placeholder="
+                                            $t(
+                                                'monitors.form.config.headers.placeholder',
+                                            )
+                                        "
+                                    ></textarea>
+                                    <input
+                                        v-for="entry in headerEntries"
+                                        :key="entry.name"
+                                        type="hidden"
+                                        :name="`config[headers][${entry.name}]`"
+                                        :value="entry.value"
+                                    />
+                                    <FieldError>{{
+                                        errors['config.headers']
+                                    }}</FieldError>
+                                    <FieldDescription>{{
+                                        $t(
+                                            'monitors.form.config.headers.description',
+                                        )
+                                    }}</FieldDescription>
+                                </Field>
+
+                                <Field>
+                                    <FieldLabel for="body">{{
+                                        $t('monitors.form.config.body.title')
+                                    }}</FieldLabel>
+                                    <textarea
+                                        id="body"
+                                        v-model="body"
+                                        name="config[body]"
+                                        rows="3"
+                                        spellcheck="false"
+                                        class="w-full rounded-sm border bg-transparent px-3 py-2 font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    ></textarea>
+                                    <FieldError>{{
+                                        errors['config.body']
+                                    }}</FieldError>
+                                    <FieldDescription>{{
+                                        $t(
+                                            'monitors.form.config.body.description',
+                                        )
+                                    }}</FieldDescription>
+                                </Field>
+
+                                <Field v-if="body.trim() !== ''">
+                                    <FieldLabel for="content_type">{{
+                                        $t(
+                                            'monitors.form.config.content_type.title',
+                                        )
+                                    }}</FieldLabel>
+                                    <Select v-model="contentType">
+                                        <SelectTrigger
+                                            id="content_type"
+                                            class="sm:w-72"
+                                            ><SelectValue
+                                        /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem
+                                                v-for="option in contentTypes"
+                                                :key="option"
+                                                :value="option"
+                                            >
+                                                {{ option }}
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <input
+                                        type="hidden"
+                                        name="config[content_type]"
+                                        :value="contentType"
+                                    />
+                                </Field>
+                            </CollapsibleContent>
+                        </Collapsible>
                     </template>
                 </FieldGroup>
             </div>
@@ -438,6 +663,60 @@
                     }}</FieldDescription>
                 </Field>
 
+                <Field>
+                    <FieldLabel for="recovery">{{
+                        $t('monitors.form.recovery_threshold.title')
+                    }}</FieldLabel>
+                    <Select v-model="recovery">
+                        <SelectTrigger id="recovery" class="sm:w-72"
+                            ><SelectValue
+                        /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem
+                                v-for="value in recoveryOptions"
+                                :key="value"
+                                :value="value"
+                            >
+                                {{
+                                    $t(
+                                        `monitors.form.recovery_threshold.options.${value}`,
+                                    )
+                                }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <input
+                        type="hidden"
+                        name="recovery_threshold"
+                        :value="recovery"
+                    />
+                    <FieldError>{{ errors.recovery_threshold }}</FieldError>
+                    <FieldDescription>{{
+                        $t('monitors.form.recovery_threshold.description')
+                    }}</FieldDescription>
+                </Field>
+
+                <Field>
+                    <FieldLabel for="degraded_response_ms">{{
+                        $t('monitors.form.degraded_response_ms.title')
+                    }}</FieldLabel>
+                    <Input
+                        id="degraded_response_ms"
+                        v-model="degradedMs"
+                        name="degraded_response_ms"
+                        type="number"
+                        min="1"
+                        class="sm:w-72"
+                        :placeholder="
+                            $t('monitors.form.degraded_response_ms.placeholder')
+                        "
+                    />
+                    <FieldError>{{ errors.degraded_response_ms }}</FieldError>
+                    <FieldDescription>{{
+                        $t('monitors.form.degraded_response_ms.description')
+                    }}</FieldDescription>
+                </Field>
+
                 <Field orientation="horizontal">
                     <FieldContent>
                         <FieldLabel for="is_active">{{
@@ -541,6 +820,7 @@
 <script setup lang="ts">
 import { Form, Link } from '@inertiajs/vue3';
 import {
+    ChevronRightIcon,
     FileSearchIcon,
     GlobeIcon,
     NetworkIcon,
@@ -552,6 +832,11 @@ import { computed, ref, watch } from 'vue';
 import Section from '@/components/Section.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import {
     Field,
     FieldContent,
@@ -602,9 +887,17 @@ const typeIcons: Record<MonitorType, unknown> = {
 };
 
 const urlTypes: MonitorType[] = ['http', 'keyword', 'ssl'];
-const methods = ['GET', 'POST', 'HEAD'];
+const methods = ['GET', 'POST', 'HEAD', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
+const authTypes = ['none', 'basic', 'bearer'];
+const contentTypes = [
+    'application/json',
+    'application/x-www-form-urlencoded',
+    'text/plain',
+    'application/xml',
+];
 const recordTypes = ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS'];
 const confirmationOptions = [1, 2, 3, 5];
+const recoveryOptions = [1, 2, 3, 5];
 
 const intervalPresets = [
     { value: 30, label: '30s' },
@@ -628,8 +921,58 @@ const expectsUrl = computed(() => urlTypes.includes(type.value));
 const invert = ref(props.defaults?.config?.invert ?? false);
 const verifySsl = ref(props.defaults?.config?.verify_ssl ?? true);
 const method = ref(props.defaults?.config?.method ?? 'GET');
-const expectedStatus = ref<number | string>(
-    props.defaults?.config?.expected_status ?? '',
+/**
+ * Free text rather than a tag input: the accepted forms ("204", "200-299",
+ * "2xx") are short enough to type and the server validates each one, so a
+ * chip editor would be ceremony around a comma.
+ */
+const expectedStatusCodes = ref<string>(
+    (props.defaults?.config?.expected_status_codes ?? []).join(', ') ||
+        (props.defaults?.config?.expected_status
+            ? String(props.defaults.config.expected_status)
+            : ''),
+);
+
+const statusCodeList = computed(() =>
+    expectedStatusCodes.value
+        .split(',')
+        .map((code) => code.trim())
+        .filter((code) => code !== ''),
+);
+
+const followRedirects = ref(props.defaults?.config?.follow_redirects ?? true);
+const advancedOpen = ref(false);
+
+const authType = ref<string>(props.defaults?.config?.auth_type ?? 'none');
+const authUsername = ref<string>(props.defaults?.config?.auth_username ?? '');
+const authPassword = ref<string>(props.defaults?.config?.auth_password ?? '');
+const authToken = ref<string>(props.defaults?.config?.auth_token ?? '');
+const body = ref<string>(props.defaults?.config?.body ?? '');
+const contentType = ref<string>(
+    props.defaults?.config?.content_type ?? 'application/json',
+);
+
+// One "Name: value" per line — the way headers are written everywhere else.
+const headersText = ref<string>(
+    Object.entries(props.defaults?.config?.headers ?? {})
+        .map(([name, value]) => `${name}: ${value}`)
+        .join('\n'),
+);
+
+const headerEntries = computed(() =>
+    headersText.value
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line !== '' && line.includes(':'))
+        .map((line) => {
+            const index = line.indexOf(':');
+
+            return {
+                name: line.slice(0, index).trim(),
+                value: line.slice(index + 1).trim(),
+            };
+        })
+        .filter((entry) => entry.name !== ''),
 );
 const port = ref<number | string>(props.defaults?.config?.port ?? 443);
 const recordType = ref(props.defaults?.config?.record_type ?? 'A');
@@ -670,6 +1013,10 @@ const timeoutValue = computed(() =>
 );
 
 const confirmation = ref(props.defaults?.confirmation_threshold ?? 1);
+const recovery = ref(props.defaults?.recovery_threshold ?? 1);
+const degradedMs = ref<number | string>(
+    props.defaults?.degraded_response_ms ?? '',
+);
 const isActive = ref(props.defaults?.is_active ?? true);
 
 const selectedChannels = ref<string[]>(

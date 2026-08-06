@@ -56,6 +56,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Support Link
+    |--------------------------------------------------------------------------
+    |
+    | Where the "support the project" links point. Running the checkers and
+    | the status pages costs real money, and this is how that gets covered.
+    | Set it to an empty value to hide the links entirely — a self-hosted
+    | instance has no reason to ask its own users for donations.
+    |
+    */
+
+    'support_url' => env('APP_SUPPORT_URL', 'https://buymeacoffee.com/thecuriousgoose'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

@@ -2,12 +2,24 @@ import type { User } from './auth';
 
 type MonitorType = 'http' | 'keyword' | 'port' | 'ping' | 'dns' | 'ssl';
 
-type MonitorStatus = 'up' | 'down' | 'paused' | 'pending';
+type MonitorStatus = 'up' | 'down' | 'degraded' | 'paused' | 'pending';
 
 type MonitorConfig = {
     method?: string;
+    /** Superseded by expected_status_codes, kept for monitors saved before it. */
     expected_status?: number | null;
+    expected_status_codes?: string[];
     verify_ssl?: boolean;
+    follow_redirects?: boolean;
+    max_redirects?: number;
+    /** Values may come back as the mask rather than the credential. */
+    headers?: Record<string, string>;
+    body?: string | null;
+    content_type?: string | null;
+    auth_type?: 'none' | 'basic' | 'bearer';
+    auth_username?: string | null;
+    auth_password?: string | null;
+    auth_token?: string | null;
     keyword?: string;
     invert?: boolean;
     port?: number;
@@ -26,6 +38,9 @@ interface Monitor {
     timeout: number;
     interval_seconds: number;
     confirmation_threshold: number;
+    recovery_threshold: number;
+    degraded_response_ms: number | null;
+    is_degraded: boolean;
     config: MonitorConfig;
     last_checked_at: string | null;
     status_changed_at: string | null;
@@ -75,6 +90,7 @@ interface SeriesPoint {
 interface DashboardSummary {
     total: number;
     up: number;
+    degraded: number;
     down: number;
     paused: number;
     pending: number;
@@ -107,6 +123,13 @@ interface NotificationChannel {
     is_active: boolean;
     alert_scope: AlertScope;
     templates?: Record<'down' | 'recovered', AlertTemplate> | null;
+    /** Null switches reminders off; the limit caps how many are sent. */
+    renotify_minutes: number | null;
+    renotify_limit: number;
+    /** HH:MM in `quiet_hours_timezone`, or null when the window is unset. */
+    quiet_hours_start: string | null;
+    quiet_hours_end: string | null;
+    quiet_hours_timezone: string | null;
     monitors_count?: number;
     monitors?: string[];
 }

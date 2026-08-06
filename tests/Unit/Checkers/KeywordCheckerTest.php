@@ -3,13 +3,29 @@
 namespace Tests\Unit\Checkers;
 
 use App\Checkers\KeywordChecker;
+use App\Checkers\Support\DnsResolver;
 use App\Enums\MonitorType;
 use App\Models\Monitor;
 use Illuminate\Support\Facades\Http;
+use Tests\Support\StubDnsResolver;
 use Tests\TestCase;
 
 class KeywordCheckerTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // A fixed public answer: these tests are about the checker, not about
+        // what example.com resolves to from this machine today.
+        $this->app->instance(DnsResolver::class, new StubDnsResolver);
+    }
+
+    private function checker(): KeywordChecker
+    {
+        return $this->app->make(KeywordChecker::class);
+    }
+
     private function monitor(array $config): Monitor
     {
         return new Monitor([
@@ -25,7 +41,7 @@ class KeywordCheckerTest extends TestCase
     {
         Http::fake(['*' => Http::response('<h1>All systems operational</h1>', 200)]);
 
-        $result = (new KeywordChecker)->check($this->monitor(['keyword' => 'operational']));
+        $result = $this->checker()->check($this->monitor(['keyword' => 'operational']));
 
         $this->assertTrue($result->isUp);
     }
@@ -34,7 +50,7 @@ class KeywordCheckerTest extends TestCase
     {
         Http::fake(['*' => Http::response('<h1>Something went wrong</h1>', 200)]);
 
-        $result = (new KeywordChecker)->check($this->monitor(['keyword' => 'operational']));
+        $result = $this->checker()->check($this->monitor(['keyword' => 'operational']));
 
         $this->assertFalse($result->isUp);
         $this->assertSame('Keyword "operational" not found in response body', $result->error);
@@ -44,7 +60,7 @@ class KeywordCheckerTest extends TestCase
     {
         Http::fake(['*' => Http::response('Fatal error: undefined', 200)]);
 
-        $result = (new KeywordChecker)->check(
+        $result = $this->checker()->check(
             $this->monitor(['keyword' => 'Fatal error', 'invert' => true]),
         );
 
@@ -56,7 +72,7 @@ class KeywordCheckerTest extends TestCase
     {
         Http::fake(['*' => Http::response('Everything is fine', 200)]);
 
-        $result = (new KeywordChecker)->check(
+        $result = $this->checker()->check(
             $this->monitor(['keyword' => 'Fatal error', 'invert' => true]),
         );
 
@@ -67,7 +83,7 @@ class KeywordCheckerTest extends TestCase
     {
         Http::fake(['*' => Http::response('operational', 500)]);
 
-        $result = (new KeywordChecker)->check($this->monitor(['keyword' => 'operational']));
+        $result = $this->checker()->check($this->monitor(['keyword' => 'operational']));
 
         $this->assertFalse($result->isUp);
         $this->assertSame('HTTP 500', $result->error);

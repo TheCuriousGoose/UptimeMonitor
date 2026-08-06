@@ -3,14 +3,30 @@
 namespace Tests\Unit\Checkers;
 
 use App\Checkers\HttpChecker;
+use App\Checkers\Support\DnsResolver;
 use App\Enums\MonitorType;
 use App\Models\Monitor;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Tests\Support\StubDnsResolver;
 use Tests\TestCase;
 
 class HttpCheckerTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // A fixed public answer: these tests are about the checker, not about
+        // what example.com resolves to from this machine today.
+        $this->app->instance(DnsResolver::class, new StubDnsResolver);
+    }
+
+    private function checker(): HttpChecker
+    {
+        return $this->app->make(HttpChecker::class);
+    }
+
     private function monitor(array $config = []): Monitor
     {
         return new Monitor([
@@ -26,7 +42,7 @@ class HttpCheckerTest extends TestCase
     {
         Http::fake(['*' => Http::response('ok', 200)]);
 
-        $result = (new HttpChecker)->check($this->monitor());
+        $result = $this->checker()->check($this->monitor());
 
         $this->assertTrue($result->isUp);
         $this->assertNull($result->error);
@@ -37,14 +53,14 @@ class HttpCheckerTest extends TestCase
     {
         Http::fake(['*' => Http::response('', 304)]);
 
-        $this->assertTrue((new HttpChecker)->check($this->monitor())->isUp);
+        $this->assertTrue($this->checker()->check($this->monitor())->isUp);
     }
 
     public function test_a_server_error_is_down(): void
     {
         Http::fake(['*' => Http::response('boom', 503)]);
 
-        $result = (new HttpChecker)->check($this->monitor());
+        $result = $this->checker()->check($this->monitor());
 
         $this->assertFalse($result->isUp);
         $this->assertSame('HTTP 503', $result->error);
@@ -55,7 +71,7 @@ class HttpCheckerTest extends TestCase
     {
         Http::fake(['*' => Http::response('', 200)]);
 
-        $result = (new HttpChecker)->check($this->monitor(['expected_status' => 201]));
+        $result = $this->checker()->check($this->monitor(['expected_status' => 201]));
 
         $this->assertFalse($result->isUp);
         $this->assertSame('Expected HTTP 201, got 200', $result->error);
@@ -65,14 +81,14 @@ class HttpCheckerTest extends TestCase
     {
         Http::fake(['*' => Http::response('', 418)]);
 
-        $this->assertTrue((new HttpChecker)->check($this->monitor(['expected_status' => 418]))->isUp);
+        $this->assertTrue($this->checker()->check($this->monitor(['expected_status' => 418]))->isUp);
     }
 
     public function test_a_connection_exception_is_reported_as_down(): void
     {
         Http::fake(fn () => throw new ConnectionException('Connection timed out'));
 
-        $result = (new HttpChecker)->check($this->monitor());
+        $result = $this->checker()->check($this->monitor());
 
         $this->assertFalse($result->isUp);
         $this->assertSame('Connection timed out', $result->error);
@@ -84,7 +100,7 @@ class HttpCheckerTest extends TestCase
             'cURL error 60: SSL certificate problem: unable to get local issuer certificate',
         ));
 
-        $result = (new HttpChecker)->check($this->monitor());
+        $result = $this->checker()->check($this->monitor());
 
         $this->assertFalse($result->isUp);
         $this->assertStringContainsString('intermediate certificate', $result->error);
@@ -99,7 +115,7 @@ class HttpCheckerTest extends TestCase
 
         $this->assertSame(
             'TLS verification failed: the certificate has expired.',
-            (new HttpChecker)->check($this->monitor())->error,
+            $this->checker()->check($this->monitor())->error,
         );
     }
 
@@ -109,7 +125,7 @@ class HttpCheckerTest extends TestCase
 
         $this->assertSame(
             'Could not resolve host: nope.invalid',
-            (new HttpChecker)->check($this->monitor())->error,
+            $this->checker()->check($this->monitor())->error,
         );
     }
 
@@ -117,7 +133,7 @@ class HttpCheckerTest extends TestCase
     {
         Http::fake(['*' => Http::response('ok', 200)]);
 
-        $result = (new HttpChecker)->check($this->monitor(['verify_ssl' => false]));
+        $result = $this->checker()->check($this->monitor(['verify_ssl' => false]));
 
         $this->assertTrue($result->isUp);
     }
@@ -126,7 +142,7 @@ class HttpCheckerTest extends TestCase
     {
         Http::fake(['*' => Http::response('', 200)]);
 
-        (new HttpChecker)->check($this->monitor(['method' => 'HEAD']));
+        $this->checker()->check($this->monitor(['method' => 'HEAD']));
 
         Http::assertSent(fn ($request) => $request->method() === 'HEAD');
     }

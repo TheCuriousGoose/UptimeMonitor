@@ -1,16 +1,25 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\IncidentAcknowledgementController;
 use App\Http\Controllers\IncidentController;
+use App\Http\Controllers\IncidentUpdateController;
 use App\Http\Controllers\IntegrationController;
+use App\Http\Controllers\MaintenanceWindowController;
+use App\Http\Controllers\MonitorBulkController;
 use App\Http\Controllers\MonitorCheckController;
 use App\Http\Controllers\MonitorController;
+use App\Http\Controllers\MonitorSearchController;
 use App\Http\Controllers\MonitorStateController;
 use App\Http\Controllers\NotificationChannelTestController;
 use App\Http\Controllers\StatusPageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+// Declared before the resource so these are not swallowed by {monitor}.
+Route::post('monitors/bulk', [MonitorBulkController::class, 'store'])->name('monitors.bulk');
+Route::get('monitors/search', [MonitorSearchController::class, 'index'])->name('monitors.search');
 
 Route::resource('monitors', MonitorController::class);
 Route::patch('monitors/{monitor}/state', [MonitorStateController::class, 'update'])->name('monitors.state');
@@ -22,6 +31,19 @@ Route::post('monitors/{monitor}/check', [MonitorCheckController::class, 'store']
     ->name('monitors.check');
 
 Route::get('incidents', [IncidentController::class, 'index'])->name('incidents.index');
+Route::get('incidents/{incident}', [IncidentController::class, 'show'])->name('incidents.show');
+
+Route::post('incidents/{incident}/acknowledge', [IncidentAcknowledgementController::class, 'store'])
+    ->name('incidents.acknowledge.store');
+Route::delete('incidents/{incident}/acknowledge', [IncidentAcknowledgementController::class, 'destroy'])
+    ->name('incidents.acknowledge.destroy');
+
+Route::post('incidents/{incident}/updates', [IncidentUpdateController::class, 'store'])
+    ->name('incidents.updates.store');
+Route::patch('incident-updates/{incident_update}', [IncidentUpdateController::class, 'update'])
+    ->name('incident-updates.update');
+Route::delete('incident-updates/{incident_update}', [IncidentUpdateController::class, 'destroy'])
+    ->name('incident-updates.destroy');
 
 Route::resource('integrations', IntegrationController::class)
     ->only(['index', 'store', 'update', 'destroy'])
@@ -32,6 +54,10 @@ Route::resource('integrations', IntegrationController::class)
 Route::post('integrations/{channel}/test', [NotificationChannelTestController::class, 'store'])
     ->middleware('throttle:channel-test')
     ->name('integrations.test');
+
+Route::resource('maintenance-windows', MaintenanceWindowController::class)
+    ->only(['index', 'store', 'update', 'destroy'])
+    ->parameters(['maintenance-windows' => 'maintenance_window']);
 
 Route::resource('status-pages', StatusPageController::class)
     ->only(['index', 'store', 'update', 'destroy'])

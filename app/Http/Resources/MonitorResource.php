@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Monitoring\ConfigMasker;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -22,7 +23,11 @@ class MonitorResource extends JsonResource
             'timeout' => $this->timeout,
             'interval_seconds' => $this->interval_seconds,
             'confirmation_threshold' => $this->confirmation_threshold,
-            'config' => $this->resolvedConfig(),
+            'recovery_threshold' => $this->recovery_threshold,
+            'degraded_response_ms' => $this->degraded_response_ms,
+            'is_degraded' => (bool) $this->is_degraded,
+            // Masked: the form needs the shape, never the credential.
+            'config' => ConfigMasker::mask($this->resolvedConfig()),
             'last_checked_at' => $this->last_checked_at?->toIso8601String(),
             'status_changed_at' => $this->status_changed_at?->toIso8601String(),
             // Nested resources are resolved here: left as resource objects they

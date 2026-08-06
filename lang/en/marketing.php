@@ -2,6 +2,7 @@
 
 return [
     'nav' => [
+        'menu' => 'Menu',
         'features' => 'Features',
         'docs' => 'Documentation',
         'blog' => 'Blog',
@@ -19,6 +20,12 @@ return [
         'product' => 'Product',
         'resources' => 'Resources',
         'company' => 'Company',
+    ],
+    'support' => [
+        'title' => 'Support the project',
+        'description' => 'Checks run around the clock and the servers behind them are not free. If this saved you an outage, it helps.',
+        'action' => 'Buy me a coffee',
+        'nav' => 'Support the project',
     ],
     'home' => [
         'eyebrow' => 'Uptime monitoring',

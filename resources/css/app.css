@@ -283,3 +283,25 @@
     --viz-series: #3987e5;
     --viz-grid: hsl(0 0% 18%);
 }
+
+/*
+ * Respect a reduced-motion preference globally.
+ *
+ * tw-animate-css is imported wholesale and several components animate by
+ * default, so opting out one component at a time would always be one
+ * animation behind. Motion is never the only signal anywhere in the app, so
+ * removing it costs nothing but the flourish.
+ *
+ * Durations collapse to 0.01ms rather than 0 so that transitionend and
+ * animationend still fire — code that waits on them would otherwise hang.
+ */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

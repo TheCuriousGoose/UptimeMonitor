@@ -2,6 +2,7 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import {
     Bell,
+    Coffee,
     FileText,
     Globe,
     LayoutGrid,
@@ -10,6 +11,7 @@ import {
     ShieldCheck,
     Siren,
     Users,
+    Wrench,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
@@ -33,6 +35,7 @@ import adminSettings from '@/routes/admin/settings';
 import adminUsers from '@/routes/admin/users';
 import incidents from '@/routes/incidents';
 import integrations from '@/routes/integrations';
+import maintenanceWindows from '@/routes/maintenance-windows';
 import monitors from '@/routes/monitors';
 import statusPages from '@/routes/status-pages';
 import type { Auth } from '@/types';
@@ -70,6 +73,11 @@ const mainNavItems: NavItem[] = [
         href: statusPages.index(),
         icon: Globe,
     },
+    {
+        title: trans('maintenance.title'),
+        href: maintenanceWindows.index(),
+        icon: Wrench,
+    },
 ];
 
 const adminNavItems: NavItem[] = [
@@ -95,7 +103,21 @@ const adminNavItems: NavItem[] = [
     },
 ];
 
-const footerNavItems: NavItem[] = [];
+// Empty when the instance is self-hosted, which collapses the group rather
+// than asking those users to fund someone else's hosting.
+const footerNavItems = computed<NavItem[]>(() => {
+    const supportUrl = page.props.supportUrl as string | null;
+
+    return supportUrl
+        ? [
+              {
+                  title: trans('marketing.support.nav'),
+                  href: supportUrl,
+                  icon: Coffee,
+              },
+          ]
+        : [];
+});
 </script>
 
 <template>

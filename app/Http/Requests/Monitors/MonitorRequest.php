@@ -2,8 +2,14 @@
 
 namespace App\Http\Requests\Monitors;
 
+use App\Checkers\Support\OutboundGuard;
 use App\Enums\MonitorType;
+use App\Models\Monitor;
+use App\Monitoring\ConfigMasker;
 use App\Rules\Hostname;
+use App\Rules\HttpHeaderName;
+use App\Rules\PublicUrl;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -49,6 +55,12 @@ abstract class MonitorRequest extends FormRequest
                 'max:'.config('monitoring.max_interval_seconds', 86400),
             ],
             'confirmation_threshold' => ['sometimes', 'integer', 'min:1', 'max:10'],
+            'recovery_threshold' => ['sometimes', 'integer', 'min:1', 'max:10'],
+            // Above the timeout it could never fire, so that is the ceiling.
+            'degraded_response_ms' => [
+                'sometimes', 'nullable', 'integer', 'min:1',
+                'max:'.(config('monitoring.max_timeout_seconds', 300) * 1000),
+            ],
             'config' => ['sometimes', 'array'],
             'notification_channels' => ['sometimes', 'array'],
             'notification_channels.*' => [
@@ -83,9 +95,17 @@ abstract class MonitorRequest extends FormRequest
         if ($type !== null) {
             // Drop any config keys that do not belong to the chosen type.
             $allowed = array_keys($type->defaultConfig());
-            $data['config'] = $this->castConfig(
+            $config = $this->castConfig(
                 array_intersect_key($data['config'] ?? [], array_flip($allowed)),
             );
+
+            // Anything the form sent back as the mask is unchanged, so put
+            // the stored credential back rather than overwriting it.
+            $existing = $this->route('monitor');
+
+            $data['config'] = $existing instanceof Monitor
+                ? ConfigMasker::unmask($config, $existing->resolvedConfig())
+                : $config;
         }
 
         return $data;
@@ -100,9 +120,9 @@ abstract class MonitorRequest extends FormRequest
     }
 
     /**
-     * The config column is plain JSON with no Eloquent casts, so a checkbox
-     * posting "0" would otherwise be stored as the string "0" — which is
-     * truthy everywhere it gets read. Coerce values to their real types here.
+     * The config cast serialises whatever it is handed, so a checkbox posting
+     * "0" would be stored as the string "0" — which is truthy everywhere it
+     * gets read. Coerce values to their real types here.
      *
      * @param  array<string, mixed>  $config
      * @return array<string, mixed>
@@ -112,10 +132,19 @@ abstract class MonitorRequest extends FormRequest
         $casts = [
             'verify_ssl' => 'bool',
             'invert' => 'bool',
+            'follow_redirects' => 'bool',
             'port' => 'int',
             'warn_days' => 'int',
+            'max_redirects' => 'int',
             'expected_status' => 'nullable_int',
             'expected' => 'nullable_string',
+            'body' => 'nullable_string',
+            'content_type' => 'nullable_string',
+            'auth_username' => 'nullable_string',
+            'auth_password' => 'nullable_string',
+            'auth_token' => 'nullable_string',
+            'headers' => 'array',
+            'expected_status_codes' => 'array',
         ];
 
         foreach ($config as $key => $value) {
@@ -124,11 +153,66 @@ abstract class MonitorRequest extends FormRequest
                 'int' => (int) $value,
                 'nullable_int' => ($value === null || $value === '') ? null : (int) $value,
                 'nullable_string' => ($value === null || $value === '') ? null : (string) $value,
+                'array' => is_array($value) ? $value : [],
                 default => $value,
             };
         }
 
         return $config;
+    }
+
+    /**
+     * Cross-field checks that need the whole payload.
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator) {
+                $config = (array) $this->input('config', []);
+
+                $this->validateHeaderNames($validator, $config);
+                $this->validateCredentialTarget($validator, $config);
+            },
+        ];
+    }
+
+    /**
+     * Header names arrive as array keys, which Laravel's rules cannot reach.
+     *
+     * @param  array<string, mixed>  $config
+     */
+    private function validateHeaderNames(Validator $validator, array $config): void
+    {
+        foreach (array_keys((array) ($config['headers'] ?? [])) as $name) {
+            if ($message = HttpHeaderName::reject($name)) {
+                $validator->errors()->add('config.headers', __($message, ['name' => (string) $name]));
+            }
+        }
+    }
+
+    /**
+     * Credentials must never be pointed at a private address, whatever
+     * monitoring.outbound.allow_private_targets says. Monitoring an internal
+     * host stays allowed; sending secrets to one does not, because the app
+     * cannot tell a service the user owns from one they are probing.
+     *
+     * @param  array<string, mixed>  $config
+     */
+    private function validateCredentialTarget(Validator $validator, array $config): void
+    {
+        $carriesSecrets = ($config['headers'] ?? []) !== []
+            || ($config['auth_type'] ?? 'none') !== 'none'
+            || (is_string($config['body'] ?? null) && $config['body'] !== '');
+
+        if (! $carriesSecrets || ! $this->monitorType()?->expectsUrl()) {
+            return;
+        }
+
+        $rule = new PublicUrl(app(OutboundGuard::class));
+
+        if (! $rule->allows($this->input('url'))) {
+            $validator->errors()->add('url', __('validation.public_url'));
+        }
     }
 
     protected function monitorType(): ?MonitorType
