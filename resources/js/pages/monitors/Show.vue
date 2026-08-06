@@ -19,6 +19,16 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
+                <LiveIndicator
+                    :interval="30000"
+                    :only="[
+                        'monitor',
+                        'checks',
+                        'stats',
+                        'series',
+                        'incidents',
+                    ]"
+                />
                 <Select
                     :model-value="period"
                     @update:model-value="
@@ -231,6 +241,7 @@ import {
     PlayIcon,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
+import LiveIndicator from '@/components/LiveIndicator.vue';
 import MonitorStatusBadge from '@/components/monitors/MonitorStatusBadge.vue';
 import ResponseChart from '@/components/monitors/ResponseChart.vue';
 import UptimeTimeline from '@/components/monitors/UptimeTimeline.vue';

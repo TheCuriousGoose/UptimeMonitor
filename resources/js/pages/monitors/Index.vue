@@ -2,6 +2,7 @@
 import { Head, Link, router, setLayoutProps } from '@inertiajs/vue3';
 import { PlusIcon } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
+import LiveIndicator from '@/components/LiveIndicator.vue';
 import MonitorsTable from '@/components/tables/monitors/MonitorsTable.vue';
 import TableColumnFilter from '@/components/tables/TableColumnFilter.vue';
 import TableFilterBar from '@/components/tables/TableFilterBar.vue';
@@ -96,6 +97,7 @@ setLayoutProps({
             </Select>
         </template>
         <template #actions>
+            <LiveIndicator :interval="30000" :only="['monitors']" />
             <Button :as="Link" :href="monitorsRoute.create()">
                 <PlusIcon />
                 {{ $t('monitors.create.label') }}

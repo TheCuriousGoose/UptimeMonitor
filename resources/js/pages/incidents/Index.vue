@@ -8,6 +8,7 @@ import {
 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 import EmptyState from '@/components/EmptyState.vue';
+import LiveIndicator from '@/components/LiveIndicator.vue';
 import StatTile from '@/components/StatTile.vue';
 import IncidentsTable from '@/components/tables/incidents/IncidentsTable.vue';
 import TableColumnFilter from '@/components/tables/TableColumnFilter.vue';
@@ -151,6 +152,12 @@ setLayoutProps({
                     </Select>
                 </template>
                 <template #actions>
+                    <!-- Slower than the monitor lists: an incident is already
+                         a confirmed outage, not a reading that moves. -->
+                    <LiveIndicator
+                        :interval="60000"
+                        :only="['incidents', 'summary']"
+                    />
                     <TableColumnFilter
                         table="incidents"
                         column-translations="incidents.table.columns"

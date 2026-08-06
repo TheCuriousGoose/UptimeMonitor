@@ -10,6 +10,14 @@ return [
     'copied' => 'Link copied',
     'tagline' => 'Uptime monitoring',
 
+    'live' => [
+        'refresh' => 'Refresh now',
+        'pause' => 'Pause auto-refresh',
+        'resume' => 'Resume auto-refresh',
+        'paused' => 'Paused',
+        'announced' => 'Updated at :time',
+    ],
+
     'rate_limited' => [
         'toast' => 'You are doing that too fast. Try again in :seconds seconds.',
         'title' => 'Too many requests',
