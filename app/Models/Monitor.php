@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\EncryptedJson;
 use App\Enums\MonitorStatus;
 use App\Enums\MonitorType;
 use Carbon\CarbonInterface;
@@ -16,8 +17,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'name', 'url', 'created_by', 'timeout', 'interval_seconds', 'type', 'config',
-    'confirmation_threshold', 'next_check_at', 'latest_is_up', 'is_active',
-    'failure_streak', 'success_streak', 'last_checked_at', 'status_changed_at',
+    'confirmation_threshold', 'recovery_threshold', 'next_check_at', 'latest_is_up',
+    'is_active', 'failure_streak', 'success_streak', 'last_checked_at', 'status_changed_at',
 ])]
 class Monitor extends Model
 {
@@ -27,7 +28,7 @@ class Monitor extends Model
     {
         return [
             'type' => MonitorType::class,
-            'config' => 'array',
+            'config' => EncryptedJson::class,
             'next_check_at' => 'immutable_datetime',
             'last_checked_at' => 'immutable_datetime',
             'status_changed_at' => 'immutable_datetime',
@@ -35,6 +36,7 @@ class Monitor extends Model
             'latest_is_up' => 'boolean',
             'interval_seconds' => 'integer',
             'confirmation_threshold' => 'integer',
+            'recovery_threshold' => 'integer',
             'failure_streak' => 'integer',
             'success_streak' => 'integer',
         ];

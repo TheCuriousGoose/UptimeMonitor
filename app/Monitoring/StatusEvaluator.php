@@ -103,12 +103,22 @@ class StatusEvaluator
 
     /**
      * A monitor only flips to down once it has failed `confirmation_threshold`
-     * checks in a row, which keeps a single blip from paging anyone.
+     * checks in a row, which keeps a single blip from paging anyone, and only
+     * flips back up after `recovery_threshold` successes. The recovery side is
+     * what stops a flapping target from being announced down, up, and down
+     * again within a couple of minutes.
      */
     private function confirmedStatus(Monitor $monitor, CheckResult $result, ?bool $previous): bool
     {
         if ($result->isUp) {
-            return true;
+            if ($monitor->success_streak >= max(1, $monitor->recovery_threshold)) {
+                return true;
+            }
+
+            // Holding "up" for a monitor that has never reported keeps a new
+            // monitor's first success flipping it out of Pending immediately —
+            // there is no outage to confirm a recovery from.
+            return $previous ?? true;
         }
 
         if ($monitor->failure_streak >= max(1, $monitor->confirmation_threshold)) {

@@ -26,6 +26,7 @@ interface Monitor {
     timeout: number;
     interval_seconds: number;
     confirmation_threshold: number;
+    recovery_threshold: number;
     config: MonitorConfig;
     last_checked_at: string | null;
     status_changed_at: string | null;

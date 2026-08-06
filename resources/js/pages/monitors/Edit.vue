@@ -48,7 +48,9 @@ setLayoutProps({
             href: monitorsRoute.show(props.monitor.uuid),
         },
         {
-            title: trans('monitors.breadcrumbs.create'),
+            // Not breadcrumbs.edit — that reads "Edit :name", and the crumb
+            // before this one is already the name.
+            title: trans('monitors.actions.edit'),
         },
     ],
 });

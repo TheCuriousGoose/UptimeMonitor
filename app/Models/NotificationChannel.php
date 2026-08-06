@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\EncryptedJson;
 use App\Enums\AlertScope;
 use App\Enums\ChannelType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -21,7 +22,8 @@ class NotificationChannel extends Model
     {
         return [
             'type' => ChannelType::class,
-            'config' => 'array',
+            // Holds delivery credentials — see App\Casts\EncryptedJson.
+            'config' => EncryptedJson::class,
             'is_active' => 'boolean',
             'alert_scope' => AlertScope::class,
             'templates' => 'array',

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Jobs\RunMonitorCheck;
 use App\Models\Monitor;
+use App\Support\SqlDialect;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -43,7 +44,7 @@ class DispatchDueChecks extends Command
                     ->whereIn('id', $monitors->modelKeys())
                     ->update([
                         'next_check_at' => DB::raw(
-                            'DATE_ADD(NOW(), INTERVAL GREATEST(interval_seconds, 30) SECOND)',
+                            SqlDialect::nowPlusSeconds('interval_seconds', 30),
                         ),
                     ]);
 

@@ -22,6 +22,7 @@ class MonitorResource extends JsonResource
             'timeout' => $this->timeout,
             'interval_seconds' => $this->interval_seconds,
             'confirmation_threshold' => $this->confirmation_threshold,
+            'recovery_threshold' => $this->recovery_threshold,
             'config' => $this->resolvedConfig(),
             'last_checked_at' => $this->last_checked_at?->toIso8601String(),
             'status_changed_at' => $this->status_changed_at?->toIso8601String(),

@@ -438,6 +438,39 @@
                     }}</FieldDescription>
                 </Field>
 
+                <Field>
+                    <FieldLabel for="recovery">{{
+                        $t('monitors.form.recovery_threshold.title')
+                    }}</FieldLabel>
+                    <Select v-model="recovery">
+                        <SelectTrigger id="recovery" class="sm:w-72"
+                            ><SelectValue
+                        /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem
+                                v-for="value in recoveryOptions"
+                                :key="value"
+                                :value="value"
+                            >
+                                {{
+                                    $t(
+                                        `monitors.form.recovery_threshold.options.${value}`,
+                                    )
+                                }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <input
+                        type="hidden"
+                        name="recovery_threshold"
+                        :value="recovery"
+                    />
+                    <FieldError>{{ errors.recovery_threshold }}</FieldError>
+                    <FieldDescription>{{
+                        $t('monitors.form.recovery_threshold.description')
+                    }}</FieldDescription>
+                </Field>
+
                 <Field orientation="horizontal">
                     <FieldContent>
                         <FieldLabel for="is_active">{{
@@ -605,6 +638,7 @@ const urlTypes: MonitorType[] = ['http', 'keyword', 'ssl'];
 const methods = ['GET', 'POST', 'HEAD'];
 const recordTypes = ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS'];
 const confirmationOptions = [1, 2, 3, 5];
+const recoveryOptions = [1, 2, 3, 5];
 
 const intervalPresets = [
     { value: 30, label: '30s' },
@@ -670,6 +704,7 @@ const timeoutValue = computed(() =>
 );
 
 const confirmation = ref(props.defaults?.confirmation_threshold ?? 1);
+const recovery = ref(props.defaults?.recovery_threshold ?? 1);
 const isActive = ref(props.defaults?.is_active ?? true);
 
 const selectedChannels = ref<string[]>(

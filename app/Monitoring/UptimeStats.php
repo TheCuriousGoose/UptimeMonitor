@@ -6,6 +6,7 @@ use App\Models\Incident;
 use App\Models\Monitor;
 use App\Models\MonitorCheck;
 use App\Models\User;
+use App\Support\SqlDialect;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
@@ -108,7 +109,7 @@ class UptimeStats
             ->where('monitor_id', $monitor->id)
             ->where('checked_at', '>=', $since)
             ->selectRaw(
-                'FLOOR((UNIX_TIMESTAMP(checked_at) - ?) / ?) as bucket_index',
+                'FLOOR(('.SqlDialect::unixTimestamp('checked_at').' - ?) / ?) as bucket_index',
                 [$startTimestamp, $bucketSeconds],
             )
             ->selectRaw('AVG(CASE WHEN is_up = 1 THEN response_ms END) as avg_ms')
@@ -186,10 +187,10 @@ class UptimeStats
         return MonitorCheck::query()
             ->where('monitor_id', $monitor->id)
             ->where('checked_at', '>=', now()->subDays($days)->startOfDay())
-            ->selectRaw('DATE(checked_at) as day')
+            ->selectRaw(SqlDialect::dateOf('checked_at').' as day')
             ->selectRaw('COUNT(*) as total')
             ->selectRaw('SUM(CASE WHEN is_up = 1 THEN 1 ELSE 0 END) as up_count')
-            ->groupBy(DB::raw('DATE(checked_at)'))
+            ->groupBy(DB::raw(SqlDialect::dateOf('checked_at')))
             ->orderBy('day')
             ->get()
             ->map(fn ($row) => [

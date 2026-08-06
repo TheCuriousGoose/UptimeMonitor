@@ -49,6 +49,7 @@ abstract class MonitorRequest extends FormRequest
                 'max:'.config('monitoring.max_interval_seconds', 86400),
             ],
             'confirmation_threshold' => ['sometimes', 'integer', 'min:1', 'max:10'],
+            'recovery_threshold' => ['sometimes', 'integer', 'min:1', 'max:10'],
             'config' => ['sometimes', 'array'],
             'notification_channels' => ['sometimes', 'array'],
             'notification_channels.*' => [
@@ -100,9 +101,9 @@ abstract class MonitorRequest extends FormRequest
     }
 
     /**
-     * The config column is plain JSON with no Eloquent casts, so a checkbox
-     * posting "0" would otherwise be stored as the string "0" — which is
-     * truthy everywhere it gets read. Coerce values to their real types here.
+     * The config cast serialises whatever it is handed, so a checkbox posting
+     * "0" would be stored as the string "0" — which is truthy everywhere it
+     * gets read. Coerce values to their real types here.
      *
      * @param  array<string, mixed>  $config
      * @return array<string, mixed>

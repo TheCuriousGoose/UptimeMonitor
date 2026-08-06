@@ -166,6 +166,16 @@ return [
                 '5' => 'After 5 failures',
             ],
         ],
+        'recovery_threshold' => [
+            'title' => 'Confirm recoveries',
+            'description' => 'How many successes in a row before we call it resolved. Higher values stop a flapping service announcing itself fixed too early.',
+            'options' => [
+                '1' => 'Resolve on the first success',
+                '2' => 'After 2 successes',
+                '3' => 'After 3 successes',
+                '5' => 'After 5 successes',
+            ],
+        ],
         'is_active' => [
             'title' => 'Start checking right away',
             'description' => 'Turn off to create the monitor paused.',
