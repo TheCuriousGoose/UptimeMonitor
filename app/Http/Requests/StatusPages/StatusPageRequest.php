@@ -69,6 +69,7 @@ abstract class StatusPageRequest extends FormRequest
             ],
             'description' => ['nullable', 'string', 'max:255'],
             'is_published' => ['sometimes', 'boolean'],
+            'show_incidents' => ['sometimes', 'boolean'],
             'monitors' => ['sometimes', 'array'],
             'monitors.*' => [
                 'string',
@@ -126,7 +127,7 @@ abstract class StatusPageRequest extends FormRequest
      */
     public function pageAttributes(): array
     {
-        $attributes = $this->safe()->only(['title', 'slug', 'description', 'is_published']);
+        $attributes = $this->safe()->only(['title', 'slug', 'description', 'is_published', 'show_incidents']);
 
         if ($this->has('theme')) {
             // Normalise through the value object so what lands in the column is

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Incidents\IndexRequest;
+use App\Http\Resources\IncidentResource;
 use App\Models\Incident;
 use App\Models\Monitor;
 use App\Policies\IncidentPolicy;
@@ -47,6 +48,17 @@ class IncidentController extends Controller
                 'direction' => $request->direction(),
             ],
             'summary' => $this->summary(),
+        ]);
+    }
+
+    public function show(Incident $incident)
+    {
+        $this->authorize('view', $incident);
+
+        $incident->load(['monitor', 'acknowledgedBy', 'updates.author']);
+
+        return Inertia::render('incidents/Show', [
+            'incident' => (new IncidentResource($incident))->resolve(),
         ]);
     }
 

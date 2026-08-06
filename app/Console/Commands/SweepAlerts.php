@@ -158,6 +158,9 @@ class SweepAlerts extends Command
 
         Incident::query()
             ->ongoing()
+            // An ack means a human has this; that is the whole contract.
+            ->whereNull('acknowledged_at')
+            ->where('is_maintenance', false)
             ->with('monitor')
             ->cursor()
             ->each(function (Incident $incident) use ($dispatcher, &$sent): void {

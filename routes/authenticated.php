@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\IncidentAcknowledgementController;
 use App\Http\Controllers\IncidentController;
+use App\Http\Controllers\IncidentUpdateController;
 use App\Http\Controllers\IntegrationController;
 use App\Http\Controllers\MaintenanceWindowController;
 use App\Http\Controllers\MonitorBulkController;
@@ -29,6 +31,19 @@ Route::post('monitors/{monitor}/check', [MonitorCheckController::class, 'store']
     ->name('monitors.check');
 
 Route::get('incidents', [IncidentController::class, 'index'])->name('incidents.index');
+Route::get('incidents/{incident}', [IncidentController::class, 'show'])->name('incidents.show');
+
+Route::post('incidents/{incident}/acknowledge', [IncidentAcknowledgementController::class, 'store'])
+    ->name('incidents.acknowledge.store');
+Route::delete('incidents/{incident}/acknowledge', [IncidentAcknowledgementController::class, 'destroy'])
+    ->name('incidents.acknowledge.destroy');
+
+Route::post('incidents/{incident}/updates', [IncidentUpdateController::class, 'store'])
+    ->name('incidents.updates.store');
+Route::patch('incident-updates/{incident_update}', [IncidentUpdateController::class, 'update'])
+    ->name('incident-updates.update');
+Route::delete('incident-updates/{incident_update}', [IncidentUpdateController::class, 'destroy'])
+    ->name('incident-updates.destroy');
 
 Route::resource('integrations', IntegrationController::class)
     ->only(['index', 'store', 'update', 'destroy'])

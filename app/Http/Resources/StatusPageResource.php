@@ -18,6 +18,7 @@ class StatusPageResource extends JsonResource
             'title' => $this->title,
             'description' => $this->description,
             'is_published' => $this->is_published,
+            'show_incidents' => $this->show_incidents,
             // Always the resolved theme, never the raw column: the editor
             // binds straight to these keys and should never see a null.
             'theme' => $this->resolvedTheme()->toArray(),

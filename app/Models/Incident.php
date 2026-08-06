@@ -11,7 +11,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['monitor_id', 'started_at', 'resolved_at', 'cause', 'failed_checks', 'is_maintenance'])]
+#[Fillable([
+    'monitor_id', 'started_at', 'resolved_at', 'cause', 'failed_checks',
+    'is_maintenance', 'acknowledged_at', 'acknowledged_by',
+])]
 class Incident extends Model
 {
     use HasFactory, HasUuids;
@@ -22,6 +25,7 @@ class Incident extends Model
             'started_at' => 'immutable_datetime',
             'resolved_at' => 'immutable_datetime',
             'is_maintenance' => 'boolean',
+            'acknowledged_at' => 'immutable_datetime',
             'failed_checks' => 'integer',
         ];
     }
@@ -56,6 +60,21 @@ class Incident extends Model
     public function wasAnnounced(): bool
     {
         return $this->notifications()->where('notify_count', '>', 0)->exists();
+    }
+
+    public function updates()
+    {
+        return $this->hasMany(IncidentUpdate::class)->orderBy('created_at');
+    }
+
+    public function acknowledgedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'acknowledged_by');
+    }
+
+    public function isAcknowledged(): bool
+    {
+        return $this->acknowledged_at !== null;
     }
 
     public function isOngoing(): bool

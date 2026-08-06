@@ -7,9 +7,9 @@ use App\Models\Incident;
 use App\Models\User;
 
 /**
- * Incidents have no CRUD of their own — they are derived from monitor
- * checks — so read access simply mirrors monitor ownership and the
- * existing "view monitors" permission.
+ * Incidents are derived from monitor checks, so access mirrors monitor
+ * ownership and the existing monitor permissions rather than introducing
+ * its own. Writes (acknowledging, commenting) follow the same rule.
  */
 class IncidentPolicy
 {
@@ -22,5 +22,16 @@ class IncidentPolicy
     {
         return $incident->monitor->created_by === $user->id
             && $user->can(Permission::MonitorsView->value);
+    }
+
+    public function acknowledge(User $user, Incident $incident): bool
+    {
+        return $incident->monitor->created_by === $user->id
+            && $user->can(Permission::MonitorsEdit->value);
+    }
+
+    public function comment(User $user, Incident $incident): bool
+    {
+        return $this->acknowledge($user, $incident);
     }
 }

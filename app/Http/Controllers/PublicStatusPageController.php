@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Content\MarkdownRenderer;
 use App\Enums\MonitorStatus;
+use App\Models\Incident;
 use App\Models\StatusPage;
 use App\Monitoring\UptimeStats;
+use Illuminate\Database\Eloquent\Builder;
 use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -43,6 +46,7 @@ class PublicStatusPageController extends Controller
                 'description' => $page->description,
             ],
             'monitors' => $monitors,
+            'incidents' => $page->show_incidents ? $this->publicIncidents($page) : null,
             'overall' => $this->overallStatus($monitors->pluck('status')->all()),
             'updatedAt' => now()->toIso8601String(),
             'theme' => $theme->toArray(),
@@ -51,6 +55,44 @@ class PublicStatusPageController extends Controller
             // default look while the client hydrates.
             'themeCss' => $theme->css(),
         ]);
+    }
+
+    /**
+     * Only human-written text crosses this boundary.
+     *
+     * Never `cause` — that is the raw checker string ("Expected HTTP 200, got
+     * 500"), the exact kind of detail this controller exists to withhold —
+     * and never failed_checks, the URL, the acknowledger, or any author name.
+     * An incident with no public update does not appear at all, so nothing is
+     * published by accident.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function publicIncidents(StatusPage $page): array
+    {
+        $renderer = app(MarkdownRenderer::class);
+
+        return Incident::query()
+            ->whereIn('monitor_id', $page->monitors->modelKeys())
+            ->where('is_maintenance', false)
+            ->whereHas('updates', fn (Builder $query) => $query->public())
+            ->with(['monitor:id,name', 'updates' => fn ($query) => $query->public()])
+            ->orderByDesc('started_at')
+            ->limit(20)
+            ->get()
+            ->map(fn (Incident $incident) => [
+                'monitor' => $incident->monitor?->name,
+                'started_at' => $incident->started_at->toIso8601String(),
+                'resolved_at' => $incident->resolved_at?->toIso8601String(),
+                'duration_seconds' => $incident->durationSeconds(),
+                'is_resolved' => ! $incident->isOngoing(),
+                'updates' => $incident->updates->map(fn ($update) => [
+                    'status' => $update->status?->value,
+                    'body_html' => $renderer->toHtml($update->body),
+                    'published_at' => $update->created_at?->toIso8601String(),
+                ])->all(),
+            ])
+            ->all();
     }
 
     /**

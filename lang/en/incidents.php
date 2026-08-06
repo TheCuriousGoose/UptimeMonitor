@@ -43,4 +43,28 @@ return [
         'ongoing' => 'Ongoing',
         'resolved' => 'Resolved',
     ],
+    'actions' => [
+        'acknowledge' => 'Acknowledge',
+        'unacknowledge' => 'Un-acknowledge',
+    ],
+    'updates' => [
+        'title' => 'Timeline',
+        'add' => 'Add an update',
+        'body' => 'Update',
+        'is_public' => 'Show this on the status page',
+        'empty' => 'Nothing has been noted yet.',
+        'status' => [
+            'investigating' => 'Investigating',
+            'identified' => 'Identified',
+            'monitoring' => 'Monitoring',
+            'resolved' => 'Resolved',
+        ],
+    ],
+    'messages' => [
+        'acknowledged' => 'Incident acknowledged',
+        'unacknowledged' => 'Acknowledgement removed',
+        'update_added' => 'Update added',
+        'update_saved' => 'Update saved',
+        'update_deleted' => 'Update deleted',
+    ],
 ];

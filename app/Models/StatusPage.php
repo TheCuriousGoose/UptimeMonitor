@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-#[Fillable(['user_id', 'slug', 'title', 'description', 'is_published', 'theme'])]
+#[Fillable(['user_id', 'slug', 'title', 'description', 'is_published', 'show_incidents', 'theme'])]
 class StatusPage extends Model
 {
     use HasFactory, HasUuids;
@@ -19,6 +19,7 @@ class StatusPage extends Model
     {
         return [
             'is_published' => 'boolean',
+            'show_incidents' => 'boolean',
             'theme' => 'array',
         ];
     }
