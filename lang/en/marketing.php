@@ -2,6 +2,7 @@
 
 return [
     'nav' => [
+        'menu' => 'Menu',
         'features' => 'Features',
         'docs' => 'Documentation',
         'blog' => 'Blog',

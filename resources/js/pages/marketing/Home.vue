@@ -1,5 +1,21 @@
 <template>
-    <Head :title="$t('marketing.home.title')" />
+    <SeoHead
+        :title="$t('marketing.home.title')"
+        :description="$t('marketing.home.subtitle')"
+    />
+
+    <!--
+        JSON-LD has to be injected as raw text: interpolation would escape the
+        quotes and crawlers would parse nothing. The content is JSON.stringify
+        output over translated strings, so it carries no markup of its own.
+    -->
+    <!-- eslint-disable vue/no-v-text-v-html-on-component -->
+    <component
+        :is="'script'"
+        type="application/ld+json"
+        v-html="organizationLd"
+    />
+    <!-- eslint-enable vue/no-v-text-v-html-on-component -->
 
     <!-- Hero -->
     <section class="border-b">
@@ -539,7 +555,7 @@
 </template>
 
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import {
     ArrowRightIcon,
     BellIcon,
@@ -559,15 +575,33 @@ import {
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import SectionHeading from '@/components/marketing/SectionHeading.vue';
+import SeoHead from '@/components/SeoHead.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { tList } from '@/lib/i18n';
+import { t, tList } from '@/lib/i18n';
 import { register } from '@/routes';
 import docs from '@/routes/docs';
 
 defineProps<{
     canRegister?: boolean;
 }>();
+
+const page = usePage();
+
+/**
+ * Organization markup so a search result carries the product name and link
+ * rather than a bare URL. Serialised here rather than in Blade because the
+ * name and description are translated strings the server view cannot reach.
+ */
+const organizationLd = computed(() =>
+    JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: (page.props.name as string) ?? '',
+        url: typeof window === 'undefined' ? '' : window.location.origin,
+        description: t('marketing.home.subtitle'),
+    }),
+);
 
 const stats = [
     { key: 'interval' },

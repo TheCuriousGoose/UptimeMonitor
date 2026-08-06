@@ -1,5 +1,7 @@
 <template>
-    <Head :title="title" />
+    <!-- The subtitle already summarises the page, so it doubles as the meta
+         description rather than asking every caller to write it twice. -->
+    <SeoHead :title="title" :description="description ?? subtitle" />
 
     <div class="mx-auto w-full px-4 py-16" :class="widthClass">
         <header class="border-b pb-6">
@@ -16,13 +18,15 @@
 </template>
 
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import SeoHead from '@/components/SeoHead.vue';
 
 const props = withDefaults(
     defineProps<{
         title: string;
         subtitle?: string;
+        /** Overrides the subtitle when it is too terse to describe the page. */
+        description?: string;
         /**
          * `prose` keeps the measure short enough to read comfortably; `wide`
          * is for listings and card grids, which look starved at reading width.

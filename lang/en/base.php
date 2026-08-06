@@ -9,6 +9,7 @@ return [
     'clear' => 'Clear',
     'copied' => 'Link copied',
     'tagline' => 'Uptime monitoring',
+    'skip_to_content' => 'Skip to content',
 
     'live' => [
         'refresh' => 'Refresh now',

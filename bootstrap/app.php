@@ -3,6 +3,7 @@
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\HandleRoleImpersonation;
+use App\Http\Middleware\HandleSeo;
 use App\Http\Middleware\ThrottleMutations;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -34,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'throttle:web-global',
             ThrottleMutations::class,
             HandleAppearance::class,
+            HandleSeo::class,
             HandleRoleImpersonation::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Authentication\DevLoginController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\PublicStatusPageController;
+use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -35,6 +36,8 @@ Route::get('{segment}/{slug}', [ContentController::class, 'show'])
 
 // Public status pages are intentionally outside the auth group.
 Route::get('status/{slug}', [PublicStatusPageController::class, 'show'])->name('status.show');
+
+Route::get('sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     require __DIR__.'/authenticated.php';
