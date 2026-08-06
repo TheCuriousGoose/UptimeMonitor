@@ -27,6 +27,12 @@ return [
 
     'active_now' => 'In progress',
     'next_occurrence' => 'Next: :time',
+    'paused' => 'Paused',
+    'window' => ':start — :end',
+    'duration' => 'for :duration',
+    // Zero is worth calling out rather than rendering as "0 monitors": a
+    // window with nothing attached silences nothing, which is rarely intended.
+    'silences' => '{0} Silences nothing yet|{1} Silences 1 monitor|[2,*] Silences :count monitors',
 
     'messages' => [
         'created' => 'Maintenance window created',

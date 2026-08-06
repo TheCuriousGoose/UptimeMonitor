@@ -2,6 +2,7 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import {
     Bell,
+    Coffee,
     FileText,
     Globe,
     LayoutGrid,
@@ -102,7 +103,21 @@ const adminNavItems: NavItem[] = [
     },
 ];
 
-const footerNavItems: NavItem[] = [];
+// Empty when the instance is self-hosted, which collapses the group rather
+// than asking those users to fund someone else's hosting.
+const footerNavItems = computed<NavItem[]>(() => {
+    const supportUrl = page.props.supportUrl as string | null;
+
+    return supportUrl
+        ? [
+              {
+                  title: trans('marketing.support.nav'),
+                  href: supportUrl,
+                  icon: Coffee,
+              },
+          ]
+        : [];
+});
 </script>
 
 <template>

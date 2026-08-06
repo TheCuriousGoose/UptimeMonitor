@@ -1,0 +1,35 @@
+# Databases the test suite needs but a dev machine has no reason to install.
+#
+# The monitoring queries in App\Support\SqlDialect are string-built per driver,
+# so the pgsql branches are only proven by running the suite against a real
+# server:
+#
+#     docker compose -f docker-compose.testing.yml up -d
+#     php -d extension=pdo_pgsql vendor/bin/phpunit -c phpunit.pgsql.xml
+#
+# The port is deliberately non-default so it cannot collide with a PostgreSQL
+# already installed on the host.
+#
+# The project name is pinned so this stack does not adopt containers from the
+# default project Compose would otherwise derive from the directory name.
+name: monitors-testing
+
+services:
+    pgsql:
+        image: postgres:17-alpine
+        container_name: monitors-pgsql
+        environment:
+            POSTGRES_USER: monitors
+            POSTGRES_PASSWORD: secret
+            POSTGRES_DB: monitors_testing
+        ports:
+            - '55432:5432'
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U monitors -d monitors_testing']
+            interval: 5s
+            timeout: 5s
+            retries: 10
+        # Test data is rebuilt by migrations on every run, so there is nothing
+        # worth persisting and tmpfs keeps the suite off the disk.
+        tmpfs:
+            - /var/lib/postgresql/data

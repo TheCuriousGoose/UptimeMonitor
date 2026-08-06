@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Casts\EncryptedJson;
 use App\Enums\MonitorStatus;
 use App\Enums\MonitorType;
+use App\Support\SqlDialect;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -186,14 +187,14 @@ class Monitor extends Model
             // Down first, then pending and up, with paused last. Someone
             // opening this page is looking for what is broken.
             return $query
-                ->orderByRaw('CASE WHEN is_active = 0 THEN 2 WHEN latest_is_up = 0 THEN 0 ELSE 1 END')
+                ->orderByRaw('CASE WHEN is_active = FALSE THEN 2 WHEN latest_is_up = FALSE THEN 0 ELSE 1 END')
                 ->orderBy('name');
         }
 
         if ($sort === 'status') {
             return $query
                 ->orderByRaw(
-                    'CASE WHEN is_active = 0 THEN 2 WHEN latest_is_up = 0 THEN 0 ELSE 1 END '.$direction,
+                    'CASE WHEN is_active = FALSE THEN 2 WHEN latest_is_up = FALSE THEN 0 ELSE 1 END '.$direction,
                 )
                 ->orderBy('name');
         }
@@ -207,9 +208,11 @@ class Monitor extends Model
             return $query;
         }
 
-        return $query->where(function (Builder $q) use ($search) {
-            $q->where('name', 'LIKE', "%{$search}%")
-                ->orWhere('url', 'LIKE', "%{$search}%");
+        $like = SqlDialect::like();
+
+        return $query->where(function (Builder $q) use ($search, $like) {
+            $q->where('name', $like, "%{$search}%")
+                ->orWhere('url', $like, "%{$search}%");
         });
     }
 }

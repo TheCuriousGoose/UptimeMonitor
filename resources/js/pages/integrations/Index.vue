@@ -99,6 +99,34 @@
                                 }}
                             </template>
                         </p>
+                        <div
+                            v-if="
+                                integration.quiet_hours_start ||
+                                integration.renotify_minutes
+                            "
+                            class="mt-1.5 flex flex-wrap gap-1"
+                        >
+                            <Badge
+                                v-if="integration.quiet_hours_start"
+                                variant="outline"
+                                class="gap-1 font-normal"
+                            >
+                                <MoonIcon class="size-3" />
+                                {{ integration.quiet_hours_start }}–{{
+                                    integration.quiet_hours_end
+                                }}
+                            </Badge>
+                            <Badge
+                                v-if="integration.renotify_minutes"
+                                variant="outline"
+                                class="gap-1 font-normal"
+                            >
+                                <BellRingIcon class="size-3" />
+                                {{ integration.renotify_minutes }}m ×{{
+                                    integration.renotify_limit
+                                }}
+                            </Badge>
+                        </div>
                     </div>
 
                     <DropdownMenu>
@@ -481,6 +509,247 @@
                             {{ $t('integrations.form.templates.unsupported') }}
                         </p>
                     </TabsContent>
+
+                    <TabsContent value="delivery" class="space-y-4">
+                        <p class="text-xs text-muted-foreground">
+                            {{ $t('integrations.form.delivery.description') }}
+                        </p>
+
+                        <div class="rounded-sm border">
+                            <div
+                                class="flex items-center justify-between gap-3 p-3"
+                            >
+                                <div>
+                                    <p class="text-sm font-medium">
+                                        {{
+                                            $t(
+                                                'integrations.form.delivery.renotify.title',
+                                            )
+                                        }}
+                                    </p>
+                                    <p class="text-xs text-muted-foreground">
+                                        {{
+                                            $t(
+                                                'integrations.form.delivery.renotify.description',
+                                            )
+                                        }}
+                                    </p>
+                                </div>
+                                <Switch
+                                    :checked="renotifyOn"
+                                    @update:checked="toggleRenotify"
+                                />
+                            </div>
+
+                            <div v-if="renotifyOn" class="border-t p-3">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <Label
+                                        for="renotify-minutes"
+                                        class="text-xs font-normal text-muted-foreground"
+                                        >{{
+                                            $t(
+                                                'integrations.form.delivery.renotify.every',
+                                            )
+                                        }}</Label
+                                    >
+                                    <Input
+                                        id="renotify-minutes"
+                                        v-model="form.renotify_minutes"
+                                        type="number"
+                                        min="5"
+                                        max="1440"
+                                        class="h-8 w-20"
+                                    />
+                                    <span
+                                        class="text-xs text-muted-foreground"
+                                        >{{
+                                            $t(
+                                                'integrations.form.delivery.renotify.minutes',
+                                            )
+                                        }}</span
+                                    >
+                                    <Label
+                                        for="renotify-limit"
+                                        class="ml-2 text-xs font-normal text-muted-foreground"
+                                        >{{
+                                            $t(
+                                                'integrations.form.delivery.renotify.limit',
+                                            )
+                                        }}</Label
+                                    >
+                                    <Input
+                                        id="renotify-limit"
+                                        v-model="form.renotify_limit"
+                                        type="number"
+                                        min="1"
+                                        max="20"
+                                        class="h-8 w-20"
+                                    />
+                                    <span
+                                        class="text-xs text-muted-foreground"
+                                        >{{
+                                            $t(
+                                                'integrations.form.delivery.renotify.reminders',
+                                            )
+                                        }}</span
+                                    >
+                                </div>
+                                <p
+                                    v-if="renotifySummary"
+                                    class="mt-2 text-xs text-muted-foreground"
+                                >
+                                    {{ renotifySummary }}
+                                </p>
+                                <InputError
+                                    :message="form.errors.renotify_minutes"
+                                />
+                                <InputError
+                                    :message="form.errors.renotify_limit"
+                                />
+                            </div>
+                            <p v-else class="border-t px-3 py-2 text-xs text-muted-foreground">
+                                {{
+                                    $t(
+                                        'integrations.form.delivery.renotify.off_hint',
+                                    )
+                                }}
+                            </p>
+                        </div>
+
+                        <div class="rounded-sm border">
+                            <div
+                                class="flex items-center justify-between gap-3 p-3"
+                            >
+                                <div>
+                                    <p class="text-sm font-medium">
+                                        {{
+                                            $t(
+                                                'integrations.form.delivery.quiet_hours.title',
+                                            )
+                                        }}
+                                    </p>
+                                    <p class="text-xs text-muted-foreground">
+                                        {{
+                                            $t(
+                                                'integrations.form.delivery.quiet_hours.description',
+                                            )
+                                        }}
+                                    </p>
+                                </div>
+                                <Switch
+                                    :checked="quietOn"
+                                    @update:checked="toggleQuiet"
+                                />
+                            </div>
+
+                            <div v-if="quietOn" class="space-y-3 border-t p-3">
+                                <div class="flex flex-wrap items-end gap-3">
+                                    <div class="grid gap-1.5">
+                                        <Label
+                                            for="quiet-start"
+                                            class="text-xs font-normal text-muted-foreground"
+                                            >{{
+                                                $t(
+                                                    'integrations.form.delivery.quiet_hours.from',
+                                                )
+                                            }}</Label
+                                        >
+                                        <Input
+                                            id="quiet-start"
+                                            v-model="form.quiet_hours_start"
+                                            type="time"
+                                            class="h-8 w-32"
+                                        />
+                                    </div>
+                                    <div class="grid gap-1.5">
+                                        <Label
+                                            for="quiet-end"
+                                            class="text-xs font-normal text-muted-foreground"
+                                            >{{
+                                                $t(
+                                                    'integrations.form.delivery.quiet_hours.to',
+                                                )
+                                            }}</Label
+                                        >
+                                        <Input
+                                            id="quiet-end"
+                                            v-model="form.quiet_hours_end"
+                                            type="time"
+                                            class="h-8 w-32"
+                                        />
+                                    </div>
+                                    <div class="min-w-48 flex-1">
+                                        <div
+                                            class="mb-1.5 flex items-center justify-between gap-2"
+                                        >
+                                            <Label
+                                                for="quiet-timezone"
+                                                class="text-xs font-normal text-muted-foreground"
+                                                >{{
+                                                    $t(
+                                                        'integrations.form.delivery.quiet_hours.timezone',
+                                                    )
+                                                }}</Label
+                                            >
+                                            <button
+                                                type="button"
+                                                class="text-xs text-primary underline-offset-2 hover:underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                                                @click="useBrowserZone"
+                                            >
+                                                {{
+                                                    $t(
+                                                        'integrations.form.delivery.quiet_hours.use_browser',
+                                                    )
+                                                }}
+                                            </button>
+                                        </div>
+                                        <TimezoneField
+                                            id="quiet-timezone"
+                                            v-model="form.quiet_hours_timezone"
+                                        />
+                                    </div>
+                                </div>
+
+                                <p
+                                    v-if="quietSummary"
+                                    class="text-xs text-muted-foreground"
+                                >
+                                    {{ quietSummary }}
+                                    <template v-if="quietIsOvernight">
+                                        {{
+                                            $t(
+                                                'integrations.form.delivery.quiet_hours.overnight',
+                                            )
+                                        }}
+                                    </template>
+                                </p>
+                                <p class="text-xs text-muted-foreground">
+                                    {{
+                                        $t(
+                                            'integrations.form.delivery.quiet_hours.behaviour',
+                                        )
+                                    }}
+                                </p>
+
+                                <InputError
+                                    :message="form.errors.quiet_hours_start"
+                                />
+                                <InputError
+                                    :message="form.errors.quiet_hours_end"
+                                />
+                                <InputError
+                                    :message="form.errors.quiet_hours_timezone"
+                                />
+                            </div>
+                            <p v-else class="border-t px-3 py-2 text-xs text-muted-foreground">
+                                {{
+                                    $t(
+                                        'integrations.form.delivery.quiet_hours.off_hint',
+                                    )
+                                }}
+                            </p>
+                        </div>
+                    </TabsContent>
                 </div>
             </Tabs>
 
@@ -510,10 +779,12 @@
 import { Head, router, useForm } from '@inertiajs/vue3';
 import {
     BellIcon,
+    BellRingIcon,
     GlobeIcon,
     HashIcon,
     MailIcon,
     MessageSquareIcon,
+    MoonIcon,
     MoreHorizontalIcon,
     PencilIcon,
     PlugIcon,
@@ -527,6 +798,7 @@ import EmptyState from '@/components/EmptyState.vue';
 import InputError from '@/components/InputError.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import Section from '@/components/Section.vue';
+import TimezoneField from '@/components/TimezoneField.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -569,7 +841,7 @@ type TemplateField = 'title' | 'body';
 type Template = { title: string; body: string };
 type Preset = Template & { key: string };
 
-const tabs = ['setup', 'scope', 'message'] as const;
+const tabs = ['setup', 'scope', 'message', 'delivery'] as const;
 
 type Tab = (typeof tabs)[number];
 
@@ -678,7 +950,60 @@ const form = useForm({
     alert_scope: 'all',
     monitors: [] as string[],
     templates: emptyTemplates(),
+    // Always populated, even while switched off: the inputs bind to them, and
+    // a null would have to be handled at every binding. The toggles below
+    // decide what the payload actually sends.
+    renotify_minutes: 30 as number | string,
+    renotify_limit: 3 as number | string,
+    quiet_hours_start: '22:00',
+    quiet_hours_end: '07:00',
+    quiet_hours_timezone: '',
 });
+
+const browserZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+
+const renotifyOn = ref(false);
+const quietOn = ref(false);
+
+const quietIsOvernight = computed(
+    () => quietOn.value && form.quiet_hours_start > form.quiet_hours_end,
+);
+
+const renotifySummary = computed(() =>
+    renotifyOn.value
+        ? trans('integrations.form.delivery.renotify.summary', {
+              minutes: form.renotify_minutes,
+              count: form.renotify_limit,
+          })
+        : '',
+);
+
+const quietSummary = computed(() =>
+    quietOn.value
+        ? trans('integrations.form.delivery.quiet_hours.summary', {
+              start: form.quiet_hours_start,
+              end: form.quiet_hours_end,
+          })
+        : '',
+);
+
+function toggleRenotify(on: boolean) {
+    renotifyOn.value = on;
+}
+
+function toggleQuiet(on: boolean) {
+    quietOn.value = on;
+
+    // The server requires a zone alongside the window, and the channel's own
+    // zone is the one that matters — not the server's.
+    if (on && !form.quiet_hours_timezone) {
+        form.quiet_hours_timezone = browserZone;
+    }
+}
+
+function useBrowserZone() {
+    form.quiet_hours_timezone = browserZone;
+}
 
 const inputType = computed(() => {
     if (form.type === 'email') {
@@ -716,6 +1041,9 @@ const tabHasError = computed<Record<Tab, boolean>>(() => {
             (key) => key === 'alert_scope' || key.startsWith('monitors'),
         ),
         message: keys.some((key) => key.startsWith('templates')),
+        delivery: keys.some(
+            (key) => key.startsWith('renotify') || key.startsWith('quiet_hours'),
+        ),
     };
 });
 
@@ -855,6 +1183,13 @@ function openConnect(provider: string) {
     form.alert_scope = 'all';
     form.monitors = [];
     form.templates = emptyTemplates();
+    renotifyOn.value = false;
+    quietOn.value = false;
+    form.renotify_minutes = 30;
+    form.renotify_limit = 3;
+    form.quiet_hours_start = '22:00';
+    form.quiet_hours_end = '07:00';
+    form.quiet_hours_timezone = browserZone;
     openForm();
 }
 
@@ -873,6 +1208,16 @@ function openEdit(integration: NotificationChannel) {
     form.alert_scope = integration.alert_scope;
     form.monitors = [...(integration.monitors ?? [])];
     form.templates = templatesFrom(integration);
+    renotifyOn.value = integration.renotify_minutes !== null;
+    quietOn.value =
+        integration.quiet_hours_start !== null &&
+        integration.quiet_hours_end !== null;
+    form.renotify_minutes = integration.renotify_minutes ?? 30;
+    form.renotify_limit = integration.renotify_limit ?? 3;
+    form.quiet_hours_start = integration.quiet_hours_start ?? '22:00';
+    form.quiet_hours_end = integration.quiet_hours_end ?? '07:00';
+    form.quiet_hours_timezone =
+        integration.quiet_hours_timezone ?? browserZone;
     openForm();
 }
 
@@ -885,7 +1230,25 @@ function payload() {
         alert_scope: form.alert_scope,
         monitors: form.monitors,
         templates: form.templates,
+        // Off is sent as null rather than omitted, so clearing a window on an
+        // existing integration actually unsets it. Number inputs hand back
+        // strings, which the integer rules reject.
+        renotify_minutes: renotifyOn.value ? numeric(form.renotify_minutes) : null,
+        renotify_limit: numeric(form.renotify_limit) ?? 3,
+        quiet_hours_start: quietOn.value ? form.quiet_hours_start : null,
+        quiet_hours_end: quietOn.value ? form.quiet_hours_end : null,
+        quiet_hours_timezone: quietOn.value ? form.quiet_hours_timezone : null,
     };
+}
+
+function numeric(value: number | string) {
+    if (value === '') {
+        return null;
+    }
+
+    const parsed = Number(value);
+
+    return Number.isFinite(parsed) ? parsed : null;
 }
 
 function submit() {

@@ -53,6 +53,14 @@ return [
         'body' => 'Update',
         'is_public' => 'Show this on the status page',
         'empty' => 'Nothing has been noted yet.',
+        'public' => 'Public',
+        'internal' => 'Internal',
+        'events' => [
+            'started' => 'Went down',
+            'acknowledged' => 'Acknowledged by :name',
+            'resolved' => 'Recovered',
+            'ongoing' => 'Still down',
+        ],
         'status' => [
             'investigating' => 'Investigating',
             'identified' => 'Identified',

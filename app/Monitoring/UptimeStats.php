@@ -31,8 +31,8 @@ class UptimeStats
             ->where('monitor_id', $monitor->id)
             ->where('checked_at', '>=', $since)
             ->selectRaw('COUNT(*) as total')
-            ->selectRaw('SUM(CASE WHEN is_up = 1 THEN 1 ELSE 0 END) as up_count')
-            ->selectRaw('AVG(CASE WHEN is_up = 1 THEN response_ms END) as avg_ms')
+            ->selectRaw('SUM(CASE WHEN is_up = TRUE THEN 1 ELSE 0 END) as up_count')
+            ->selectRaw('AVG(CASE WHEN is_up = TRUE THEN response_ms END) as avg_ms')
             ->first();
 
         $total = (int) ($totals->total ?? 0);
@@ -66,16 +66,16 @@ class UptimeStats
         // The moment is bound from PHP rather than using SQL NOW(): the
         // column holds UTC, and NOW() is the database server's local clock.
         $moment = now();
-        $awake = 'SUM(CASE WHEN is_active = 1 AND (maintenance_until IS NULL OR maintenance_until <= ?)';
+        $awake = 'SUM(CASE WHEN is_active = TRUE AND (maintenance_until IS NULL OR maintenance_until <= ?)';
 
         $counts = Monitor::query()
             ->forUser($user)
             ->selectRaw('COUNT(*) as total')
-            ->selectRaw('SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as paused')
-            ->selectRaw('SUM(CASE WHEN is_active = 1 AND maintenance_until > ? THEN 1 ELSE 0 END) as maintenance', [$moment])
-            ->selectRaw($awake.' AND latest_is_up = 1 AND is_degraded = 0 THEN 1 ELSE 0 END) as up_count', [$moment])
-            ->selectRaw($awake.' AND latest_is_up = 1 AND is_degraded = 1 THEN 1 ELSE 0 END) as degraded_count', [$moment])
-            ->selectRaw($awake.' AND latest_is_up = 0 THEN 1 ELSE 0 END) as down_count', [$moment])
+            ->selectRaw('SUM(CASE WHEN is_active = FALSE THEN 1 ELSE 0 END) as paused')
+            ->selectRaw('SUM(CASE WHEN is_active = TRUE AND maintenance_until > ? THEN 1 ELSE 0 END) as maintenance', [$moment])
+            ->selectRaw($awake.' AND latest_is_up = TRUE AND is_degraded = FALSE THEN 1 ELSE 0 END) as up_count', [$moment])
+            ->selectRaw($awake.' AND latest_is_up = TRUE AND is_degraded = TRUE THEN 1 ELSE 0 END) as degraded_count', [$moment])
+            ->selectRaw($awake.' AND latest_is_up = FALSE THEN 1 ELSE 0 END) as down_count', [$moment])
             ->selectRaw($awake.' AND latest_is_up IS NULL THEN 1 ELSE 0 END) as pending', [$moment])
             ->first();
 
@@ -83,8 +83,8 @@ class UptimeStats
             ->whereIn('monitor_id', Monitor::query()->forUser($user)->select('id'))
             ->where('checked_at', '>=', $since)
             ->selectRaw('COUNT(*) as total')
-            ->selectRaw('SUM(CASE WHEN is_up = 1 THEN 1 ELSE 0 END) as up_count')
-            ->selectRaw('AVG(CASE WHEN is_up = 1 THEN response_ms END) as avg_ms')
+            ->selectRaw('SUM(CASE WHEN is_up = TRUE THEN 1 ELSE 0 END) as up_count')
+            ->selectRaw('AVG(CASE WHEN is_up = TRUE THEN response_ms END) as avg_ms')
             ->first();
 
         $checkTotal = (int) ($checks->total ?? 0);
@@ -127,8 +127,8 @@ class UptimeStats
                 'FLOOR(('.SqlDialect::unixTimestamp('checked_at').' - ?) / ?) as bucket_index',
                 [$startTimestamp, $bucketSeconds],
             )
-            ->selectRaw('AVG(CASE WHEN is_up = 1 THEN response_ms END) as avg_ms')
-            ->selectRaw('SUM(CASE WHEN is_up = 0 THEN 1 ELSE 0 END) as failures')
+            ->selectRaw('AVG(CASE WHEN is_up = TRUE THEN response_ms END) as avg_ms')
+            ->selectRaw('SUM(CASE WHEN is_up = FALSE THEN 1 ELSE 0 END) as failures')
             ->selectRaw('COUNT(*) as total')
             ->groupBy('bucket_index')
             ->orderBy('bucket_index')
@@ -206,7 +206,7 @@ class UptimeStats
             ->where('checked_at', '>=', now()->subDays($days)->startOfDay())
             ->selectRaw(SqlDialect::dateOf('checked_at').' as day')
             ->selectRaw('COUNT(*) as total')
-            ->selectRaw('SUM(CASE WHEN is_up = 1 THEN 1 ELSE 0 END) as up_count')
+            ->selectRaw('SUM(CASE WHEN is_up = TRUE THEN 1 ELSE 0 END) as up_count')
             ->groupBy(DB::raw(SqlDialect::dateOf('checked_at')))
             ->orderBy('day')
             ->get()

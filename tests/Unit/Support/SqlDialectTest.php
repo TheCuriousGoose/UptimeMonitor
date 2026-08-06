@@ -47,6 +47,18 @@ class SqlDialectTest extends TestCase
     }
 
     /**
+     * Only pgsql needs asking: LIKE already ignores case under MySQL's default
+     * collation and in SQLite, and neither understands ILIKE.
+     */
+    public function test_it_picks_a_case_insensitive_like_per_driver(): void
+    {
+        $this->assertSame('like', SqlDialect::like('mysql'));
+        $this->assertSame('like', SqlDialect::like('mariadb'));
+        $this->assertSame('like', SqlDialect::like('sqlite'));
+        $this->assertSame('ilike', SqlDialect::like('pgsql'));
+    }
+
+    /**
      * Silently emitting MySQL syntax on an unknown driver would produce wrong
      * numbers rather than an error, which is the worse failure.
      */

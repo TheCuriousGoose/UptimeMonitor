@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\RoleResource;
+use App\Support\SqlDialect;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -19,7 +20,7 @@ class RoleController extends Controller
             ->withCount('users')
             ->with('permissions')
             ->when($request->filled('search'), fn ($q) => $q
-                ->where('name', 'like', "%{$request->input('search')}%")
+                ->where('name', SqlDialect::like(), "%{$request->input('search')}%")
             )
             ->orderBy('name')
             ->paginate(15);

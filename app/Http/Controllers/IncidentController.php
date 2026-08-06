@@ -7,6 +7,7 @@ use App\Http\Resources\IncidentResource;
 use App\Models\Incident;
 use App\Models\Monitor;
 use App\Policies\IncidentPolicy;
+use App\Support\SqlDialect;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +25,7 @@ class IncidentController extends Controller
                 $request->search(),
                 fn (Builder $query, string $search) => $query->whereHas(
                     'monitor',
-                    fn (Builder $monitor) => $monitor->where('name', 'LIKE', "%{$search}%"),
+                    fn (Builder $monitor) => $monitor->where('name', SqlDialect::like(), "%{$search}%"),
                 ),
             )
             ->when(

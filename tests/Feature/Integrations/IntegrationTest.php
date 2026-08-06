@@ -476,6 +476,101 @@ class IntegrationTest extends TestCase
         $this->assertSame('@php echo 1; @endphp', $text->body);
     }
 
+    // -- Delivery settings -------------------------------------------------
+
+    public function test_quiet_hours_and_reminders_are_saved_from_the_form(): void
+    {
+        $user = $this->user();
+
+        $this->actingAs($user)
+            ->post(route('integrations.store'), [
+                'name' => 'Ops email',
+                'type' => 'email',
+                'config' => ['email' => 'ops@example.test'],
+                'renotify_minutes' => 45,
+                'renotify_limit' => 4,
+                'quiet_hours_start' => '22:00',
+                'quiet_hours_end' => '07:00',
+                'quiet_hours_timezone' => 'Europe/Berlin',
+            ])
+            ->assertRedirect(route('integrations.index'));
+
+        $channel = $user->notificationChannels()->sole();
+
+        $this->assertSame(45, $channel->renotify_minutes);
+        $this->assertSame(4, $channel->renotify_limit);
+        $this->assertSame('Europe/Berlin', $channel->quiet_hours_timezone);
+        $this->assertSame('22:00', substr((string) $channel->quiet_hours_start, 0, 5));
+        $this->assertSame('07:00', substr((string) $channel->quiet_hours_end, 0, 5));
+    }
+
+    /**
+     * The form sends nulls rather than omitting the keys when either toggle is
+     * switched off — omitting them would leave the old window in place, and the
+     * channel would keep going quiet at a time the user thought they cleared.
+     */
+    public function test_switching_the_toggles_off_clears_the_stored_window(): void
+    {
+        $user = $this->user();
+        $integration = NotificationChannel::factory()->for($user, 'user')->create([
+            'type' => ChannelType::Email,
+            'config' => ['email' => 'ops@example.test'],
+            'renotify_minutes' => 30,
+            'quiet_hours_start' => '22:00',
+            'quiet_hours_end' => '07:00',
+            'quiet_hours_timezone' => 'Europe/Berlin',
+        ]);
+
+        $this->actingAs($user)
+            ->put(route('integrations.update', $integration), [
+                'name' => $integration->name,
+                'type' => 'email',
+                'config' => ['email' => 'ops@example.test'],
+                'renotify_minutes' => null,
+                'quiet_hours_start' => null,
+                'quiet_hours_end' => null,
+                'quiet_hours_timezone' => null,
+            ])
+            ->assertRedirect(route('integrations.index'));
+
+        $integration->refresh();
+
+        $this->assertNull($integration->renotify_minutes);
+        $this->assertNull($integration->quiet_hours_start);
+        $this->assertNull($integration->quiet_hours_end);
+        $this->assertFalse($integration->isQuiet(now()));
+    }
+
+    /**
+     * The form has to repopulate from these, so a missing key would silently
+     * reset a user's window the next time they saved an unrelated field.
+     */
+    public function test_the_page_carries_the_delivery_settings_back_to_the_form(): void
+    {
+        $user = $this->user();
+        NotificationChannel::factory()->for($user, 'user')->create([
+            'type' => ChannelType::Email,
+            'config' => ['email' => 'ops@example.test'],
+            'renotify_minutes' => 45,
+            'renotify_limit' => 4,
+            'quiet_hours_start' => '22:00:00',
+            'quiet_hours_end' => '07:00:00',
+            'quiet_hours_timezone' => 'Europe/Berlin',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('integrations.index'))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('integrations.0.renotify_minutes', 45)
+                ->where('integrations.0.renotify_limit', 4)
+                // Trimmed to HH:MM, which is what the time input binds to.
+                ->where('integrations.0.quiet_hours_start', '22:00')
+                ->where('integrations.0.quiet_hours_end', '07:00')
+                ->where('integrations.0.quiet_hours_timezone', 'Europe/Berlin')
+                ->etc(),
+            );
+    }
+
     // -- Ownership ---------------------------------------------------------
 
     public function test_another_users_integration_cannot_be_disconnected(): void

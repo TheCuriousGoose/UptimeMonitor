@@ -74,6 +74,20 @@ final class SqlDialect
         };
     }
 
+    /**
+     * The operator for a case-insensitive substring search. MySQL's default
+     * collation and SQLite's LIKE already ignore case; only pgsql has to be
+     * asked, and asking the others for ILIKE is a syntax error.
+     */
+    public static function like(?string $driver = null): string
+    {
+        return match ($driver ??= self::driver()) {
+            'mysql', 'mariadb', 'sqlite' => 'like',
+            'pgsql' => 'ilike',
+            default => self::unsupported($driver),
+        };
+    }
+
     private static function driver(): string
     {
         return DB::connection()->getDriverName();

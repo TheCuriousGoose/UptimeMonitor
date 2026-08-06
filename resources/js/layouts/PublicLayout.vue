@@ -116,6 +116,24 @@
                     <p class="mt-2 text-sm text-muted-foreground">
                         {{ $t('marketing.footer.tagline') }}
                     </p>
+
+                    <div v-if="supportUrl" class="mt-5">
+                        <p class="text-sm font-medium">
+                            {{ $t('marketing.support.title') }}
+                        </p>
+                        <p class="mt-1 text-sm text-muted-foreground">
+                            {{ $t('marketing.support.description') }}
+                        </p>
+                        <a
+                            :href="supportUrl"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="mt-3 inline-flex items-center gap-2 rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors hover:border-foreground/25 hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                        >
+                            <CoffeeIcon class="size-4" aria-hidden="true" />
+                            {{ $t('marketing.support.action') }}
+                        </a>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-8 sm:grid-cols-3">
@@ -152,7 +170,7 @@
 
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { MenuIcon } from 'lucide-vue-next';
+import { CoffeeIcon, MenuIcon } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import SkipLink from '@/components/SkipLink.vue';
@@ -182,6 +200,7 @@ import docs from '@/routes/docs';
 
 const page = usePage();
 const appName = computed(() => (page.props.name as string) ?? 'Vigil Watch');
+const supportUrl = computed(() => page.props.supportUrl as string | null);
 const year = new Date().getFullYear();
 const mobileNavOpen = ref(false);
 

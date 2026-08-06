@@ -123,6 +123,13 @@ interface NotificationChannel {
     is_active: boolean;
     alert_scope: AlertScope;
     templates?: Record<'down' | 'recovered', AlertTemplate> | null;
+    /** Null switches reminders off; the limit caps how many are sent. */
+    renotify_minutes: number | null;
+    renotify_limit: number;
+    /** HH:MM in `quiet_hours_timezone`, or null when the window is unset. */
+    quiet_hours_start: string | null;
+    quiet_hours_end: string | null;
+    quiet_hours_timezone: string | null;
     monitors_count?: number;
     monitors?: string[];
 }

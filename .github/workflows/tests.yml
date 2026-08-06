@@ -15,9 +15,17 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    name: ci (${{ matrix.database }})
     strategy:
+      # Both databases report, so a portability break shows which dialect it
+      # is rather than just that something failed.
+      fail-fast: false
       matrix:
         php-version: ['8.5']
+        # The date arithmetic and boolean literals in App\Support\SqlDialect
+        # have no portable spelling, so pgsql only stays correct if it is
+        # actually exercised.
+        database: [mariadb, pgsql]
 
     services:
       mysql:
@@ -32,6 +40,19 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd=pg_isready
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       - name: Checkout code
@@ -40,6 +61,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
+          extensions: pdo_mysql, pdo_pgsql
           tools: composer:v2
           coverage: xdebug
       - name: Setup Node
@@ -58,10 +80,10 @@ jobs:
         run: npm run build
       - name: Tests
         env:
-          DB_CONNECTION: mariadb
+          DB_CONNECTION: ${{ matrix.database }}
           DB_HOST: 127.0.0.1
-          DB_PORT: 3306
+          DB_PORT: ${{ matrix.database == 'pgsql' && '5432' || '3306' }}
           DB_DATABASE: test_db
-          DB_USERNAME: root
-          DB_PASSWORD: ""
+          DB_USERNAME: ${{ matrix.database == 'pgsql' && 'postgres' || 'root' }}
+          DB_PASSWORD: ${{ matrix.database == 'pgsql' && 'password' || '' }}
         run: ./vendor/bin/phpunit

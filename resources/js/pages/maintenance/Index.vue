@@ -5,6 +5,7 @@ import { computed, ref } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import PageHeader from '@/components/PageHeader.vue';
+import TimezoneField from '@/components/TimezoneField.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -31,7 +32,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { formatDateTime } from '@/lib/format';
+import { formatDateTime, formatInterval } from '@/lib/format';
 import { trans } from '@/lib/i18n';
 import * as maintenanceRoute from '@/routes/maintenance-windows';
 import type { Monitor } from '@/types/monitors';
@@ -116,6 +117,12 @@ function edit(window: MaintenanceWindow) {
         monitors: [...(window.monitors ?? [])],
     };
     open.value = true;
+}
+
+// Pluralised in the template through the component's own $t — the standalone
+// trans() helper takes no count argument.
+function silencedCount(window: MaintenanceWindow) {
+    return window.monitors?.length ?? 0;
 }
 
 function toggleMonitor(uuid: string) {
@@ -211,13 +218,45 @@ setLayoutProps({
                             {{ $t('maintenance.active_now') }}
                         </Badge>
                         <Badge v-else-if="!window.is_active" variant="outline">
-                            {{ $t('maintenance.form.is_active') }}
+                            {{ $t('maintenance.paused') }}
                         </Badge>
                     </div>
-                    <p class="mt-0.5 text-xs text-muted-foreground">
+
+                    <p class="mt-1 text-xs text-muted-foreground">
                         {{ $t(`maintenance.recurrence.${window.recurrence}`) }}
                         ·
-                        {{ window.timezone }}
+                        <template v-if="window.recurrence === 'recurring'">
+                            <code class="font-mono">{{ window.cron }}</code>
+                            <template v-if="window.duration_minutes">
+                                ·
+                                {{
+                                    $t('maintenance.duration', {
+                                        duration: formatInterval(
+                                            window.duration_minutes * 60,
+                                        ),
+                                    })
+                                }}
+                            </template>
+                        </template>
+                        <template v-else-if="window.starts_at">
+                            {{
+                                $t('maintenance.window', {
+                                    start: formatDateTime(window.starts_at),
+                                    end: formatDateTime(window.ends_at),
+                                })
+                            }}
+                        </template>
+                        · {{ window.timezone }}
+                    </p>
+
+                    <p class="mt-0.5 text-xs text-muted-foreground">
+                        {{
+                            $t(
+                                'maintenance.silences',
+                                { count: silencedCount(window) },
+                                silencedCount(window),
+                            )
+                        }}
                         <template v-if="window.next_occurrence_at">
                             ·
                             {{
@@ -336,7 +375,7 @@ setLayoutProps({
                     <FieldLabel for="timezone">{{
                         $t('maintenance.form.timezone')
                     }}</FieldLabel>
-                    <Input id="timezone" v-model="form.timezone" />
+                    <TimezoneField id="timezone" v-model="form.timezone" />
                     <FieldError>{{ errors.timezone }}</FieldError>
                 </Field>
 
