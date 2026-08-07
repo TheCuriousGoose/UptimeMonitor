@@ -22,12 +22,10 @@ class AlertingSeeder extends Seeder
             return;
         }
 
-        $email = NotificationChannel::create([
-            'user_id' => $user->id,
-            'name' => 'Ops email',
-            'type' => 'email',
-            'config' => ['email' => $user->email],
-        ]);
+        $email = NotificationChannel::firstOrCreate(
+            ['user_id' => $user->id, 'name' => 'Ops email'],
+            ['type' => 'email', 'config' => ['email' => $user->email]],
+        );
 
         $monitors = Monitor::query()->where('created_by', $user->id)->limit(6)->get();
 
@@ -35,13 +33,15 @@ class AlertingSeeder extends Seeder
             $monitor->notificationChannels()->syncWithoutDetaching([$email->id]);
         }
 
-        $page = StatusPage::create([
-            'user_id' => $user->id,
-            'slug' => 'acme',
-            'title' => 'Acme Status',
-            'description' => 'Live availability for our public services.',
-            'is_published' => true,
-        ]);
+        $page = StatusPage::firstOrCreate(
+            ['slug' => 'acme'],
+            [
+                'user_id' => $user->id,
+                'title' => 'Acme Status',
+                'description' => 'Live availability for our public services.',
+                'is_published' => true,
+            ],
+        );
 
         $page->monitors()->sync(
             $monitors->values()->mapWithKeys(

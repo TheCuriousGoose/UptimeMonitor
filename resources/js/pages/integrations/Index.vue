@@ -7,7 +7,10 @@
             :description="$t('integrations.subtitle')"
         />
 
-        <Section :title="$t('integrations.available')">
+        <Section
+            v-can="'channels.create'"
+            :title="$t('integrations.available')"
+        >
             <div class="grid gap-3 md:grid-cols-3">
                 <button
                     v-for="provider in providers"
@@ -136,16 +139,23 @@
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem @select="openEdit(integration)">
+                            <DropdownMenuItem
+                                v-can="'channels.edit'"
+                                @select="openEdit(integration)"
+                            >
                                 <PencilIcon />
                                 {{ $t('integrations.actions.edit') }}
                             </DropdownMenuItem>
-                            <DropdownMenuItem @select="sendTest(integration)">
+                            <DropdownMenuItem
+                                v-can="'channels.edit'"
+                                @select="sendTest(integration)"
+                            >
                                 <SendIcon />
                                 {{ $t('integrations.actions.test') }}
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
+                            <DropdownMenuSeparator v-can="'channels.delete'" />
                             <DropdownMenuItem
+                                v-can="'channels.delete'"
                                 variant="destructive"
                                 @select="askDisconnect(integration)"
                             >
@@ -607,7 +617,10 @@
                                     :message="form.errors.renotify_limit"
                                 />
                             </div>
-                            <p v-else class="border-t px-3 py-2 text-xs text-muted-foreground">
+                            <p
+                                v-else
+                                class="border-t px-3 py-2 text-xs text-muted-foreground"
+                            >
                                 {{
                                     $t(
                                         'integrations.form.delivery.renotify.off_hint',
@@ -741,7 +754,10 @@
                                     :message="form.errors.quiet_hours_timezone"
                                 />
                             </div>
-                            <p v-else class="border-t px-3 py-2 text-xs text-muted-foreground">
+                            <p
+                                v-else
+                                class="border-t px-3 py-2 text-xs text-muted-foreground"
+                            >
                                 {{
                                     $t(
                                         'integrations.form.delivery.quiet_hours.off_hint',
@@ -1042,7 +1058,8 @@ const tabHasError = computed<Record<Tab, boolean>>(() => {
         ),
         message: keys.some((key) => key.startsWith('templates')),
         delivery: keys.some(
-            (key) => key.startsWith('renotify') || key.startsWith('quiet_hours'),
+            (key) =>
+                key.startsWith('renotify') || key.startsWith('quiet_hours'),
         ),
     };
 });
@@ -1216,8 +1233,7 @@ function openEdit(integration: NotificationChannel) {
     form.renotify_limit = integration.renotify_limit ?? 3;
     form.quiet_hours_start = integration.quiet_hours_start ?? '22:00';
     form.quiet_hours_end = integration.quiet_hours_end ?? '07:00';
-    form.quiet_hours_timezone =
-        integration.quiet_hours_timezone ?? browserZone;
+    form.quiet_hours_timezone = integration.quiet_hours_timezone ?? browserZone;
     openForm();
 }
 
@@ -1233,7 +1249,9 @@ function payload() {
         // Off is sent as null rather than omitted, so clearing a window on an
         // existing integration actually unsets it. Number inputs hand back
         // strings, which the integer rules reject.
-        renotify_minutes: renotifyOn.value ? numeric(form.renotify_minutes) : null,
+        renotify_minutes: renotifyOn.value
+            ? numeric(form.renotify_minutes)
+            : null,
         renotify_limit: numeric(form.renotify_limit) ?? 3,
         quiet_hours_start: quietOn.value ? form.quiet_hours_start : null,
         quiet_hours_end: quietOn.value ? form.quiet_hours_end : null,

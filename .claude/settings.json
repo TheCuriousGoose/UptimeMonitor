@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan *)",
+      "Bash(composer install*)",
+      "Bash(composer dump-autoload*)",
+      "Bash(composer validate*)",
+      "Bash(composer lint*)",
+      "Bash(composer test*)",
+      "Bash(composer ci:check*)",
+      "Bash(vendor/bin/pint *)",
+      "Bash(vendor/bin/phpunit *)",
+      "Bash(npm run *)",
+      "Bash(npx eslint *)",
+      "Bash(npx vue-tsc *)",
+      "Bash(npx prettier *)",
+      "Bash(php -v)",
+      "Bash(php -m)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(git show*)",
+      "Bash(gh pr view*)",
+      "Bash(gh pr diff*)",
+      "Bash(gh pr checks*)",
+      "Bash(gh run list*)",
+      "Bash(gh run view*)"
+    ]
+  }
+}

@@ -15,7 +15,7 @@ class IncidentUpdatePolicy
     {
         return ($update->user_id === $user->id
                 || $update->incident->monitor->created_by === $user->id)
-            && $user->can(Permission::MonitorsEdit->value);
+            && $user->can(Permission::IncidentsComment->value);
     }
 
     public function delete(User $user, IncidentUpdate $update): bool

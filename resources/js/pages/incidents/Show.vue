@@ -180,13 +180,19 @@ setLayoutProps({
                 <IncidentStatusBadge :is-ongoing="incident.is_ongoing" />
                 <Button
                     v-if="!incident.is_acknowledged"
+                    v-can="'incidents.acknowledge'"
                     variant="outline"
                     @click="acknowledge"
                 >
                     <CheckIcon />
                     {{ $t('incidents.actions.acknowledge') }}
                 </Button>
-                <Button v-else variant="ghost" @click="unacknowledge">
+                <Button
+                    v-else
+                    v-can="'incidents.acknowledge'"
+                    variant="ghost"
+                    @click="unacknowledge"
+                >
                     {{ $t('incidents.actions.unacknowledge') }}
                 </Button>
             </template>
@@ -239,7 +245,9 @@ setLayoutProps({
                     />
 
                     <div class="min-w-0 flex-1">
-                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <div
+                            class="flex flex-wrap items-center gap-x-2 gap-y-1"
+                        >
                             <span class="text-sm font-medium">{{
                                 entry.title
                             }}</span>
@@ -274,8 +282,8 @@ setLayoutProps({
 
                         <p class="mt-0.5 text-xs text-muted-foreground">
                             <template v-if="entry.author"
-                                >{{ entry.author }} · </template
-                            >
+                                >{{ entry.author }} ·
+                            </template>
                             <time
                                 v-if="entry.at"
                                 :datetime="entry.at"
@@ -303,7 +311,10 @@ setLayoutProps({
                 {{ $t('incidents.updates.empty') }}
             </p>
 
-            <div class="space-y-3 border-t px-4 py-4">
+            <div
+                v-can="'incidents.comment'"
+                class="space-y-3 border-t px-4 py-4"
+            >
                 <Field>
                     <FieldLabel for="body">{{
                         $t('incidents.updates.body')

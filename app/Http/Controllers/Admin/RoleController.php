@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\RoleRequest;
 use App\Http\Resources\RoleResource;
+use App\Policies\RolePolicy;
 use App\Support\SqlDialect;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,10 +15,13 @@ use Inertia\Response;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
+#[UsePolicy(RolePolicy::class)]
 class RoleController extends Controller
 {
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', Role::class);
+
         $roles = Role::query()
             ->withCount('users')
             ->with('permissions')
@@ -31,37 +37,25 @@ class RoleController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(RoleRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:roles,name'],
-            'permissions' => ['array'],
-            'permissions.*' => ['exists:permissions,id'],
-        ]);
-
-        $role = Role::create(['name' => $data['name']]);
-        $role->syncPermissions($data['permissions'] ?? []);
+        $role = Role::create(['name' => $request->validated('name')]);
+        $role->syncPermissions($request->permissionNames());
 
         return back()->with('success', 'Role created.');
     }
 
-    public function update(Request $request, Role $role): RedirectResponse
+    public function update(RoleRequest $request, Role $role): RedirectResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:roles,name,'.$role->id],
-            'permissions' => ['array'],
-            'permissions.*' => ['exists:permissions,id'],
-        ]);
-
-        $role->update(['name' => $data['name']]);
-        $role->syncPermissions($data['permissions'] ?? []);
+        $role->update(['name' => $request->validated('name')]);
+        $role->syncPermissions($request->permissionNames());
 
         return back()->with('success', 'Role updated.');
     }
 
     public function destroy(Role $role): RedirectResponse
     {
-        abort_if($role->name === 'Super Admin', 403, 'Cannot delete Super Admin role.');
+        $this->authorize('delete', $role);
 
         $role->delete();
 

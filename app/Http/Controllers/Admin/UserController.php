@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\User;
+use App\Policies\UserPolicy;
 use App\Support\SqlDialect;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -13,10 +16,13 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Permission\Models\Role;
 
+#[UsePolicy(UserPolicy::class)]
 class UserController extends Controller
 {
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', User::class);
+
         $users = User::query()
             ->with('roles')
             ->when($request->filled('search'), fn ($q) => $q
@@ -32,19 +38,9 @@ class UserController extends Controller
         ]);
     }
 
-    public function update(Request $request, User $user): RedirectResponse
+    public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'roles' => ['array'],
-            'roles.*' => ['exists:roles,id'],
-        ]);
-
-        $user->fill([
-            'name' => $data['name'],
-            'email' => $data['email'],
-        ]);
+        $user->fill($request->safe()->only(['name', 'email']));
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
@@ -52,8 +48,7 @@ class UserController extends Controller
 
         $user->save();
 
-        $roles = Role::whereIn('id', $data['roles'] ?? [])->pluck('name');
-        $user->syncRoles($roles);
+        $user->syncRoles($request->roleNames());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "User \"{$user->name}\" updated."]);
 
@@ -62,6 +57,8 @@ class UserController extends Controller
 
     public function resetPassword(Request $request, User $user): RedirectResponse
     {
+        $this->authorize('resetPassword', $user);
+
         $data = $request->validate([
             'password' => ['required', 'confirmed', PasswordRule::default()],
         ]);
@@ -75,6 +72,8 @@ class UserController extends Controller
 
     public function sendPasswordResetLink(User $user): RedirectResponse
     {
+        $this->authorize('resetPassword', $user);
+
         $status = Password::sendResetLink(['email' => $user->email]);
 
         Inertia::flash('toast', [

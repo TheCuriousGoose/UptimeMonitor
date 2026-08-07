@@ -27,6 +27,7 @@ use App\Monitoring\Notifiers\PagerDutyNotifier;
 use App\Monitoring\Notifiers\SlackNotifier;
 use App\Monitoring\Notifiers\TeamsNotifier;
 use App\Monitoring\Notifiers\WebhookNotifier;
+use App\Policies\RolePolicy;
 use App\Settings\SettingRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -35,6 +36,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Telescope\Telescope;
+use Spatie\Permission\Models\Role as SpatieRole;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -79,6 +81,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        // Outside App\Models, so auto-discovery cannot pair the two.
+        Gate::policy(SpatieRole::class, RolePolicy::class);
 
         Gate::before(function ($user, $ability) {
             return $user->hasRole('Super Admin') ? true : null;

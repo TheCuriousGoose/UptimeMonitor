@@ -96,7 +96,11 @@ setLayoutProps({
         :description="$t('monitors.empty.description')"
     >
         <template #actions>
-            <Button :as="Link" :href="monitorsRoute.create()">
+            <Button
+                v-can="'monitors.create'"
+                :as="Link"
+                :href="monitorsRoute.create()"
+            >
                 <PlusIcon />
                 {{ $t('monitors.create.label') }}
             </Button>
@@ -139,7 +143,11 @@ setLayoutProps({
             </template>
             <template #actions>
                 <LiveIndicator :interval="30000" :only="['monitors']" />
-                <Button :as="Link" :href="monitorsRoute.create()">
+                <Button
+                    v-can="'monitors.create'"
+                    :as="Link"
+                    :href="monitorsRoute.create()"
+                >
                     <PlusIcon />
                     {{ $t('monitors.create.label') }}
                 </Button>

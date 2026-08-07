@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Actions\Users\CreateUser;
+use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -19,14 +21,20 @@ class DevSeeder extends Seeder
             return;
         }
 
-        // Create a default admin user for testing
-        User::factory()->create([
-            'email' => 'admin@example.test',
-            'name' => 'Admin User',
-        ]);
+        app(CreateUser::class)->firstOrCreate(
+            name: 'Admin User',
+            email: 'admin@example.test',
+            password: 'password',
+            role: Role::SuperAdmin,
+            verified: true,
+        );
 
-        // Create additional test users
-        User::factory(10)->create();
+        $usersToGenerate = 10;
+        $userCount = User::count();
+
+        if ($userCount < $usersToGenerate) {
+            User::factory($usersToGenerate - $userCount)->withRole(Role::User->value)->create();
+        }
 
         // Generate fake monitors, check history, incidents, channels and status pages
         $this->call([

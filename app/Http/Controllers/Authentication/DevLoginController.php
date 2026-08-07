@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers\Authentication;
 
+use App\Actions\Users\CreateUser;
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
 class DevLoginController extends Controller
 {
+    public function __construct(private readonly CreateUser $createUser) {}
+
     /**
      * Quickly login as a Super Admin (development only).
      */
@@ -19,18 +21,15 @@ class DevLoginController extends Controller
             abort(403, 'This action is only available in local development.');
         }
 
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@example.test'],
-            [
-                'name' => 'Admin User',
-                'password' => Hash::make('password'),
-                'email_verified_at' => now(),
-            ]
+        $admin = $this->createUser->firstOrCreate(
+            name: 'Admin User',
+            email: 'admin@example.test',
+            password: 'password',
+            role: Role::SuperAdmin,
+            verified: true,
         );
 
-        if (! $admin->hasRole('Super Admin')) {
-            $admin->syncRoles('Super Admin');
-        }
+        $admin->syncRoles(Role::SuperAdmin->value);
 
         Auth::login($admin, remember: true);
 
@@ -46,13 +45,12 @@ class DevLoginController extends Controller
             abort(403, 'This action is only available in local development.');
         }
 
-        $user = User::firstOrCreate(
-            ['email' => 'user@example.test'],
-            [
-                'name' => 'Test User',
-                'password' => Hash::make('password'),
-                'email_verified_at' => now(),
-            ]
+        $user = $this->createUser->firstOrCreate(
+            name: 'Test User',
+            email: 'user@example.test',
+            password: 'password',
+            role: Role::User,
+            verified: true,
         );
 
         Auth::login($user, remember: true);

@@ -7,7 +7,9 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('role:Super Admin')->prefix('admin')->name('admin.')->group(function () {
+// Gated per-action by policy rather than by a hardcoded role, so a
+// partial-admin role can be composed from the Roles screen.
+Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('roles', [RoleController::class, 'index'])->name('roles.index');
     Route::post('roles', [RoleController::class, 'store'])->name('roles.store');
     Route::put('roles/{role}', [RoleController::class, 'update'])->name('roles.update');
@@ -26,7 +28,10 @@ Route::middleware('role:Super Admin')->prefix('admin')->name('admin.')->group(fu
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::put('settings/{key}', [SettingController::class, 'update'])->name('settings.update');
 
-    Route::post('impersonate/{role}', [ImpersonateRoleController::class, 'store'])->name('impersonate.store');
+    // A bypass of every check above, not a permission of its own.
+    Route::post('impersonate/{role}', [ImpersonateRoleController::class, 'store'])
+        ->middleware('role:Super Admin')
+        ->name('impersonate.store');
 });
 
 // Stop impersonation — accessible while impersonating (outside role:Super Admin guard)

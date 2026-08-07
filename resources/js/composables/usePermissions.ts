@@ -1,32 +1,27 @@
-import { router } from '@inertiajs/vue3';
-import { reactive } from 'vue';
-
-interface PermissionState {
-    permissions: string[];
-}
+import { usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import type { ComputedRef } from 'vue';
 
 export interface UsePermissionsReturn {
+    permissions: ComputedRef<string[]>;
     can: (permission: string) => boolean;
     canAny: (permissions: string | string[]) => boolean;
 }
 
-const state = reactive<PermissionState>({
-    permissions: [],
-});
-
-router.on('navigate', (event) => {
-    const { auth } = event.detail.page.props as {
-        auth?: { permissions?: string[] };
-    };
-    state.permissions = auth?.permissions ?? [];
-});
-
 export function usePermissions(): UsePermissionsReturn {
+    const page = usePage();
+
+    const permissions = computed<string[]>(
+        () =>
+            (page.props.auth as { permissions?: string[] } | undefined)
+                ?.permissions ?? [],
+    );
+
     const can = (permission: string): boolean =>
-        state.permissions.includes(permission);
+        permissions.value.includes(permission);
 
-    const canAny = (permissions: string | string[]): boolean =>
-        ([] as string[]).concat(permissions).some(can);
+    const canAny = (value: string | string[]): boolean =>
+        ([] as string[]).concat(value).some(can);
 
-    return { can, canAny };
+    return { permissions, can, canAny };
 }
