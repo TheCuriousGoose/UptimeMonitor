@@ -53,6 +53,15 @@ class NotificationChannelFactory extends Factory
         ]);
     }
 
+    public function googleChat(string $url = 'https://chat.googleapis.com/v1/spaces/AAA/messages?key=k&token=t'): static
+    {
+        return $this->state(fn () => [
+            'name' => 'Google Chat',
+            'type' => ChannelType::GoogleChat,
+            'config' => ['url' => $url],
+        ]);
+    }
+
     public function inactive(): static
     {
         return $this->state(fn () => ['is_active' => false]);

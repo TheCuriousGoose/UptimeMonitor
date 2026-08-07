@@ -53,7 +53,7 @@ return [
                 'up' => 'Up',
                 'down' => 'Down',
             ],
-            'incident' => 'Incident opened 4m ago — connection refused after 3 consecutive failures. Paged on-call via PagerDuty.',
+            'incident' => 'Incident opened 4m ago. Connection refused after 3 consecutive failures. Paged on-call via PagerDuty.',
         ],
 
         'stats' => [
@@ -88,7 +88,7 @@ return [
         'features' => [
             'checks' => [
                 'title' => 'Six kinds of check',
-                'body' => 'HTTP, keyword, TCP port, ping, DNS record and TLS certificate expiry — each with its own timeout and confirmation threshold.',
+                'body' => 'HTTP, keyword, TCP port, ping, DNS record and TLS certificate expiry. Each with its own timeout and confirmation threshold.',
             ],
             'confirmation' => [
                 'title' => 'No alerts for blips',
@@ -100,7 +100,7 @@ return [
             ],
             'alerts' => [
                 'title' => 'Alerts where you work',
-                'body' => 'Email, webhooks, Slack and Discord — plus PagerDuty, Opsgenie and Teams, which resolve the alert automatically on recovery.',
+                'body' => 'Email, webhooks, Slack, Discord and Google Chat, plus PagerDuty, Opsgenie and Teams, which resolve the alert automatically on recovery.',
             ],
             'status' => [
                 'title' => 'Status pages',
@@ -130,7 +130,7 @@ return [
                 'keyword' => [
                     'name' => 'Keyword',
                     'target' => 'URL',
-                    'catches' => 'Pages that return 200 while rendering an error. Fails when a string is missing from the body — or when it is present, if you invert the match.',
+                    'catches' => 'Pages that return 200 while rendering an error. Fails when a string is missing from the body, or present if you invert the match.',
                 ],
                 'port' => [
                     'name' => 'Port',
@@ -140,7 +140,7 @@ return [
                 'ping' => [
                     'name' => 'Ping',
                     'target' => 'Host',
-                    'catches' => 'Hosts that have gone off the network entirely — the cheapest way to separate "the box is gone" from "the app is broken".',
+                    'catches' => 'Hosts that have gone off the network entirely. The cheapest way to separate "the box is gone" from "the app is broken".',
                 ],
                 'dns' => [
                     'name' => 'DNS',
@@ -175,7 +175,7 @@ return [
                 ],
                 'resolve' => [
                     'title' => 'Recovery closes the loop',
-                    'body' => 'When the monitor passes again, the incident is closed with its total duration and the same channels are notified — including the on-call tools, which resolve the alert on their side.',
+                    'body' => 'When the monitor passes again, the incident closes with its total duration and the same channels are notified, including the on-call tools, which resolve the alert on their side.',
                 ],
             ],
         ],
@@ -188,7 +188,7 @@ return [
                 'body' => 'Group monitors onto a page at your own slug, publish 90 days of daily uptime, and let customers answer "is it just me?" without opening a ticket.',
                 'points' => [
                     'A 90-day uptime bar per monitor, with incident detail on hover',
-                    'Choose which monitors appear — internal checks stay private',
+                    'Choose which monitors appear. Internal checks stay private',
                     'Light, dark or visitor preference, fixed by you rather than inherited',
                     'No login, no app chrome, no JavaScript required to read it',
                 ],
@@ -208,7 +208,7 @@ return [
         'open' => [
             'eyebrow' => 'Open source',
             'heading' => 'Self-hosted, and priced accordingly',
-            'body' => 'Vigil Watch runs on your own infrastructure. There is no billing, no seat count and no feature held back behind a plan — run as many monitors as your server can handle.',
+            'body' => 'Vigil Watch runs on your own infrastructure. No billing, no seat count, no feature held back behind a plan. Run as many monitors as your server can handle.',
             'points' => [
                 'unlimited' => ['title' => 'Unlimited monitors and status pages', 'body' => 'The only ceiling is your hardware.'],
                 'data' => ['title' => 'Your data stays yours', 'body' => 'Checks, incidents and contacts live in your database. Nothing is sent anywhere else.'],
@@ -239,7 +239,7 @@ return [
                 ],
                 'existing' => [
                     'question' => 'Can I manage it without the UI?',
-                    'answer' => 'Yes. The REST API covers creating, updating, pausing and deleting monitors, triggering a check on demand, and reading incident history — all under scoped keys.',
+                    'answer' => 'Yes. The REST API covers creating, updating, pausing and deleting monitors, triggering a check on demand, and reading incident history, all under scoped keys.',
                 ],
                 'cost' => [
                     'question' => 'What does it cost?',
@@ -261,7 +261,7 @@ return [
         'sections' => [
             'checks' => [
                 'title' => 'Checks',
-                'body' => 'Six check types, each with its own configuration, timeout and schedule. A monitor is a target plus a question — the type decides which question gets asked.',
+                'body' => 'Six check types, each with its own configuration, timeout and schedule. A monitor is a target plus a question. The type decides which question gets asked.',
                 'points' => [
                     'HTTP with a chosen method, expected status code and optional certificate verification',
                     'Keyword matching on the response body, invertible so a string can be required to be absent',
@@ -287,7 +287,7 @@ return [
                 'body' => 'A run of failures becomes one incident with a beginning, a cause and an end. The record is what you read afterwards, so it is written to be read: no scrolling through a log of identical failed pings to work out when something started.',
                 'points' => [
                     'Opened at the first failure, not the one that crossed the threshold, so duration is accurate',
-                    'Carries the error that caused it — status code, timeout, connection refused, missing keyword',
+                    'Carries the error that caused it: status code, timeout, connection refused, missing keyword',
                     'Closed automatically on recovery, with total downtime recorded',
                     'Full check history behind each incident, at the resolution it was captured',
                     'Filterable by monitor and state, and readable over the API',
@@ -332,7 +332,7 @@ return [
     'about' => [
         'title' => 'About',
         'subtitle' => 'Why this exists.',
-        'body' => "Most uptime monitoring is either a black box that emails you \"site down\" with no detail, or an enterprise platform priced for a team of fifty.\n\nVigil Watch is the middle: it records every check, groups failures into incidents you can actually read, and routes alerts to whoever is on call — while staying something one person can run on a single server.",
+        'body' => "Most uptime monitoring is either a black box that emails you \"site down\" with no detail, or an enterprise platform priced for a team of fifty.\n\nVigil Watch is the middle: it records every check, groups failures into incidents you can actually read, and routes alerts to whoever is on call, while staying something one person can run on a single server.",
         'principles_heading' => 'How it is built',
         'principles' => [
             'honest' => [
@@ -367,7 +367,7 @@ return [
     'contact' => [
         'title' => 'Contact',
         'subtitle' => 'Questions, bugs and feature requests.',
-        'body' => 'Vigil Watch is developed in the open. The fastest way to reach us is to open an issue on the repository — bug reports, feature requests and questions are all welcome there.',
+        'body' => 'Vigil Watch is developed in the open. The fastest way to reach us is to open an issue on the repository. Bug reports, feature requests and questions are all welcome there.',
         'issues' => 'Report an issue',
         'security_heading' => 'Security',
         'security_body' => 'If you have found a security issue, please report it privately rather than opening a public issue.',
@@ -379,7 +379,7 @@ return [
             ],
             'feature' => [
                 'title' => 'Something is missing',
-                'body' => 'Check the roadmap first — it may already be planned. If not, describe the situation you are trying to handle rather than the feature you have in mind.',
+                'body' => 'Check the roadmap first, it may already be planned. If not, describe the situation you are trying to handle rather than the feature you have in mind.',
             ],
             'docs' => [
                 'title' => 'The docs are wrong',
@@ -395,7 +395,7 @@ return [
     'roadmap' => [
         'title' => 'Roadmap',
         'subtitle' => 'What is being worked on, and what is next.',
-        'note' => 'Planned work is ordered by how often it is asked for, not by how interesting it is to build. Dates are deliberately absent — this is a list of intent, not a delivery schedule.',
+        'note' => 'Planned work is ordered by how often it is asked for, not by how interesting it is to build. Dates are deliberately absent: this is a list of intent, not a delivery schedule.',
         'status' => [
             'shipped' => 'Shipped',
             'building' => 'In progress',

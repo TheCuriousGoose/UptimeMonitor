@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import type { Ref } from 'vue';
+import { csrfHeaders } from '@/lib/http';
 
 type ColumnVisibility = Record<string, boolean>;
 type Cache = Record<string, ColumnVisibility>;
@@ -75,9 +76,14 @@ export function useColumnPreferences(
         }
 
         saveTimer = setTimeout(() => {
+            // Unsigned this was a silent 419: the choice stuck locally, so the
+            // write never coming back was invisible until another browser.
             fetch('/me/preferences', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...csrfHeaders(),
+                },
                 body: JSON.stringify({
                     columns: { [tableKey]: columns.value },
                 }),

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Onboarding\OnboardingProgress;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -18,6 +19,7 @@ class PreferenceController extends Controller
             'columns' => ['sometimes', 'array'],
             'columns.*' => ['array'],
             'columns.*.*' => ['boolean'],
+            OnboardingProgress::PREFERENCE_KEY => ['sometimes', 'boolean'],
         ]);
 
         $user = $request->user();
@@ -28,6 +30,10 @@ class PreferenceController extends Controller
                 $current['columns'] ?? [],
                 $validated['columns'],
             );
+        }
+
+        if (array_key_exists(OnboardingProgress::PREFERENCE_KEY, $validated)) {
+            $current[OnboardingProgress::PREFERENCE_KEY] = $validated[OnboardingProgress::PREFERENCE_KEY];
         }
 
         $user->preferences = $current;

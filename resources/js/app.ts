@@ -31,6 +31,10 @@ createInertiaApp({
             // Public status pages render standalone, with no app chrome.
             case name.startsWith('status/'):
                 return null;
+            // First-run setup is deliberately chrome-free: it has one job, and
+            // a sidebar full of empty sections is not helping with it.
+            case name.startsWith('onboarding/'):
+                return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):

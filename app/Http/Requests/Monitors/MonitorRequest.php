@@ -101,14 +101,25 @@ abstract class MonitorRequest extends FormRequest
 
             // Anything the form sent back as the mask is unchanged, so put
             // the stored credential back rather than overwriting it.
-            $existing = $this->route('monitor');
+            $existing = $this->existingMonitor();
 
-            $data['config'] = $existing instanceof Monitor
+            $data['config'] = $existing !== null
                 ? ConfigMasker::unmask($config, $existing->resolvedConfig())
                 : $config;
         }
 
         return $data;
+    }
+
+    /**
+     * The monitor this payload is editing, whose stored credentials fill in
+     * for any that came back as the mask. Null when creating one.
+     */
+    protected function existingMonitor(): ?Monitor
+    {
+        $monitor = $this->route('monitor');
+
+        return $monitor instanceof Monitor ? $monitor : null;
     }
 
     /**

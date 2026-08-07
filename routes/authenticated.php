@@ -9,17 +9,30 @@ use App\Http\Controllers\MaintenanceWindowController;
 use App\Http\Controllers\MonitorBulkController;
 use App\Http\Controllers\MonitorCheckController;
 use App\Http\Controllers\MonitorController;
+use App\Http\Controllers\MonitorPreviewController;
 use App\Http\Controllers\MonitorSearchController;
 use App\Http\Controllers\MonitorStateController;
 use App\Http\Controllers\NotificationChannelTestController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\StatusPageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+Route::get('get-started', [OnboardingController::class, 'show'])->name('onboarding.show');
+Route::post('get-started', [OnboardingController::class, 'store'])->name('onboarding.store');
+Route::post('get-started/skip', [OnboardingController::class, 'skip'])->name('onboarding.skip');
+
 // Declared before the resource so these are not swallowed by {monitor}.
 Route::post('monitors/bulk', [MonitorBulkController::class, 'store'])->name('monitors.bulk');
 Route::get('monitors/search', [MonitorSearchController::class, 'index'])->name('monitors.search');
+
+// Shares the check-now budget rather than getting its own: both make the
+// server issue an outbound request to a user-supplied target, and the point of
+// that limit is to bound how many an account can force in total.
+Route::post('monitors/preview', [MonitorPreviewController::class, 'store'])
+    ->middleware('throttle:check-now')
+    ->name('monitors.preview');
 
 Route::resource('monitors', MonitorController::class);
 Route::patch('monitors/{monitor}/state', [MonitorStateController::class, 'update'])->name('monitors.state');

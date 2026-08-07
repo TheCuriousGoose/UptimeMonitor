@@ -89,13 +89,13 @@ const mainNavItems = computed(() => visible(allMainNavItems));
 
 const allAdminNavItems: NavItem[] = [
     {
-        title: 'Users',
+        title: trans('admin.users.title'),
         href: adminUsers.index(),
         icon: Users,
         permission: 'users.view',
     },
     {
-        title: 'Roles',
+        title: trans('admin.roles.title'),
         href: adminRoles.index(),
         icon: ShieldCheck,
         permission: 'roles.view',
@@ -107,7 +107,7 @@ const allAdminNavItems: NavItem[] = [
         permission: 'content.view',
     },
     {
-        title: 'Settings',
+        title: trans('settings.title'),
         href: adminSettings.index(),
         icon: Settings2,
         permission: 'settings.view',

@@ -1,7 +1,7 @@
 <template>
     <Head :title="trans('monitors.breadcrumbs.edit', { name: monitor.name })" />
 
-    <div class="p-4">
+    <div>
         <div class="mb-6">
             <h1 class="text-xl font-semibold">
                 {{ $t('monitors.edit.form.title') }}

@@ -28,7 +28,11 @@
                     <PencilIcon />
                     {{ $t('monitors.actions.edit') }}
                 </DropdownMenuItem>
-                <DropdownMenuItem v-can="'monitors.edit'" @select="runCheck">
+                <DropdownMenuItem
+                    v-can="'monitors.edit'"
+                    :disabled="checking"
+                    @select="runCheck"
+                >
                     <PlayIcon />
                     {{ $t('monitors.actions.check_now') }}
                 </DropdownMenuItem>
@@ -57,7 +61,9 @@
         <ConfirmDialog
             v-model:open="confirmingDelete"
             :title="$t('monitors.actions.delete')"
-            :description="$t('monitors.actions.confirm_delete')"
+            :description="
+                $t('monitors.actions.confirm_delete', { name: monitor.name })
+            "
             :confirm-label="$t('base.delete')"
             destructive
             @confirm="destroy"
@@ -94,12 +100,17 @@ const props = defineProps<{
 }>();
 
 const confirmingDelete = ref(false);
+const checking = ref(false);
 
 function runCheck() {
     router.post(
         monitorsRoute.check(props.monitor.uuid).url,
         {},
-        { preserveScroll: true },
+        {
+            preserveScroll: true,
+            onStart: () => (checking.value = true),
+            onFinish: () => (checking.value = false),
+        },
     );
 }
 

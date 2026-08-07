@@ -9,7 +9,7 @@ return [
     ],
     'reveal' => [
         'created' => ':name created',
-        'copy_now' => 'Copy this key now — it will not be shown again.',
+        'copy_now' => 'Copy it now. It is not shown again.',
     ],
     'form' => [
         'create' => 'New key',

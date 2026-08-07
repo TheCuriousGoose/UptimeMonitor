@@ -16,7 +16,7 @@ export const columns: ColumnDef<Incident>[] = [
                 h(
                     'span',
                     { class: 'font-medium leading-tight' },
-                    row.original.monitor?.name ?? '—',
+                    row.original.monitor?.name ?? '-',
                 ),
                 h(
                     'span',
@@ -40,7 +40,7 @@ export const columns: ColumnDef<Incident>[] = [
             h(
                 'span',
                 { class: 'text-sm text-muted-foreground' },
-                row.original.cause ?? '—',
+                row.original.cause ?? '-',
             ),
     },
     {

@@ -64,8 +64,8 @@ function impersonate(role: Role) {
             :disabled="role.name === 'Super Admin'"
             :title="
                 role.name === 'Super Admin'
-                    ? 'Cannot impersonate Super Admin'
-                    : `Impersonate ${role.name}`
+                    ? $t('admin.roles.cannot_impersonate')
+                    : $t('admin.roles.impersonate', { name: role.name })
             "
             @click="impersonate(role)"
         >
@@ -75,7 +75,7 @@ function impersonate(role: Role) {
             variant="ghost"
             size="icon"
             class="size-8"
-            :title="`Edit ${role.name}`"
+            :title="$t('admin.roles.edit_role', { name: role.name })"
             @click="openEdit(role)"
         >
             <PencilIcon class="size-3.5" />
@@ -87,8 +87,8 @@ function impersonate(role: Role) {
             :disabled="role.name === 'Super Admin'"
             :title="
                 role.name === 'Super Admin'
-                    ? 'Cannot delete Super Admin'
-                    : `Delete ${role.name}`
+                    ? $t('admin.roles.cannot_delete')
+                    : $t('admin.roles.delete_role', { name: role.name })
             "
             @click="confirmingDelete = true"
         >
@@ -98,8 +98,8 @@ function impersonate(role: Role) {
 
     <ConfirmDialog
         v-model:open="confirmingDelete"
-        :title="`Delete role &quot;${role.name}&quot;?`"
-        description="Users assigned to this role will lose its permissions. This cannot be undone."
+        :title="$t('admin.roles.confirm_delete', { name: role.name })"
+        :description="$t('admin.roles.confirm_delete_description')"
         :confirm-label="$t('base.delete')"
         destructive
         @confirm="deleteRole(role)"
@@ -108,11 +108,13 @@ function impersonate(role: Role) {
     <Dialog v-model:open="editOpen">
         <DialogContent class="sm:max-w-xl">
             <DialogHeader>
-                <DialogTitle>Edit Role: {{ role.name }}</DialogTitle>
+                <DialogTitle>{{
+                    $t('admin.roles.edit_role', { name: role.name })
+                }}</DialogTitle>
             </DialogHeader>
             <div class="space-y-4 py-2">
                 <div class="grid gap-1.5">
-                    <Label for="edit-name">Name</Label>
+                    <Label for="edit-name">{{ $t('admin.roles.name') }}</Label>
                     <Input
                         id="edit-name"
                         v-model="editName"
@@ -120,13 +122,12 @@ function impersonate(role: Role) {
                     />
                 </div>
                 <div class="grid gap-2">
-                    <Label>Permissions</Label>
+                    <Label>{{ $t('admin.roles.permissions') }}</Label>
                     <p
                         v-if="role.name === 'Super Admin'"
                         class="text-xs text-muted-foreground"
                     >
-                        Super Admin has all permissions implicitly and cannot be
-                        changed.
+                        {{ $t('admin.roles.super_admin_locked') }}
                     </p>
                     <div v-else class="max-h-96 overflow-y-auto pr-1">
                         <RolePermissionPicker
@@ -140,7 +141,7 @@ function impersonate(role: Role) {
                 <Button
                     :disabled="role.name === 'Super Admin'"
                     @click="submitEdit(role)"
-                    >Save</Button
+                    >{{ $t('admin.roles.save') }}</Button
                 >
             </DialogFooter>
         </DialogContent>

@@ -215,7 +215,7 @@ setLayoutProps({
             />
             <StatTile
                 :label="$t('incidents.table.columns.cause')"
-                :value="incident.cause ?? '—'"
+                :value="incident.cause ?? '-'"
             />
         </div>
 
@@ -334,7 +334,7 @@ setLayoutProps({
                             ><SelectValue
                         /></SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="none">—</SelectItem>
+                            <SelectItem value="none">-</SelectItem>
                             <SelectItem
                                 v-for="option in statuses"
                                 :key="option"

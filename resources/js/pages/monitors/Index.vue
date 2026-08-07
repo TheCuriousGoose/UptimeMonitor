@@ -39,7 +39,16 @@ const search = ref<string>(props.filters.search ?? '');
 const status = ref<string>(props.filters.status ?? ALL);
 const loading = ref(false);
 
-const statuses: MonitorStatus[] = ['up', 'down', 'paused', 'pending'];
+// Every state the server can filter by. Leaving "slow" and "maintenance" out
+// hid two states the table happily renders.
+const statuses: MonitorStatus[] = [
+    'up',
+    'degraded',
+    'down',
+    'maintenance',
+    'paused',
+    'pending',
+];
 
 // A filter is the user waiting on their own action, so the table shows
 // skeletons. The background poll deliberately does not set this.

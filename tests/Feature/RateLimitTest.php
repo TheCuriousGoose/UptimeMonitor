@@ -100,6 +100,10 @@ class RateLimitTest extends TestCase
     {
         $user = $this->user();
 
+        // An account with nothing in it is sent to the guided setup instead,
+        // and this needs a page that renders.
+        Monitor::factory()->forUser($user)->create();
+
         // Well past the 60/min mutation ceiling, but these are GETs.
         for ($i = 0; $i < 70; $i++) {
             $this->actingAs($user)->get(route('dashboard'))->assertOk();

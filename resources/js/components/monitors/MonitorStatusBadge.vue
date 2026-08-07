@@ -18,6 +18,7 @@ import {
     ClockIcon,
     PauseIcon,
     TrendingDownIcon,
+    WrenchIcon,
     XCircleIcon,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -43,6 +44,12 @@ const tones = {
     degraded: {
         icon: TrendingDownIcon,
         classes: 'text-amber-700 dark:text-amber-400',
+    },
+    // Silenced on purpose, which is neither healthy nor broken — and above all
+    // not the clock the pending fallback used to show here.
+    maintenance: {
+        icon: WrenchIcon,
+        classes: 'text-sky-700 dark:text-sky-400',
     },
     paused: {
         icon: PauseIcon,
