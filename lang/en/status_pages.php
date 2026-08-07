@@ -31,7 +31,7 @@ return [
         ],
         'monitors' => [
             'title' => 'Monitors to show',
-            'description' => 'Only uptime is shown publicly — never the target or error details.',
+            'description' => 'Only uptime is public. Targets and error details are never exposed.',
             'empty' => 'Create a monitor first, then add it to this page.',
         ],
         'tabs' => [
@@ -42,7 +42,7 @@ return [
     ],
     'theme' => [
         'preview' => 'Preview',
-        'preview_system' => 'Shown in your own scheme — visitors see theirs.',
+        'preview_system' => 'Previewed in your scheme. Visitors get theirs.',
         'reset' => 'Reset to defaults',
         'sample' => [
             'title' => 'Acme Status',
@@ -104,7 +104,7 @@ return [
         ],
         'footer_text' => [
             'title' => 'Footer note',
-            'description' => 'A line of your own under the page — a company name, a support address.',
+            'description' => 'A line under the page. A company name, a support address.',
             'placeholder' => '© Acme B.V.',
         ],
         'links' => [
@@ -121,7 +121,7 @@ return [
         'delete' => 'Delete',
         'visit' => 'Open page',
         'copy' => 'Copy link',
-        'confirm_delete' => 'Delete this status page? The public link will stop working.',
+        'confirm_delete' => 'Delete ":name"? The public link will stop working.',
     ],
     'monitors_count' => ':count monitor|:count monitors',
     'validation' => [

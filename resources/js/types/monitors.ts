@@ -2,7 +2,13 @@ import type { User } from './auth';
 
 type MonitorType = 'http' | 'keyword' | 'port' | 'ping' | 'dns' | 'ssl';
 
-type MonitorStatus = 'up' | 'down' | 'degraded' | 'paused' | 'pending';
+type MonitorStatus =
+    | 'up'
+    | 'down'
+    | 'degraded'
+    | 'maintenance'
+    | 'paused'
+    | 'pending';
 
 type MonitorConfig = {
     method?: string;
@@ -106,7 +112,8 @@ type ChannelType =
     | 'discord'
     | 'pagerduty'
     | 'opsgenie'
-    | 'teams';
+    | 'teams'
+    | 'google_chat';
 
 type AlertScope = 'all' | 'selected';
 

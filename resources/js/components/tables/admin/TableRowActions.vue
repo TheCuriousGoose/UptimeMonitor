@@ -131,26 +131,38 @@ function openEdit(user: UserWithRoles) {
     <Dialog v-model:open="editOpen">
         <DialogContent class="sm:max-w-xl">
             <DialogHeader>
-                <DialogTitle>Edit {{ user.name }}</DialogTitle>
+                <DialogTitle>{{
+                    $t('admin.users.edit', { name: user.name })
+                }}</DialogTitle>
             </DialogHeader>
 
             <Tabs v-model="activeTab" class="w-full">
                 <TabsList class="grid w-full grid-cols-3">
-                    <TabsTrigger value="details">Details</TabsTrigger>
-                    <TabsTrigger value="roles">Roles</TabsTrigger>
-                    <TabsTrigger value="password">Password</TabsTrigger>
+                    <TabsTrigger value="details">{{
+                        $t('admin.users.tabs.details')
+                    }}</TabsTrigger>
+                    <TabsTrigger value="roles">{{
+                        $t('admin.users.tabs.roles')
+                    }}</TabsTrigger>
+                    <TabsTrigger value="password">{{
+                        $t('admin.users.tabs.password')
+                    }}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="details" class="space-y-4 py-1">
                     <div class="grid gap-1.5">
-                        <Label :for="`user-${user.id}-name`">Name</Label>
+                        <Label :for="`user-${user.id}-name`">{{
+                            $t('admin.users.name')
+                        }}</Label>
                         <Input
                             :id="`user-${user.id}-name`"
                             v-model="editName"
                         />
                     </div>
                     <div class="grid gap-1.5">
-                        <Label :for="`user-${user.id}-email`">Email</Label>
+                        <Label :for="`user-${user.id}-email`">{{
+                            $t('admin.users.email')
+                        }}</Label>
                         <Input
                             :id="`user-${user.id}-email`"
                             v-model="editEmail"
@@ -158,13 +170,13 @@ function openEdit(user: UserWithRoles) {
                         />
                     </div>
                     <div class="flex flex-wrap gap-2 pt-1">
-                        <span class="text-xs text-muted-foreground"
-                            >Current roles:</span
-                        >
+                        <span class="text-xs text-muted-foreground">{{
+                            $t('admin.users.current_roles')
+                        }}</span>
                         <template v-if="user.roles.length === 0">
-                            <span class="text-xs text-muted-foreground"
-                                >No roles assigned</span
-                            >
+                            <span class="text-xs text-muted-foreground">{{
+                                $t('admin.users.no_roles')
+                            }}</span>
                         </template>
                         <Badge
                             v-for="role in user.roles"
@@ -185,7 +197,7 @@ function openEdit(user: UserWithRoles) {
                     <Input
                         v-model="roleSearch"
                         type="search"
-                        placeholder="Search roles…"
+                        :placeholder="$t('admin.users.search_roles')"
                         class="sm:max-w-xs"
                     />
 
@@ -193,7 +205,11 @@ function openEdit(user: UserWithRoles) {
                         v-if="!filteredRoles.length"
                         class="text-sm text-muted-foreground"
                     >
-                        No roles match "{{ roleSearch }}".
+                        {{
+                            $t('admin.users.no_roles_match', {
+                                search: roleSearch,
+                            })
+                        }}
                     </p>
 
                     <div
@@ -224,16 +240,16 @@ function openEdit(user: UserWithRoles) {
                     <div class="space-y-3">
                         <div>
                             <h4 class="text-sm font-semibold">
-                                Set new password
+                                {{ $t('admin.users.password.heading') }}
                             </h4>
                             <p class="text-xs text-muted-foreground">
-                                Directly assign a new password for this user.
+                                {{ $t('admin.users.password.description') }}
                             </p>
                         </div>
                         <div class="grid gap-1.5">
-                            <Label :for="`user-${user.id}-password`"
-                                >New password</Label
-                            >
+                            <Label :for="`user-${user.id}-password`">{{
+                                $t('admin.users.password.new')
+                            }}</Label>
                             <PasswordInput
                                 :id="`user-${user.id}-password`"
                                 v-model="passwordForm.password"
@@ -246,7 +262,9 @@ function openEdit(user: UserWithRoles) {
                         <div class="grid gap-1.5">
                             <Label
                                 :for="`user-${user.id}-password-confirmation`"
-                                >Confirm password</Label
+                                >{{
+                                    $t('admin.users.password.confirmation')
+                                }}</Label
                             >
                             <PasswordInput
                                 :id="`user-${user.id}-password-confirmation`"
@@ -264,7 +282,7 @@ function openEdit(user: UserWithRoles) {
                             :disabled="passwordForm.processing"
                             @click="submitPasswordReset"
                         >
-                            Set Password
+                            {{ $t('admin.users.password.submit') }}
                         </Button>
                     </div>
 
@@ -273,11 +291,15 @@ function openEdit(user: UserWithRoles) {
                     <div class="space-y-3">
                         <div>
                             <h4 class="text-sm font-semibold">
-                                Email reset link
+                                {{ $t('admin.users.password.reset_heading') }}
                             </h4>
                             <p class="text-xs text-muted-foreground">
-                                Send {{ user.email }} an email with a link to
-                                reset their password themselves.
+                                {{
+                                    $t(
+                                        'admin.users.password.reset_description',
+                                        { email: user.email },
+                                    )
+                                }}
                             </p>
                         </div>
                         <Button
@@ -286,17 +308,19 @@ function openEdit(user: UserWithRoles) {
                             :disabled="sendingResetLink"
                             @click="sendResetLink"
                         >
-                            Send Reset Link
+                            {{ $t('admin.users.password.reset_submit') }}
                         </Button>
                     </div>
                 </TabsContent>
             </Tabs>
 
             <DialogFooter v-if="activeTab !== 'password'">
-                <Button variant="ghost" @click="editOpen = false"
-                    >Cancel</Button
-                >
-                <Button @click="submitEdit">Save Changes</Button>
+                <Button variant="ghost" @click="editOpen = false">{{
+                    $t('base.cancel')
+                }}</Button>
+                <Button @click="submitEdit">{{
+                    $t('admin.users.save')
+                }}</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>

@@ -46,7 +46,7 @@ export function formatInterval(seconds: number): string {
 
 export function formatResponseMs(ms: number | null): string {
     if (ms === null) {
-        return '—';
+        return '-';
     }
 
     return ms >= 1000 ? `${(ms / 1000).toFixed(2)} s` : `${ms} ms`;
@@ -54,7 +54,7 @@ export function formatResponseMs(ms: number | null): string {
 
 export function formatUptime(percentage: number | null): string {
     if (percentage === null) {
-        return '—';
+        return '-';
     }
 
     // Keep three decimals near the top of the range where they carry meaning.
@@ -67,7 +67,7 @@ export function formatUptime(percentage: number | null): string {
 
 export function formatDateTime(value: string | null): string {
     if (!value) {
-        return '—';
+        return '-';
     }
 
     return new Intl.DateTimeFormat(undefined, {
@@ -80,7 +80,7 @@ export function formatDateTime(value: string | null): string {
 
 export function formatRelative(value: string | null): string {
     if (!value) {
-        return '—';
+        return '-';
     }
 
     const seconds = Math.round((Date.now() - new Date(value).getTime()) / 1000);

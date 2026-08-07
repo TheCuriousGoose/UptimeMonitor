@@ -1,11 +1,21 @@
 <template>
     <Head :title="$t('dashboards.title')" />
 
-    <div class="flex flex-col gap-6 p-4">
-        <!-- A brand new account has nothing to show, so lead with the one
-             action that makes the rest of the app useful. -->
+    <!-- Page padding belongs to the layout's <main>; adding it here too is
+         what left this screen inset further than the rest of the app. -->
+    <div class="flex flex-col gap-6">
+        <!-- A brand new account has nothing to plot, so the dashboard is the
+             setup path instead: the whole route to a working alert, not just
+             the first step of it. -->
+        <OnboardingChecklist
+            v-if="summary.total === 0 && showOnboarding"
+            :progress="onboarding"
+            hero
+            @dismiss="dismissed = true"
+        />
+
         <EmptyState
-            v-if="summary.total === 0"
+            v-else-if="summary.total === 0"
             :icon="ActivityIcon"
             :title="$t('dashboards.empty.title')"
             :description="$t('dashboards.empty.description')"
@@ -19,6 +29,14 @@
         </EmptyState>
 
         <template v-else>
+            <!-- Still worth finishing once monitors exist — a monitor with no
+                 integration has nobody to tell. -->
+            <OnboardingChecklist
+                v-if="showOnboarding"
+                :progress="onboarding"
+                @dismiss="dismissed = true"
+            />
+
             <PageHeader
                 :title="$t('dashboards.title')"
                 :description="$t('dashboards.subtitle')"
@@ -136,7 +154,7 @@
                                 <p
                                     class="truncate text-xs text-muted-foreground"
                                 >
-                                    {{ incident.cause ?? '—' }} ·
+                                    {{ incident.cause ?? '-' }} ·
                                     {{ formatDateTime(incident.started_at) }}
                                 </p>
                             </div>
@@ -174,9 +192,11 @@ import {
     TrendingUpIcon,
     XCircleIcon,
 } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
 import EmptyState from '@/components/EmptyState.vue';
 import LiveIndicator from '@/components/LiveIndicator.vue';
 import MonitorStatusBadge from '@/components/monitors/MonitorStatusBadge.vue';
+import OnboardingChecklist from '@/components/OnboardingChecklist.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import Section from '@/components/Section.vue';
 import StatTile from '@/components/StatTile.vue';
@@ -188,21 +208,37 @@ import {
     formatResponseMs,
     formatUptime,
 } from '@/lib/format';
+import { trans } from '@/lib/i18n';
 import { dashboard } from '@/routes';
 import * as monitorsRoute from '@/routes/monitors';
 import type { DashboardSummary, Incident, Monitor } from '@/types/monitors';
+import type { OnboardingProgress } from '@/types/onboarding';
 
-defineProps<{
+const props = defineProps<{
     summary: DashboardSummary;
     attention: Monitor[];
     recentIncidents: Incident[];
+    onboarding: OnboardingProgress;
 }>();
+
+const dismissed = ref(false);
+
+const showOnboarding = computed(
+    () =>
+        !dismissed.value &&
+        !props.onboarding.dismissed &&
+        !(
+            props.onboarding.has_monitor &&
+            props.onboarding.has_channel &&
+            props.onboarding.has_status_page
+        ),
+);
 
 defineOptions({
     layout: {
         breadcrumbs: [
             {
-                title: 'Dashboard',
+                title: trans('dashboards.title'),
                 href: dashboard(),
             },
         ],

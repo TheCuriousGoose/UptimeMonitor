@@ -20,6 +20,7 @@ use App\Checkers\Support\SystemPingRunner;
 use App\Enums\ChannelType;
 use App\Enums\MonitorType;
 use App\Monitoring\Notifiers\DiscordNotifier;
+use App\Monitoring\Notifiers\GoogleChatNotifier;
 use App\Monitoring\Notifiers\MailNotifier;
 use App\Monitoring\Notifiers\NotifierRegistry;
 use App\Monitoring\Notifiers\OpsgenieNotifier;
@@ -62,6 +63,7 @@ class AppServiceProvider extends ServiceProvider
             ChannelType::PagerDuty->value => PagerDutyNotifier::class,
             ChannelType::Opsgenie->value => OpsgenieNotifier::class,
             ChannelType::Teams->value => TeamsNotifier::class,
+            ChannelType::GoogleChat->value => GoogleChatNotifier::class,
         ]));
 
         // Bound as interfaces so tests can swap in fakes for network access.

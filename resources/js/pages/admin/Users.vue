@@ -43,7 +43,7 @@ watch(
 </script>
 
 <template>
-    <Head title="Users" />
+    <Head :title="$t('admin.users.title')" />
 
     <TableFilterBar>
         <template #filters>
@@ -51,7 +51,7 @@ watch(
                 v-model="search"
                 type="search"
                 class="w-64"
-                placeholder="Search users…"
+                :placeholder="$t('admin.users.search')"
             />
         </template>
     </TableFilterBar>

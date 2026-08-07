@@ -34,7 +34,7 @@ return [
     ],
     'empty' => [
         'title' => 'Add your first monitor',
-        'description' => 'Point us at a URL, host or port and we will tell you the moment it stops responding.',
+        'description' => 'Give us a URL, host or port. We check it on a schedule and alert when it fails.',
     ],
     'is_up' => 'Up',
     'is_down' => 'Down',
@@ -44,14 +44,20 @@ return [
         'label' => 'New monitor',
         'form' => [
             'title' => 'New monitor',
-            'subtitle' => 'Tell us what to watch and how often to check it.',
+            'subtitle' => 'Define the target, the schedule and where alerts go.',
+        ],
+        'guide' => [
+            'title' => 'How this works',
+            'pick' => 'Pick a check type, then give it a target.',
+            'test' => 'Hit "Test check" to run it once before saving.',
+            'alerts' => 'Tick the integrations to route alerts to. Without one, alerts go nowhere.',
         ],
     ],
     'edit' => [
         'label' => 'Edit monitor',
         'form' => [
             'title' => 'Edit monitor',
-            'subtitle' => 'Change what this monitor watches or how it alerts you.',
+            'subtitle' => 'Change the target, the schedule or the alert routing.',
         ],
     ],
     'actions' => [
@@ -61,8 +67,16 @@ return [
         'pause' => 'Pause',
         'resume' => 'Resume',
         'check_now' => 'Check now',
-        'confirm_delete' => 'Delete this monitor and all of its history? This cannot be undone.',
+        'confirm_delete' => 'Delete ":name" and all of its history? This cannot be undone.',
         'confirm_bulk_delete' => 'Delete :count monitors and all of their history? This cannot be undone.',
+    ],
+    'preview' => [
+        'action' => 'Test check',
+        'hint' => 'Runs once against the real target. Nothing is saved, nothing is alerted.',
+        'up' => 'Passed in :duration',
+        'down' => 'Failed',
+        'status' => 'HTTP :code',
+        'failed' => 'Could not run the test. Retry in a moment.',
     ],
     'form' => [
         'submit' => 'Save monitor',
@@ -126,9 +140,6 @@ return [
             'follow_redirects' => [
                 'title' => 'Follow redirects',
                 'description' => 'Check where the redirect lands rather than the redirect itself.',
-            ],
-            'advanced' => [
-                'title' => 'Headers, body and authentication',
             ],
             'secret_masked' => 'Stored credentials are hidden. Leave the masked value alone to keep the current one.',
             'auth' => [
@@ -236,10 +247,18 @@ return [
             'manage' => 'Manage integrations',
             'covers_all' => 'alerts on all monitors',
         ],
+        'tabs' => [
+            'basic' => 'Basic',
+            'advanced' => 'Advanced',
+        ],
         'sections' => [
             'what' => 'What to check',
             'schedule' => 'Schedule',
             'alerts' => 'Alerts',
+            'request' => 'Request',
+            'request_hint' => 'How the check is sent.',
+            'reliability' => 'Failure handling',
+            'reliability_hint' => 'How patient the monitor is before it calls an outage.',
         ],
     ],
     'breadcrumbs' => [
@@ -262,18 +281,28 @@ return [
         'incidents' => 'Incidents',
         'downtime' => 'Downtime',
         'checks' => 'Checks',
-        'none' => '—',
+        'none' => '-',
     ],
     'show' => [
         'timeline' => 'Uptime timeline',
         'response_chart' => 'Response time',
         'incidents' => 'Incident history',
-        'no_incidents' => 'No incidents in this period. Nice.',
+        'no_incidents' => 'No incidents in this period.',
         'details' => 'Details',
         'last_checked' => 'Last checked',
         'next_check' => 'Next check',
         'ongoing' => 'Ongoing since :time',
         'resolved_after' => 'Resolved after :duration',
+        'failed_checks' => '{1} 1 failed check|[2,*] :count failed checks',
+        'no_alerts' => [
+            'title' => 'No alert routing',
+            // Two different problems: nothing exists to attach, or things
+            // exist but none of them cover this monitor.
+            'none_exist' => 'This monitor is being checked, but you have no integrations. Failures will go nowhere.',
+            'unattached' => 'This monitor is being checked, but no integration is attached to it. Failures will go nowhere.',
+            'connect' => 'Connect an integration',
+            'attach' => 'Attach one',
+        ],
     ],
     'messages' => [
         'created' => [
@@ -293,13 +322,13 @@ return [
             'success' => 'Monitor resumed',
         ],
         'check_queued' => [
-            'success' => 'Check queued — results appear in a moment',
+            'success' => 'Check queued. Results appear shortly.',
         ],
         'bulk' => [
             'pause' => ':count monitors paused',
             'resume' => ':count monitors resumed',
             'delete' => ':count monitors deleted',
-            'none' => 'Nothing was changed — you cannot act on the selected monitors',
+            'none' => 'Nothing changed. You lack permission on the selected monitors.',
         ],
     ],
     'uptime_timeline_for' => 'Uptime timeline for :name',

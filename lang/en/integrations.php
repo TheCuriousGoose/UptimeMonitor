@@ -3,7 +3,7 @@
 return [
     'title' => 'Alerts',
     'heading' => 'Integrations',
-    'subtitle' => 'Where we send alerts when a monitor goes down or recovers.',
+    'subtitle' => 'Delivery targets for down and recovery alerts.',
     'breadcrumbs' => [
         'index' => 'Integrations',
     ],
@@ -11,7 +11,7 @@ return [
     'connected' => 'Connected',
     'empty' => [
         'title' => 'Nothing connected yet',
-        'description' => 'Add an email address, a webhook, or an on-call tool so you hear about outages.',
+        'description' => 'Add an email address, a webhook or an on-call tool. Until then, alerts go nowhere.',
     ],
     'types' => [
         'email' => 'Email',
@@ -21,6 +21,7 @@ return [
         'pagerduty' => 'PagerDuty',
         'opsgenie' => 'Opsgenie',
         'teams' => 'Microsoft Teams',
+        'google_chat' => 'Google Chat',
     ],
     'providers' => [
         'email' => [
@@ -75,6 +76,13 @@ return [
             'hint' => 'An incoming webhook URL for the Teams channel.',
             'placeholder' => 'https://outlook.office.com/webhook/...',
         ],
+        'google_chat' => [
+            'name' => 'Google Chat',
+            'description' => 'Posts an alert card to a space when a monitor goes down or recovers.',
+            'field' => 'Webhook URL',
+            'hint' => 'A webhook URL from the space\'s Apps & integrations settings.',
+            'placeholder' => 'https://chat.googleapis.com/v1/spaces/.../messages?key=...',
+        ],
     ],
     'form' => [
         'connect' => 'Connect',
@@ -107,7 +115,7 @@ return [
                 'minutes' => 'minutes',
                 'limit' => 'Stop after',
                 'reminders' => 'reminders',
-                'off_hint' => 'Off — a single alert is sent when the monitor goes down.',
+                'off_hint' => 'Off. One alert per incident.',
                 'summary' => 'A reminder every :minutes, up to :count times, until the incident resolves.',
             ],
             'quiet_hours' => [
@@ -117,7 +125,7 @@ return [
                 'to' => 'To',
                 'timezone' => 'Time zone',
                 'use_browser' => 'Use my time zone',
-                'off_hint' => 'Off — alerts are delivered at any hour.',
+                'off_hint' => 'Off. Alerts deliver at any hour.',
                 'summary' => 'Alerts between :start and :end are held until :end.',
                 'overnight' => 'This window runs overnight.',
                 'behaviour' => 'A down alert is held and delivered when the window ends. Recoveries during quiet hours are dropped, since there is nothing to act on.',
@@ -158,9 +166,10 @@ return [
     ],
     'attached' => ':count monitor|:count monitors',
     'all_monitors' => 'All monitors',
+    'paused' => 'Not sending',
     'test' => [
         'sample_monitor' => 'Example monitor',
-        'sample_error' => 'This is a test alert — nothing is actually down.',
+        'sample_error' => 'Test alert. Nothing is actually down.',
     ],
     'validation' => [
         'unknown_placeholder' => 'Unknown placeholder: :placeholders',

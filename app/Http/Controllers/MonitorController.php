@@ -14,6 +14,7 @@ use App\Http\Resources\NotificationChannelResource;
 use App\Models\Monitor;
 use App\Models\NotificationChannel;
 use App\Monitoring\UptimeStats;
+use App\Onboarding\OnboardingProgress;
 use App\Policies\MonitorPolicy;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Support\Facades\Auth;
@@ -56,6 +57,19 @@ class MonitorController extends Controller
 
         return Inertia::render('monitors/Show', [
             'monitor' => (new MonitorResource($monitor))->resolve(),
+            // A monitor nothing is listening to fails silently forever, and
+            // an all-scope channel covers it without appearing on the pivot,
+            // so the page cannot work this out from the relation alone.
+            'alertsCovered' => NotificationChannel::query()
+                ->active()
+                ->forMonitor($monitor)
+                ->exists(),
+            // Nothing to attach versus nothing attached are different problems
+            // with different fixes, and sending the first case to the edit
+            // form just lands them on an empty checkbox list.
+            'hasChannels' => NotificationChannel::query()
+                ->where('user_id', $monitor->created_by)
+                ->exists(),
             'checks' => MonitorCheckResource::collection($monitor->checks)->resolve(),
             'stats' => $stats->forMonitor($monitor, $since),
             'series' => $stats->responseSeries($monitor, $since),
@@ -74,6 +88,7 @@ class MonitorController extends Controller
         return Inertia::render('monitors/Create', [
             'types' => MonitorType::values(),
             'channels' => NotificationChannelResource::collection($this->userChannels())->resolve(),
+            'onboarding' => OnboardingProgress::for(Auth::user()),
         ]);
     }
 

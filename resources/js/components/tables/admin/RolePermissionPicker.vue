@@ -99,7 +99,7 @@ function toggleGroup(group: PermissionGroup) {
         <Input
             v-model="search"
             type="search"
-            placeholder="Search permissions…"
+            :placeholder="$t('admin.roles.search_permissions')"
             :disabled="disabled"
             class="sm:max-w-xs"
         />

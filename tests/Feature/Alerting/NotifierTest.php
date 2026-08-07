@@ -97,6 +97,46 @@ class NotifierTest extends TestCase
         });
     }
 
+    public function test_the_google_chat_notifier_sends_a_card(): void
+    {
+        Http::fake();
+
+        $monitor = $this->monitor();
+        $channel = NotificationChannel::factory()->googleChat()->create([
+            'user_id' => $monitor->created_by,
+        ]);
+
+        SendAlert::dispatchSync($channel, AlertMessage::down($monitor, 'HTTP 503'));
+
+        Http::assertSent(function ($request) {
+            $card = $request['cardsV2'][0]['card'];
+            $widgets = $card['sections'][0]['widgets'];
+
+            // `text` rides along with the card: Chat uses it for the
+            // notification preview and for clients that cannot render cards.
+            return $request['text'] === 'Checkout API is DOWN'
+                && $card['header']['title'] === 'Checkout API is DOWN'
+                && $card['header']['subtitle'] === 'Checkout API'
+                && $widgets[1]['decoratedText']['text'] === 'Down';
+        });
+    }
+
+    public function test_the_google_chat_notifier_marks_a_recovery(): void
+    {
+        Http::fake();
+
+        $monitor = $this->monitor();
+        $channel = NotificationChannel::factory()->googleChat()->create([
+            'user_id' => $monitor->created_by,
+        ]);
+
+        SendAlert::dispatchSync($channel, AlertMessage::recovered($monitor));
+
+        Http::assertSent(
+            fn ($request) => $request['cardsV2'][0]['card']['sections'][0]['widgets'][1]['decoratedText']['text'] === 'Recovered',
+        );
+    }
+
     public function test_a_recovery_message_reports_the_downtime(): void
     {
         $monitor = $this->monitor();

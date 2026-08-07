@@ -1,7 +1,7 @@
 <template>
     <Head :title="$t('integrations.title')" />
 
-    <div class="flex flex-col gap-8 p-4">
+    <div class="flex flex-col gap-8">
         <PageHeader
             :title="$t('integrations.heading')"
             :description="$t('integrations.subtitle')"
@@ -69,8 +69,7 @@
                                 v-if="!integration.is_active"
                                 variant="secondary"
                             >
-                                {{ $t('integrations.form.is_active.title') }}:
-                                off
+                                {{ $t('integrations.paused') }}
                             </Badge>
                         </div>
                         <p
@@ -800,6 +799,7 @@ import {
     HashIcon,
     MailIcon,
     MessageSquareIcon,
+    MessagesSquareIcon,
     MoonIcon,
     MoreHorizontalIcon,
     PencilIcon,
@@ -869,6 +869,7 @@ const providerIcons: Record<string, unknown> = {
     pagerduty: SirenIcon,
     opsgenie: BellIcon,
     teams: MessageSquareIcon,
+    google_chat: MessagesSquareIcon,
 };
 
 /** The config key each provider stores its destination under. */
@@ -880,6 +881,7 @@ const secretKeys: Record<string, string> = {
     pagerduty: 'routing_key',
     opsgenie: 'api_key',
     teams: 'url',
+    google_chat: 'url',
 };
 
 /**
@@ -925,7 +927,7 @@ const presets: Record<AlertEvent, Preset[]> = {
         {
             key: 'short',
             title: 'DOWN: {{monitor.name}}',
-            body: '{{monitor.url}} — {{error}}',
+            body: '{{monitor.url}}: {{error}}',
         },
     ],
     recovered: [
@@ -942,7 +944,7 @@ const presets: Record<AlertEvent, Preset[]> = {
         {
             key: 'short',
             title: 'UP: {{monitor.name}}',
-            body: '{{monitor.url}} — back after {{incident.duration}}',
+            body: '{{monitor.url}} back after {{incident.duration}}',
         },
     ],
 };

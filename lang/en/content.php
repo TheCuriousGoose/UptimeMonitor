@@ -69,7 +69,7 @@ return [
         'edit' => 'Edit',
         'view' => 'View public page',
         'delete' => 'Delete',
-        'confirm_delete' => 'Delete this entry? It will disappear from the public site.',
+        'confirm_delete' => 'Delete ":name"? It will disappear from the public site.',
     ],
     'messages' => [
         'created' => 'Entry created',

@@ -1,7 +1,7 @@
 <template>
     <Head :title="monitor.name" />
 
-    <div class="flex flex-col gap-4 p-4">
+    <div class="flex flex-col gap-4">
         <!-- Header: identity, current state, and the actions you reach for
              during an incident, all above the fold. -->
         <div class="flex flex-wrap items-start justify-between gap-3">
@@ -46,8 +46,15 @@
                         </SelectItem>
                     </SelectContent>
                 </Select>
-                <Button variant="outline" @click="runCheck">
-                    <PlayIcon />
+                <!-- "Check now" is rate limited to a handful a minute, so an
+                     impatient second click would spend the budget on a 429. -->
+                <Button
+                    variant="outline"
+                    :disabled="checking"
+                    @click="runCheck"
+                >
+                    <Spinner v-if="checking" />
+                    <PlayIcon v-else />
                     {{ $t('monitors.actions.check_now') }}
                 </Button>
                 <Button variant="outline" @click="toggleState">
@@ -68,7 +75,61 @@
                     <PencilIcon />
                     {{ $t('monitors.actions.edit') }}
                 </Button>
+                <Button
+                    v-can="'monitors.delete'"
+                    variant="ghost"
+                    @click="confirmingDelete = true"
+                >
+                    <Trash2Icon />
+                    <span class="sr-only">{{
+                        $t('monitors.actions.delete')
+                    }}</span>
+                </Button>
             </div>
+        </div>
+
+        <!-- A monitor nobody is listening to will detect an outage and then
+             tell no one, which is worse than not having it. -->
+        <div
+            v-if="!alertsCovered"
+            class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-600/30 bg-amber-500/5 px-4 py-3 text-sm"
+        >
+            <div class="flex items-start gap-2.5">
+                <BellOffIcon
+                    class="mt-0.5 size-4 shrink-0 text-amber-700 dark:text-amber-400"
+                    aria-hidden="true"
+                />
+                <div class="min-w-0">
+                    <p class="font-medium">
+                        {{ $t('monitors.show.no_alerts.title') }}
+                    </p>
+                    <p class="mt-0.5 text-muted-foreground">
+                        {{
+                            hasChannels
+                                ? $t('monitors.show.no_alerts.unattached')
+                                : $t('monitors.show.no_alerts.none_exist')
+                        }}
+                    </p>
+                </div>
+            </div>
+            <!-- With no integrations at all, the edit form only offers an
+                 empty list, so that case goes where one can be created. -->
+            <Button
+                :as="Link"
+                variant="outline"
+                size="sm"
+                :href="
+                    hasChannels
+                        ? monitorsRoute.edit(monitor.uuid).url
+                        : integrationsRoute.index().url
+                "
+            >
+                {{
+                    hasChannels
+                        ? $t('monitors.show.no_alerts.attach')
+                        : $t('monitors.show.no_alerts.connect')
+                }}
+            </Button>
         </div>
 
         <div
@@ -91,7 +152,7 @@
                 :value="
                     stats.downtime_seconds > 0
                         ? formatDuration(stats.downtime_seconds)
-                        : '—'
+                        : '-'
                 "
                 :hint="`${stats.incidents} ${$t('monitors.stats.incidents').toLowerCase()} · ${stats.total_checks} ${$t('monitors.stats.checks').toLowerCase()}`"
             />
@@ -119,34 +180,14 @@
             </Section>
 
             <Section :title="$t('monitors.show.details')" class="lg:pl-6">
+                <!-- Labels ellipsize, values do not: some of these settings
+                     have long names, and the value is the information. -->
                 <dl class="space-y-3 text-sm">
                     <div class="flex justify-between gap-3">
-                        <dt class="text-muted-foreground">
-                            {{ $t('monitors.form.check_interval.title') }}
-                        </dt>
-                        <dd>
-                            {{ formatInterval(monitor.interval_seconds) }}
-                        </dd>
-                    </div>
-                    <div class="flex justify-between gap-3">
-                        <dt class="text-muted-foreground">
-                            {{ $t('monitors.form.timeout.title') }}
-                        </dt>
-                        <dd>{{ monitor.timeout }}s</dd>
-                    </div>
-                    <div class="flex justify-between gap-3">
-                        <dt class="text-muted-foreground">
-                            {{
-                                $t('monitors.form.confirmation_threshold.title')
-                            }}
-                        </dt>
-                        <dd>{{ monitor.confirmation_threshold }}</dd>
-                    </div>
-                    <div class="flex justify-between gap-3">
-                        <dt class="text-muted-foreground">
+                        <dt class="truncate text-muted-foreground">
                             {{ $t('monitors.show.last_checked') }}
                         </dt>
-                        <dd>
+                        <dd class="shrink-0">
                             {{
                                 monitor.last_checked_at
                                     ? formatRelative(monitor.last_checked_at)
@@ -154,13 +195,26 @@
                             }}
                         </dd>
                     </div>
+                    <div v-if="nextCheckAt" class="flex justify-between gap-3">
+                        <dt class="truncate text-muted-foreground">
+                            {{ $t('monitors.show.next_check') }}
+                        </dt>
+                        <dd class="shrink-0">
+                            {{ formatDateTime(nextCheckAt) }}
+                        </dd>
+                    </div>
                     <div
-                        v-for="(value, key) in visibleConfig"
-                        :key="key"
+                        v-for="row in details"
+                        :key="row.label"
                         class="flex justify-between gap-3"
                     >
-                        <dt class="text-muted-foreground">{{ key }}</dt>
-                        <dd class="truncate">{{ value }}</dd>
+                        <dt
+                            class="truncate text-muted-foreground"
+                            :title="row.label"
+                        >
+                            {{ row.label }}
+                        </dt>
+                        <dd class="shrink-0">{{ row.value }}</dd>
                     </div>
                 </dl>
 
@@ -199,11 +253,17 @@
                 >
                     <div class="min-w-0">
                         <p class="text-sm font-medium">
-                            {{ incident.cause ?? '—' }}
+                            {{ incident.cause ?? '-' }}
                         </p>
                         <p class="mt-0.5 text-xs text-muted-foreground">
                             {{ formatDateTime(incident.started_at) }} ·
-                            {{ incident.failed_checks }} failed checks
+                            {{
+                                $t(
+                                    'monitors.show.failed_checks',
+                                    { count: incident.failed_checks },
+                                    incident.failed_checks,
+                                )
+                            }}
                         </p>
                     </div>
                     <span
@@ -230,17 +290,31 @@
             </ul>
         </Section>
     </div>
+
+    <ConfirmDialog
+        v-model:open="confirmingDelete"
+        :title="$t('monitors.actions.delete')"
+        :description="
+            $t('monitors.actions.confirm_delete', { name: monitor.name })
+        "
+        :confirm-label="$t('base.delete')"
+        destructive
+        @confirm="destroy"
+    />
 </template>
 
 <script setup lang="ts">
 import { Head, Link, router, setLayoutProps } from '@inertiajs/vue3';
 import {
+    BellOffIcon,
     PauseIcon,
     PencilIcon,
     PlayCircleIcon,
     PlayIcon,
+    Trash2Icon,
 } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import LiveIndicator from '@/components/LiveIndicator.vue';
 import MonitorStatusBadge from '@/components/monitors/MonitorStatusBadge.vue';
 import ResponseChart from '@/components/monitors/ResponseChart.vue';
@@ -255,6 +329,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
 import {
     formatDateTime,
     formatDuration,
@@ -264,6 +339,7 @@ import {
     formatUptime,
 } from '@/lib/format';
 import { trans } from '@/lib/i18n';
+import * as integrationsRoute from '@/routes/integrations';
 import * as monitorsRoute from '@/routes/monitors';
 import type {
     Incident,
@@ -281,16 +357,110 @@ const props = defineProps<{
     incidents: Incident[];
     period: string;
     periods: string[];
+    alertsCovered: boolean;
+    hasChannels: boolean;
 }>();
 
-/** Only show config the user actually set something meaningful for. */
-const visibleConfig = computed(() =>
-    Object.fromEntries(
-        Object.entries(props.monitor.config ?? {}).filter(
-            ([, value]) => value !== null && value !== '' && value !== false,
-        ),
-    ),
-);
+const checking = ref(false);
+const confirmingDelete = ref(false);
+
+/**
+ * The details panel used to print the raw config map, so it read out
+ * `verify_ssl: true` and `headers: { "Accept": "…" }` — and the masked
+ * credentials with them. Only settings a reader can act on get a row, under
+ * the same label the form uses, and defaults stay quiet.
+ */
+const details = computed(() => {
+    const monitor = props.monitor;
+    const config = monitor.config ?? {};
+    const rows: { label: string; value: string }[] = [];
+
+    const add = (label: string, value: string | number | null | undefined) => {
+        if (value !== null && value !== undefined && value !== '') {
+            rows.push({ label, value: String(value) });
+        }
+    };
+
+    const configLabel = (key: string) =>
+        trans(`monitors.form.config.${key}.title`);
+
+    add(
+        trans('monitors.form.check_interval.title'),
+        formatInterval(monitor.interval_seconds),
+    );
+    add(trans('monitors.form.timeout.title'), `${monitor.timeout}s`);
+    add(
+        trans('monitors.form.confirmation_threshold.title'),
+        monitor.confirmation_threshold,
+    );
+    add(
+        trans('monitors.form.recovery_threshold.title'),
+        monitor.recovery_threshold,
+    );
+    add(
+        trans('monitors.form.degraded_response_ms.title'),
+        monitor.degraded_response_ms
+            ? formatResponseMs(monitor.degraded_response_ms)
+            : null,
+    );
+
+    add(configLabel('keyword'), config.keyword);
+
+    // Only worth a row when it flips the meaning of the keyword above it.
+    if (config.invert) {
+        add(configLabel('invert'), trans('base.on'));
+    }
+
+    add(configLabel('port'), config.port);
+    add(configLabel('record_type'), config.record_type);
+    add(configLabel('expected'), config.expected);
+    add(configLabel('warn_days'), config.warn_days);
+    add(configLabel('method'), config.method);
+    add(
+        configLabel('expected_status_codes'),
+        config.expected_status_codes?.join(', '),
+    );
+
+    // Defaults say nothing; it is turning them off that a reader needs to see.
+    if (config.verify_ssl === false) {
+        add(configLabel('verify_ssl'), trans('base.off'));
+    }
+
+    if (config.follow_redirects === false) {
+        add(configLabel('follow_redirects'), trans('base.off'));
+    }
+
+    if (config.auth_type && config.auth_type !== 'none') {
+        add(
+            trans('monitors.form.config.auth.title'),
+            trans(`monitors.form.config.auth.options.${config.auth_type}`),
+        );
+    }
+
+    // The values are credentials or masks, so the count is all we can show.
+    const headers = Object.keys(config.headers ?? {}).length;
+
+    if (headers > 0) {
+        add(configLabel('headers'), headers);
+    }
+
+    return rows;
+});
+
+/**
+ * Derived rather than sent: during an outage "when does it try again" is the
+ * question, and a paused or never-checked monitor has no answer.
+ */
+const nextCheckAt = computed(() => {
+    if (!props.monitor.is_active || !props.monitor.last_checked_at) {
+        return null;
+    }
+
+    return new Date(
+        Date.parse(props.monitor.last_checked_at) +
+            props.monitor.interval_seconds * 1000,
+    ).toISOString();
+});
 
 function updatePeriod(next: string) {
     router.get(
@@ -304,7 +474,11 @@ function runCheck() {
     router.post(
         monitorsRoute.check(props.monitor.uuid).url,
         {},
-        { preserveScroll: true },
+        {
+            preserveScroll: true,
+            onStart: () => (checking.value = true),
+            onFinish: () => (checking.value = false),
+        },
     );
 }
 
@@ -314,6 +488,10 @@ function toggleState() {
         {},
         { preserveScroll: true },
     );
+}
+
+function destroy() {
+    router.delete(monitorsRoute.destroy(props.monitor.uuid).url);
 }
 
 setLayoutProps({

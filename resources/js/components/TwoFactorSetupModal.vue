@@ -21,6 +21,7 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { useAppearance } from '@/composables/useAppearance';
 import { useTwoFactorAuth } from '@/composables/useTwoFactorAuth';
+import { trans } from '@/lib/i18n';
 import { confirm } from '@/routes/two-factor';
 import type { TwoFactorConfigContent } from '@/types';
 
@@ -46,26 +47,24 @@ const pinInputContainerRef = useTemplateRef('pinInputContainerRef');
 const modalConfig = computed<TwoFactorConfigContent>(() => {
     if (props.twoFactorEnabled) {
         return {
-            title: 'Two-factor authentication enabled',
-            description:
-                'Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.',
-            buttonText: 'Close',
+            title: trans('.setup.enabled_title'),
+            description: trans('.setup.enabled_description'),
+            buttonText: trans('.setup.close'),
         };
     }
 
     if (showVerificationStep.value) {
         return {
-            title: 'Verify authentication code',
-            description: 'Enter the 6-digit code from your authenticator app',
-            buttonText: 'Continue',
+            title: trans('.setup.verify_title'),
+            description: trans('.setup.verify_description'),
+            buttonText: trans('.setup.continue'),
         };
     }
 
     return {
-        title: 'Enable two-factor authentication',
-        description:
-            'To finish enabling two-factor authentication, scan the QR code or enter the setup key in your authenticator app',
-        buttonText: 'Continue',
+        title: trans('.setup.enable_title'),
+        description: trans('.setup.enable_description'),
+        buttonText: trans('.setup.continue'),
     };
 });
 

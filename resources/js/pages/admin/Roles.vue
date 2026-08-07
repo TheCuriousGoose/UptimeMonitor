@@ -70,7 +70,7 @@ function submitCreate() {
 </script>
 
 <template>
-    <Head title="Roles" />
+    <Head :title="$t('admin.roles.title')" />
 
     <TableFilterBar>
         <template #filters>
@@ -78,31 +78,38 @@ function submitCreate() {
                 v-model="search"
                 type="search"
                 class="w-64"
-                placeholder="Search roles…"
+                :placeholder="$t('admin.roles.search')"
             />
         </template>
         <template #actions>
             <Dialog v-model:open="createOpen">
                 <DialogTrigger as-child>
                     <Button size="sm"
-                        ><PlusIcon class="mr-1.5 size-4" /> New Role</Button
+                        ><PlusIcon class="mr-1.5 size-4" />
+                        {{ $t('admin.roles.create') }}</Button
                     >
                 </DialogTrigger>
                 <DialogContent class="sm:max-w-xl">
                     <DialogHeader>
-                        <DialogTitle>Create Role</DialogTitle>
+                        <DialogTitle>{{
+                            $t('admin.roles.create_title')
+                        }}</DialogTitle>
                     </DialogHeader>
                     <div class="space-y-4 py-2">
                         <div class="grid gap-1.5">
-                            <Label for="create-name">Name</Label>
+                            <Label for="create-name">{{
+                                $t('admin.roles.name')
+                            }}</Label>
                             <Input
                                 id="create-name"
                                 v-model="createName"
-                                placeholder="e.g. Editor"
+                                :placeholder="
+                                    $t('admin.roles.name_placeholder')
+                                "
                             />
                         </div>
                         <div class="grid gap-2">
-                            <Label>Permissions</Label>
+                            <Label>{{ $t('admin.roles.permissions') }}</Label>
                             <div class="max-h-96 overflow-y-auto pr-1">
                                 <RolePermissionPicker
                                     v-model="createPerms"
@@ -112,7 +119,9 @@ function submitCreate() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button @click="submitCreate">Create</Button>
+                        <Button @click="submitCreate">{{
+                            $t('admin.roles.submit_create')
+                        }}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

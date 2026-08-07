@@ -1,7 +1,7 @@
 <template>
     <Head :title="$t('content.title')" />
 
-    <div class="flex flex-col gap-6 p-4">
+    <div class="flex flex-col gap-6">
         <PageHeader
             :title="$t('content.heading')"
             :description="$t('content.subtitle')"
@@ -289,7 +289,11 @@
     <ConfirmDialog
         v-model:open="confirmingDelete"
         :title="$t('content.actions.delete')"
-        :description="$t('content.actions.confirm_delete')"
+        :description="
+            $t('content.actions.confirm_delete', {
+                name: pendingDelete?.title ?? '',
+            })
+        "
         :confirm-label="$t('base.delete')"
         destructive
         @confirm="destroy"

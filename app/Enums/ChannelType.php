@@ -11,6 +11,7 @@ enum ChannelType: string
     case PagerDuty = 'pagerduty';
     case Opsgenie = 'opsgenie';
     case Teams = 'teams';
+    case GoogleChat = 'google_chat';
 
     /**
      * The config key holding this channel's delivery target.
@@ -55,7 +56,7 @@ enum ChannelType: string
             self::Opsgenie => [
                 'config.api_key' => ['required', 'string', 'max:255'],
             ],
-            self::Webhook, self::Slack, self::Discord, self::Teams => [
+            self::Webhook, self::Slack, self::Discord, self::Teams, self::GoogleChat => [
                 'config.url' => ['required', 'url', 'max:2048'],
             ],
         };

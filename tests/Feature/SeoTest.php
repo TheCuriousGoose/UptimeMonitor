@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\ContentType;
 use App\Models\ContentEntry;
+use App\Models\Monitor;
 use App\Models\StatusPage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -62,6 +63,10 @@ class SeoTest extends TestCase
     public function test_the_authenticated_app_stays_out_of_the_index(): void
     {
         $user = User::factory()->withRole('User')->create();
+
+        // An empty account is sent to the guided setup, and a redirect carries
+        // no robots tag to assert on.
+        Monitor::factory()->forUser($user)->create();
 
         foreach ([route('dashboard'), route('monitors.index'), route('profile.edit')] as $url) {
             $this->actingAs($user)->get($url)
