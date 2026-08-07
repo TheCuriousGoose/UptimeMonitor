@@ -184,7 +184,7 @@ setLayoutProps({
             :description="$t('maintenance.subtitle')"
         >
             <template #actions>
-                <Button @click="create">
+                <Button v-can="'maintenance.create'" @click="create">
                     <PlusIcon />
                     {{ $t('maintenance.title') }}
                 </Button>
@@ -198,7 +198,7 @@ setLayoutProps({
             :description="$t('maintenance.empty.description')"
         >
             <template #actions>
-                <Button @click="create">
+                <Button v-can="'maintenance.create'" @click="create">
                     <PlusIcon />
                     {{ $t('maintenance.title') }}
                 </Button>
@@ -270,10 +270,16 @@ setLayoutProps({
                     </p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <Button variant="outline" size="sm" @click="edit(window)">
+                    <Button
+                        v-can="'maintenance.edit'"
+                        variant="outline"
+                        size="sm"
+                        @click="edit(window)"
+                    >
                         {{ $t('monitors.actions.edit') }}
                     </Button>
                     <Button
+                        v-can="'maintenance.delete'"
                         variant="ghost"
                         size="sm"
                         @click="askDelete(window)"

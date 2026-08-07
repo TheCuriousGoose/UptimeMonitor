@@ -21,17 +21,18 @@
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuItem
+                    v-can="'monitors.edit'"
                     :as="Link"
                     :href="monitorsRoute.edit(monitor.uuid).url"
                 >
                     <PencilIcon />
                     {{ $t('monitors.actions.edit') }}
                 </DropdownMenuItem>
-                <DropdownMenuItem @select="runCheck">
+                <DropdownMenuItem v-can="'monitors.edit'" @select="runCheck">
                     <PlayIcon />
                     {{ $t('monitors.actions.check_now') }}
                 </DropdownMenuItem>
-                <DropdownMenuItem @select="toggleState">
+                <DropdownMenuItem v-can="'monitors.edit'" @select="toggleState">
                     <component
                         :is="monitor.is_active ? PauseIcon : PlayCircleIcon"
                     />
@@ -41,8 +42,9 @@
                             : $t('monitors.actions.resume')
                     }}
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator v-can="'monitors.delete'" />
                 <DropdownMenuItem
+                    v-can="'monitors.delete'"
                     variant="destructive"
                     @select="confirmingDelete = true"
                 >

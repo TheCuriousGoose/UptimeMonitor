@@ -38,6 +38,21 @@ enum Permission: string
     case ContentEdit = 'content.edit';
     case ContentDelete = 'content.delete';
 
+    // Incidents
+    case IncidentsView = 'incidents.view';
+    case IncidentsAcknowledge = 'incidents.acknowledge';
+    case IncidentsComment = 'incidents.comment';
+
+    // Maintenance windows
+    case MaintenanceView = 'maintenance.view';
+    case MaintenanceCreate = 'maintenance.create';
+    case MaintenanceEdit = 'maintenance.edit';
+    case MaintenanceDelete = 'maintenance.delete';
+
+    // Instance settings
+    case SettingsView = 'settings.view';
+    case SettingsEdit = 'settings.edit';
+
     /**
      * All Permission cases for a given resource prefix.
      * Useful for seeding or syncing role permissions by resource.

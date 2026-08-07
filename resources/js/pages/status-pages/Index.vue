@@ -7,7 +7,7 @@
             :description="$t('status_pages.subtitle')"
         >
             <template #actions>
-                <Button @click="openCreate">
+                <Button v-can="'status_pages.create'" @click="openCreate">
                     <PlusIcon />
                     {{ $t('status_pages.form.create') }}
                 </Button>
@@ -63,7 +63,10 @@
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem @select="openEdit(page)">
+                        <DropdownMenuItem
+                            v-can="'status_pages.edit'"
+                            @select="openEdit(page)"
+                        >
                             <PencilIcon />
                             {{ $t('status_pages.actions.edit') }}
                         </DropdownMenuItem>
@@ -76,8 +79,9 @@
                             <ExternalLinkIcon />
                             {{ $t('status_pages.actions.visit') }}
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
+                        <DropdownMenuSeparator v-can="'status_pages.delete'" />
                         <DropdownMenuItem
+                            v-can="'status_pages.delete'"
                             variant="destructive"
                             @select="askDelete(page)"
                         >

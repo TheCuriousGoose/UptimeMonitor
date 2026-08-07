@@ -14,6 +14,7 @@ export type Auth = {
     roles: string[];
     permissions: string[];
     impersonating_role: string | null;
+    is_authenticated: boolean;
 };
 
 export type TwoFactorConfigContent = {

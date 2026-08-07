@@ -37,6 +37,8 @@ enum Role: string
             ...Permission::forResource('monitors'),
             ...Permission::forResource('channels'),
             ...Permission::forResource('status_pages'),
+            ...Permission::forResource('incidents'),
+            ...Permission::forResource('maintenance'),
         ];
     }
 }

@@ -11,66 +11,96 @@
         >
             {{ group }}
         </h2>
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead class="w-64">{{
-                        $t('settings.table.setting')
-                    }}</TableHead>
-                    <TableHead class="w-64">{{
-                        $t('settings.table.key')
-                    }}</TableHead>
-                    <TableHead>{{ $t('settings.table.value') }}</TableHead>
-                    <TableHead class="w-16"></TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                <TableRow v-for="setting in items" :key="setting.key">
-                    <TableCell>
-                        <div class="text-sm font-medium">
-                            {{ setting.label }}
+
+        <div class="divide-y rounded-md border">
+            <Collapsible
+                v-for="setting in items"
+                :key="setting.key"
+                :open="isExpanded(setting)"
+            >
+                <div class="flex items-start justify-between gap-3 px-4 py-3">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium">{{
+                                setting.label
+                            }}</span>
+                            <Badge variant="outline" class="font-mono text-xs">
+                                {{ setting.key }}
+                            </Badge>
                         </div>
-                        <div
+                        <p
                             v-if="setting.description"
                             class="mt-0.5 text-xs text-muted-foreground"
                         >
                             {{ setting.description }}
+                        </p>
+                    </div>
+
+                    <div class="flex shrink-0 items-center gap-3">
+                        <Switch
+                            v-if="setting.type === 'boolean'"
+                            :checked="setting.value === '1'"
+                            @update:checked="toggle(setting, $event)"
+                        />
+                        <template v-else>
+                            <span class="text-sm text-muted-foreground">
+                                {{ displayValue(setting) }}
+                            </span>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                class="size-8"
+                                @click="openEdit(setting)"
+                            >
+                                <PencilIcon class="size-3.5" />
+                            </Button>
+                        </template>
+                    </div>
+                </div>
+
+                <CollapsibleContent v-if="setting.children?.length">
+                    <div class="space-y-px border-t bg-muted/30 px-4 py-3">
+                        <p
+                            v-if="!isConfigured(setting)"
+                            class="mb-2 text-xs text-amber-600 dark:text-amber-500"
+                        >
+                            {{ $t('settings.oauth.incomplete') }}
+                        </p>
+
+                        <div
+                            v-for="child in setting.children"
+                            :key="child.key"
+                            class="flex items-center justify-between gap-3 py-1.5"
+                        >
+                            <div class="min-w-0">
+                                <div class="text-sm">{{ child.label }}</div>
+                                <p
+                                    v-if="child.description"
+                                    class="text-xs text-muted-foreground"
+                                >
+                                    {{ child.description }}
+                                </p>
+                            </div>
+                            <div class="flex shrink-0 items-center gap-3">
+                                <span
+                                    class="font-mono text-xs text-muted-foreground"
+                                >
+                                    {{ displayValue(child) }}
+                                </span>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    class="size-8"
+                                    @click="openEdit(child)"
+                                >
+                                    <PencilIcon class="size-3.5" />
+                                </Button>
+                            </div>
                         </div>
-                    </TableCell>
-                    <TableCell>
-                        <Badge
-                            variant="outline"
-                            class="mt-1 font-mono text-xs"
-                            >{{ setting.key }}</Badge
-                        >
-                    </TableCell>
-                    <TableCell>
-                        <span
-                            :class="[
-                                'text-sm',
-                                setting.type === 'boolean'
-                                    ? setting.value === '1'
-                                        ? 'text-green-600 dark:text-green-400'
-                                        : 'text-muted-foreground'
-                                    : '',
-                            ]"
-                        >
-                            {{ displayValue(setting) }}
-                        </span>
-                    </TableCell>
-                    <TableCell>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            class="size-8"
-                            @click="openEdit(setting)"
-                        >
-                            <PencilIcon class="size-3.5" />
-                        </Button>
-                    </TableCell>
-                </TableRow>
-            </TableBody>
-        </Table>
+                    </div>
+                </CollapsibleContent>
+            </Collapsible>
+        </div>
     </div>
 
     <Dialog v-model:open="editOpen">
@@ -87,29 +117,22 @@
                 :key="editSetting.key"
                 class="space-y-4 py-2"
             >
-                <div
-                    v-if="editSetting.type === 'boolean'"
-                    class="flex items-center justify-between"
-                >
-                    <Label for="setting-switch">Enabled</Label>
-                    <Switch
-                        id="setting-switch"
-                        v-model:checked="editBooleanValue"
-                    />
-                </div>
-
-                <div v-else class="grid gap-1.5">
-                    <Label for="setting-value">Value</Label>
+                <div class="grid gap-1.5">
+                    <Label for="setting-value">{{
+                        $t('settings.table.value')
+                    }}</Label>
                     <Input
                         id="setting-value"
                         v-model="editValue"
-                        :type="
-                            editSetting.type === 'integer' ||
-                            editSetting.type === 'float'
-                                ? 'number'
-                                : 'text'
-                        "
+                        :type="inputType"
                         :step="editSetting.type === 'float' ? 'any' : undefined"
+                        :placeholder="
+                            editSetting.type === 'secret' &&
+                            editSetting.has_value
+                                ? $t('settings.edit.secret_placeholder')
+                                : undefined
+                        "
+                        autocomplete="off"
                     />
                 </div>
 
@@ -134,9 +157,10 @@
 <script setup lang="ts">
 import { Head, router, setLayoutProps } from '@inertiajs/vue3';
 import { PencilIcon } from 'lucide-vue-next';
-import { ref, computed, nextTick } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import {
     Dialog,
     DialogContent,
@@ -148,14 +172,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
+import { trans } from '@/lib/i18n';
 import * as adminSettings from '@/routes/admin/settings';
 import type { AppSetting } from '@/types/admin';
 
@@ -174,18 +191,49 @@ setLayoutProps({
 const editOpen = ref(false);
 const editSetting = ref<AppSetting | null>(null);
 const editValue = ref<string>('');
-const editBooleanValue = ref(false);
+
+const inputType = computed(() => {
+    switch (editSetting.value?.type) {
+        case 'secret':
+            return 'password';
+        case 'integer':
+        case 'float':
+            return 'number';
+        default:
+            return 'text';
+    }
+});
+
+// Children only make sense once the toggle they hang off is on.
+function isExpanded(setting: AppSetting): boolean {
+    return Boolean(setting.children?.length) && setting.value === '1';
+}
+
+function isConfigured(setting: AppSetting): boolean {
+    return (setting.children ?? [])
+        .filter(
+            (child) =>
+                child.key.endsWith('client_id') ||
+                child.key.endsWith('client_secret'),
+        )
+        .every((child) => child.has_value);
+}
 
 function openEdit(setting: AppSetting) {
     editSetting.value = setting;
-    editValue.value = setting.value ?? '';
-
-    // Explicitly parse string boolean representations cleanly
-    editBooleanValue.value = setting.value === '1' || setting.value === 'true';
+    editValue.value = setting.type === 'secret' ? '' : (setting.value ?? '');
 
     nextTick(() => {
         editOpen.value = true;
     });
+}
+
+function toggle(setting: AppSetting, enabled: boolean) {
+    router.put(
+        adminSettings.update(setting.key).url,
+        { value: enabled ? '1' : '0' },
+        { preserveScroll: true },
+    );
 }
 
 function submitEdit() {
@@ -193,16 +241,16 @@ function submitEdit() {
         return;
     }
 
+    const type = editSetting.value.type;
     const payload =
-        editSetting.value.type === 'boolean'
-            ? { value: editBooleanValue.value ? '1' : '0' }
-            : editSetting.value.type === 'integer'
-              ? { value: parseInt(editValue.value, 10) }
-              : editSetting.value.type === 'float'
-                ? { value: parseFloat(editValue.value) }
-                : { value: editValue.value };
+        type === 'integer'
+            ? { value: parseInt(editValue.value, 10) }
+            : type === 'float'
+              ? { value: parseFloat(editValue.value) }
+              : { value: editValue.value };
 
     router.put(adminSettings.update(editSetting.value.key).url, payload, {
+        preserveScroll: true,
         onSuccess: () => {
             editOpen.value = false;
         },
@@ -211,24 +259,26 @@ function submitEdit() {
 
 function displayValue(setting: AppSetting): string {
     if (setting.type === 'boolean') {
-        return setting.value === '1' ? 'Enabled' : 'Disabled';
+        return setting.value === '1'
+            ? trans('settings.value.enabled')
+            : trans('settings.value.disabled');
     }
 
-    return setting.value ?? '—';
+    if (setting.type === 'secret') {
+        return setting.has_value ? '••••••••' : trans('settings.value.not_set');
+    }
+
+    return setting.value || trans('settings.value.not_set');
 }
 
-const groupedSettings = computed(() => {
-    return props.settings.reduce(
-        (acc, s) => {
-            if (!acc[s.group]) {
-                acc[s.group] = [];
-            }
-
-            acc[s.group].push(s);
+const groupedSettings = computed(() =>
+    props.settings.reduce(
+        (acc, setting) => {
+            (acc[setting.group] ??= []).push(setting);
 
             return acc;
         },
         {} as Record<string, AppSetting[]>,
-    );
-});
+    ),
+);
 </script>

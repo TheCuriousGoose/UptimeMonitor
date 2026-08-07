@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Authentication;
 
+use App\Actions\Users\CreateUser;
 use App\Http\Controllers\Controller;
 use App\Models\OAuthConnection;
-use App\Models\User;
+use App\Settings\SettingRepository;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
@@ -15,16 +16,18 @@ class OAuthController extends Controller
 {
     protected array $providers = ['google', 'github'];
 
+    public function __construct(private readonly SettingRepository $settings) {}
+
     public function redirect(string $provider): RedirectResponse
     {
-        abort_unless(in_array($provider, $this->providers), 404);
+        $this->configure($provider);
 
         return Socialite::driver($provider)->redirect();
     }
 
     public function callback(string $provider): RedirectResponse
     {
-        abort_unless(in_array($provider, $this->providers), 404);
+        $this->configure($provider);
 
         try {
             $socialiteUser = Socialite::driver($provider)->user();
@@ -40,12 +43,10 @@ class OAuthController extends Controller
             return to_route('login')->withErrors(['email' => __('auth.oauth_no_email')]);
         }
 
-        $user = User::firstOrCreate(
-            ['email' => $email],
-            [
-                'name' => $socialiteUser->getName() ?? $socialiteUser->getNickname() ?? '',
-                'email_verified_at' => now(),
-            ],
+        $user = app(CreateUser::class)->firstOrCreate(
+            name: $socialiteUser->getName() ?? $socialiteUser->getNickname() ?? '',
+            email: $email,
+            verified: true,
         );
 
         OAuthConnection::updateOrCreate(
@@ -56,5 +57,29 @@ class OAuthController extends Controller
         Auth::login($user, remember: true);
 
         return to_route('monitors.index')->with('success', __('auth.successful'));
+    }
+
+    /**
+     * Credentials live in settings so an operator can change them without a
+     * deploy; the .env values stay as the fallback.
+     */
+    private function configure(string $provider): void
+    {
+        abort_unless(in_array($provider, $this->providers, true), 404);
+        abort_unless($this->settings->get("oauth.{$provider}", false), 404);
+
+        $stored = $this->settings->childrenOf("oauth.{$provider}");
+
+        $clientId = $stored->get('client_id') ?: config("services.{$provider}.client_id");
+        $clientSecret = $stored->get('client_secret') ?: config("services.{$provider}.client_secret");
+
+        abort_if(blank($clientId) || blank($clientSecret), 404);
+
+        config([
+            "services.{$provider}.client_id" => $clientId,
+            "services.{$provider}.client_secret" => $clientSecret,
+            "services.{$provider}.redirect" => $stored->get('redirect')
+                ?: (config("services.{$provider}.redirect") ?: route('oauth.callback', $provider)),
+        ]);
     }
 }

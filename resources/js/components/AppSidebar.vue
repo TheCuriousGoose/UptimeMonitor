@@ -27,6 +27,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { usePermissions } from '@/composables/usePermissions';
 import { trans } from '@/lib/i18n';
 import { dashboard } from '@/routes';
 import adminContent from '@/routes/admin/content';
@@ -38,16 +39,15 @@ import integrations from '@/routes/integrations';
 import maintenanceWindows from '@/routes/maintenance-windows';
 import monitors from '@/routes/monitors';
 import statusPages from '@/routes/status-pages';
-import type { Auth } from '@/types';
 import type { NavItem } from '@/types';
 
 const page = usePage();
-const auth = computed(() => page.props.auth as Auth);
-const isSuperAdmin = computed(
-    () => auth.value.roles?.includes('Super Admin') ?? false,
-);
+const { canAny } = usePermissions();
 
-const mainNavItems: NavItem[] = [
+const visible = (items: NavItem[]) =>
+    items.filter((item) => !item.permission || canAny(item.permission));
+
+const allMainNavItems: NavItem[] = [
     {
         title: trans('dashboards.title'),
         href: dashboard(),
@@ -57,51 +57,64 @@ const mainNavItems: NavItem[] = [
         title: trans('monitors.title'),
         href: monitors.index(),
         icon: Monitor,
+        permission: 'monitors.view',
     },
     {
         title: trans('incidents.title'),
         href: incidents.index(),
         icon: Siren,
+        permission: 'incidents.view',
     },
     {
         title: trans('integrations.title'),
         href: integrations.index(),
         icon: Bell,
+        permission: 'channels.view',
     },
     {
         title: trans('status_pages.title'),
         href: statusPages.index(),
         icon: Globe,
+        permission: 'status_pages.view',
     },
     {
         title: trans('maintenance.title'),
         href: maintenanceWindows.index(),
         icon: Wrench,
+        permission: 'maintenance.view',
     },
 ];
 
-const adminNavItems: NavItem[] = [
+const mainNavItems = computed(() => visible(allMainNavItems));
+
+const allAdminNavItems: NavItem[] = [
     {
         title: 'Users',
         href: adminUsers.index(),
         icon: Users,
+        permission: 'users.view',
     },
     {
         title: 'Roles',
         href: adminRoles.index(),
         icon: ShieldCheck,
+        permission: 'roles.view',
     },
     {
         title: trans('content.heading'),
         href: adminContent.index(),
         icon: FileText,
+        permission: 'content.view',
     },
     {
         title: 'Settings',
         href: adminSettings.index(),
         icon: Settings2,
+        permission: 'settings.view',
     },
 ];
+
+const adminNavItems = computed(() => visible(allAdminNavItems));
 
 // Empty when the instance is self-hosted, which collapses the group rather
 // than asking those users to fund someone else's hosting.
@@ -136,7 +149,11 @@ const footerNavItems = computed<NavItem[]>(() => {
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
-            <NavMain v-if="isSuperAdmin" :items="adminNavItems" label="Admin" />
+            <NavMain
+                v-if="adminNavItems.length"
+                :items="adminNavItems"
+                label="Admin"
+            />
         </SidebarContent>
 
         <SidebarFooter>

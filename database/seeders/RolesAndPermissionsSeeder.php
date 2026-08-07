@@ -15,13 +15,35 @@ class RolesAndPermissionsSeeder extends Seeder
     {
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        foreach (Permission::cases() as $permission) {
-            PermissionModel::firstOrCreate(['name' => $permission->value]);
-        }
+        $introduced = $this->syncPermissionCatalog();
 
         foreach (Role::cases() as $role) {
             $model = RoleModel::firstOrCreate(['name' => $role->value]);
-            $model->syncPermissions(array_map(fn ($p) => $p->value, $role->permissions()));
+            $defaults = array_map(fn (Permission $p) => $p->value, $role->permissions());
+
+            // Existing roles are operator-owned: reseeding must not undo
+            // grants made from the Roles screen.
+            $model->wasRecentlyCreated
+                ? $model->syncPermissions($defaults)
+                : $model->givePermissionTo(array_intersect($defaults, $introduced));
         }
+    }
+
+    /**
+     * @return array<int, string> permission names that did not exist before
+     */
+    private function syncPermissionCatalog(): array
+    {
+        $introduced = [];
+
+        foreach (Permission::cases() as $permission) {
+            $model = PermissionModel::firstOrCreate(['name' => $permission->value]);
+
+            if ($model->wasRecentlyCreated) {
+                $introduced[] = $permission->value;
+            }
+        }
+
+        return $introduced;
     }
 }

@@ -14,6 +14,7 @@ return [
         'terms' => 'Terms',
         'login' => 'Log in',
         'register' => 'Get started',
+        'dashboard' => 'Dashboard',
     ],
     'footer' => [
         'tagline' => 'Uptime monitoring that tells you what broke, when, and for how long.',

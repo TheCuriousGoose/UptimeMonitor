@@ -2,11 +2,12 @@
 
 namespace App\Console\Commands;
 
+use App\Actions\Users\CreateUser as CreateUserAction;
+use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Hash;
 
 #[Signature('make:user')]
 #[Description('Create a new user')]
@@ -15,15 +16,15 @@ class CreateUser extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(CreateUserAction $createUser)
     {
         $name = $this->ask('Name');
         $email = $this->ask('Email');
 
-        $emailAlreadyExists = User::where('email', $email)->exists();
-
-        if ($emailAlreadyExists) {
+        if (User::where('email', $email)->exists()) {
             $this->error('User with that email already exists!');
+
+            return Command::FAILURE;
         }
 
         $password = $this->secret('Password');
@@ -35,11 +36,19 @@ class CreateUser extends Command
             return Command::FAILURE;
         }
 
-        $user = User::create([
-            'name' => $name,
-            'email' => $email,
-            'password' => Hash::make($password),
-        ]);
+        $role = Role::from($this->choice(
+            'Role',
+            array_map(fn (Role $r) => $r->value, Role::cases()),
+            Role::User->value,
+        ));
+
+        $user = $createUser->create(
+            name: $name,
+            email: $email,
+            password: $password,
+            role: $role,
+            verified: true,
+        );
 
         $this->info('User created successfully.');
         $this->table([
@@ -48,6 +57,9 @@ class CreateUser extends Command
             ['ID', $user->id],
             ['Name', $name],
             ['Email', $email],
+            ['Role', $role->value],
         ]);
+
+        return Command::SUCCESS;
     }
 }
