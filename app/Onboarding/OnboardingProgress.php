@@ -13,6 +13,10 @@ use App\Models\User;
  * Derived from what the account actually has rather than tracked as its own
  * flag, so it cannot drift: deleting your only integration puts that step back
  * whatever a stored "completed onboarding" boolean would have claimed.
+ *
+ * Deliberately not memoised. A static cache here was keyed by nothing, so the
+ * first account to ask froze the answer for every later one in the process.
+ * Callers that need it twice pass the array to shouldRedirect() instead.
  */
 final class OnboardingProgress
 {
@@ -34,5 +38,15 @@ final class OnboardingProgress
                 ->exists(),
             'dismissed' => (bool) data_get($user->preferences, self::PREFERENCE_KEY, false),
         ];
+    }
+
+    /**
+     * @param  array<string, bool>  $progress
+     */
+    public static function shouldRedirect(User $user, array $progress): bool
+    {
+        return ! $progress['has_monitor']
+            && ! $progress['dismissed']
+            && $user->can('create', Monitor::class);
     }
 }

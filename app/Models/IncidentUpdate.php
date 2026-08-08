@@ -3,9 +3,10 @@
 namespace App\Models;
 
 use App\Enums\IncidentUpdateStatus;
+use App\Models\Concerns\RoutesByUuid;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['incident_id', 'user_id', 'body', 'status', 'is_public'])]
 class IncidentUpdate extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, RoutesByUuid;
 
     protected function casts(): array
     {
@@ -21,16 +22,6 @@ class IncidentUpdate extends Model
             'status' => IncidentUpdateStatus::class,
             'is_public' => 'boolean',
         ];
-    }
-
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
-    }
-
-    public function uniqueIds(): array
-    {
-        return ['uuid'];
     }
 
     public function incident(): BelongsTo
@@ -43,8 +34,9 @@ class IncidentUpdate extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function scopePublic(Builder $query): Builder
+    #[Scope]
+    protected function public(Builder $query): void
     {
-        return $query->where('is_public', true);
+        $query->where('is_public', true);
     }
 }

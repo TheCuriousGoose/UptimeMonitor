@@ -23,13 +23,9 @@ Route::get('get-started', [OnboardingController::class, 'show'])->name('onboardi
 Route::post('get-started', [OnboardingController::class, 'store'])->name('onboarding.store');
 Route::post('get-started/skip', [OnboardingController::class, 'skip'])->name('onboarding.skip');
 
-// Declared before the resource so these are not swallowed by {monitor}.
 Route::post('monitors/bulk', [MonitorBulkController::class, 'store'])->name('monitors.bulk');
 Route::get('monitors/search', [MonitorSearchController::class, 'index'])->name('monitors.search');
 
-// Shares the check-now budget rather than getting its own: both make the
-// server issue an outbound request to a user-supplied target, and the point of
-// that limit is to bound how many an account can force in total.
 Route::post('monitors/preview', [MonitorPreviewController::class, 'store'])
     ->middleware('throttle:check-now')
     ->name('monitors.preview');
@@ -37,8 +33,6 @@ Route::post('monitors/preview', [MonitorPreviewController::class, 'store'])
 Route::resource('monitors', MonitorController::class);
 Route::patch('monitors/{monitor}/state', [MonitorStateController::class, 'update'])->name('monitors.state');
 
-// Makes the server issue an outbound request to a user-supplied target, so it
-// is throttled far harder than an ordinary write.
 Route::post('monitors/{monitor}/check', [MonitorCheckController::class, 'store'])
     ->middleware('throttle:check-now')
     ->name('monitors.check');

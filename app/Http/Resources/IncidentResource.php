@@ -2,11 +2,14 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\Concerns\ResolvesRelations;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class IncidentResource extends JsonResource
 {
+    use ResolvesRelations;
+
     /**
      * @return array<string, mixed>
      */
@@ -23,20 +26,9 @@ class IncidentResource extends JsonResource
             'is_maintenance' => (bool) $this->is_maintenance,
             'acknowledged_at' => $this->acknowledged_at?->toIso8601String(),
             'is_acknowledged' => $this->isAcknowledged(),
-            'acknowledged_by' => $this->whenLoaded(
-                'acknowledgedBy',
-                fn () => (new UserResource($this->acknowledgedBy))->resolve(),
-            ),
-            'updates' => $this->whenLoaded(
-                'updates',
-                fn () => IncidentUpdateResource::collection($this->updates)->resolve(),
-            ),
-            // Nested resources are resolved here: left as resource objects they
-            // would each pick up their own "data" envelope when serialised.
-            'monitor' => $this->whenLoaded(
-                'monitor',
-                fn () => (new MonitorResource($this->monitor))->resolve(),
-            ),
+            'acknowledged_by' => $this->whenLoadedResource('acknowledgedBy', UserResource::class),
+            'updates' => $this->whenLoadedCollection('updates', IncidentUpdateResource::class),
+            'monitor' => $this->whenLoadedResource('monitor', MonitorResource::class),
         ];
     }
 }

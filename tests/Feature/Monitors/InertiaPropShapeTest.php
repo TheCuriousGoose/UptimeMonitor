@@ -73,6 +73,16 @@ class InertiaPropShapeTest extends TestCase
         $this->assertUnwrapped($props['channels'], 'channels');
         $this->assertSame('Ops email', $props['channels'][0]['name']);
         $this->assertContains('keyword', $props['types']);
+
+        // The form renders its type-specific selects from these rather than
+        // keeping its own copies, so every key it reads must be present.
+        $this->assertSame(
+            ['url_types', 'methods', 'content_types', 'auth_types', 'record_types'],
+            array_keys($props['typeOptions']),
+        );
+        $this->assertSame(['http', 'keyword', 'ssl'], $props['typeOptions']['url_types']);
+        $this->assertContains('GET', $props['typeOptions']['methods']);
+        $this->assertContains('CNAME', $props['typeOptions']['record_types']);
     }
 
     public function test_the_edit_page_props_are_flat(): void

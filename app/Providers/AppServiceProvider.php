@@ -3,12 +3,6 @@
 namespace App\Providers;
 
 use App\Checkers\CheckerRegistry;
-use App\Checkers\DnsChecker;
-use App\Checkers\HttpChecker;
-use App\Checkers\KeywordChecker;
-use App\Checkers\PingChecker;
-use App\Checkers\PortChecker;
-use App\Checkers\SslChecker;
 use App\Checkers\Support\CertificateReader;
 use App\Checkers\Support\DnsResolver;
 use App\Checkers\Support\PingRunner;
@@ -19,15 +13,7 @@ use App\Checkers\Support\SystemDnsResolver;
 use App\Checkers\Support\SystemPingRunner;
 use App\Enums\ChannelType;
 use App\Enums\MonitorType;
-use App\Monitoring\Notifiers\DiscordNotifier;
-use App\Monitoring\Notifiers\GoogleChatNotifier;
-use App\Monitoring\Notifiers\MailNotifier;
 use App\Monitoring\Notifiers\NotifierRegistry;
-use App\Monitoring\Notifiers\OpsgenieNotifier;
-use App\Monitoring\Notifiers\PagerDutyNotifier;
-use App\Monitoring\Notifiers\SlackNotifier;
-use App\Monitoring\Notifiers\TeamsNotifier;
-use App\Monitoring\Notifiers\WebhookNotifier;
 use App\Policies\RolePolicy;
 use App\Settings\SettingRepository;
 use Carbon\CarbonImmutable;
@@ -46,25 +32,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(CheckerRegistry::class, fn () => new CheckerRegistry([
-            MonitorType::Http->value => HttpChecker::class,
-            MonitorType::Keyword->value => KeywordChecker::class,
-            MonitorType::Port->value => PortChecker::class,
-            MonitorType::Ping->value => PingChecker::class,
-            MonitorType::Dns->value => DnsChecker::class,
-            MonitorType::Ssl->value => SslChecker::class,
-        ]));
+        // Built from the type profiles rather than restated here, so a new
+        // monitor type cannot be validated and defaulted but left unroutable.
+        $this->app->singleton(
+            CheckerRegistry::class,
+            fn () => new CheckerRegistry(MonitorType::checkerMap()),
+        );
 
-        $this->app->singleton(NotifierRegistry::class, fn () => new NotifierRegistry([
-            ChannelType::Email->value => MailNotifier::class,
-            ChannelType::Webhook->value => WebhookNotifier::class,
-            ChannelType::Slack->value => SlackNotifier::class,
-            ChannelType::Discord->value => DiscordNotifier::class,
-            ChannelType::PagerDuty->value => PagerDutyNotifier::class,
-            ChannelType::Opsgenie->value => OpsgenieNotifier::class,
-            ChannelType::Teams->value => TeamsNotifier::class,
-            ChannelType::GoogleChat->value => GoogleChatNotifier::class,
-        ]));
+        $this->app->singleton(
+            NotifierRegistry::class,
+            fn () => new NotifierRegistry(ChannelType::notifierMap()),
+        );
 
         // Bound as interfaces so tests can swap in fakes for network access.
         $this->app->bind(SocketConnector::class, StreamSocketConnector::class);

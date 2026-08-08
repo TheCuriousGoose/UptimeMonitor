@@ -3,6 +3,7 @@
 namespace App\Http\Requests\StatusPages;
 
 use App\Enums\StatusPageMode;
+use App\Http\Requests\Concerns\NormalisesUuidLists;
 use App\Models\StatusPage;
 use App\Rules\FontFileUrl;
 use App\StatusPages\StatusPageTheme;
@@ -11,28 +12,12 @@ use Illuminate\Validation\Rule;
 
 abstract class StatusPageRequest extends FormRequest
 {
+    use NormalisesUuidLists;
+
     protected function prepareForValidation(): void
     {
-        $this->pruneMonitors();
+        $this->pruneUuidList('monitors');
         $this->pruneLinks();
-    }
-
-    /**
-     * The form submits a blank entry when no monitors are ticked so the list
-     * can be cleared; drop it before the exists rule runs.
-     */
-    private function pruneMonitors(): void
-    {
-        if (! $this->has('monitors')) {
-            return;
-        }
-
-        $this->merge([
-            'monitors' => array_values(array_filter(
-                (array) $this->input('monitors'),
-                fn ($uuid) => is_string($uuid) && $uuid !== '',
-            )),
-        ]);
     }
 
     /**
@@ -146,7 +131,7 @@ abstract class StatusPageRequest extends FormRequest
      */
     public function monitorUuids(): array
     {
-        return array_values(array_filter((array) $this->safe()->input('monitors', [])));
+        return $this->uuidList('monitors');
     }
 
     protected function currentPage(): ?StatusPage

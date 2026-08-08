@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RoutesByUuid;
 use App\StatusPages\StatusPageTheme;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 #[Fillable(['user_id', 'slug', 'title', 'description', 'is_published', 'show_incidents', 'theme'])]
 class StatusPage extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, RoutesByUuid;
 
     protected function casts(): array
     {
@@ -22,16 +22,6 @@ class StatusPage extends Model
             'show_incidents' => 'boolean',
             'theme' => 'array',
         ];
-    }
-
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
-    }
-
-    public function uniqueIds(): array
-    {
-        return ['uuid'];
     }
 
     public function user(): BelongsTo

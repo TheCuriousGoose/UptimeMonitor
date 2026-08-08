@@ -5,58 +5,43 @@ namespace App\Policies;
 use App\Enums\Permission;
 use App\Models\Monitor;
 use App\Models\User;
+use App\Policies\Concerns\AuthorizesOwnership;
 
 class MonitorPolicy
 {
+    use AuthorizesOwnership;
+
     /**
-     * Determine whether the user can view any models.
+     * Ungated on purpose: the index scopes to the acting user, so an empty
+     * list is the honest answer rather than a 403.
      */
     public function viewAny(): bool
     {
         return true;
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
     public function view(User $user, Monitor $monitor): bool
     {
-        return $monitor->created_by === $user->id
-            && $user->can(Permission::MonitorsView->value);
+        return $this->owns($user, $monitor->created_by, Permission::MonitorsView);
     }
 
-    /**
-     * Determine whether the user can create the model
-     */
     public function create(User $user): bool
     {
         return $user->can(Permission::MonitorsCreate->value);
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, Monitor $monitor): bool
     {
-        return $monitor->created_by === $user->id
-            && $user->can(Permission::MonitorsEdit->value);
+        return $this->owns($user, $monitor->created_by, Permission::MonitorsEdit);
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
     public function delete(User $user, Monitor $monitor): bool
     {
-        return $monitor->created_by === $user->id
-            && $user->can(Permission::MonitorsDelete->value);
+        return $this->owns($user, $monitor->created_by, Permission::MonitorsDelete);
     }
 
-    /**
-     * Determine whether the user can restore the model.
-     */
     public function restore(User $user, Monitor $monitor): bool
     {
-        return $monitor->created_by === $user->id
-            && $user->can(Permission::MonitorsDelete->value);
+        return $this->owns($user, $monitor->created_by, Permission::MonitorsDelete);
     }
 }

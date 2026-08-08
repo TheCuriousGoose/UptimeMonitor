@@ -18,10 +18,7 @@ class DashboardController extends Controller
         $user = Auth::user();
         $progress = OnboardingProgress::for($user);
 
-        // An account with nothing in it has no dashboard to show — every tile
-        // reads zero and every panel is empty. Send them somewhere that helps
-        // instead. Skipping sets the flag, so this happens at most once.
-        if (! $progress['has_monitor'] && ! $progress['dismissed'] && $user->can('create', Monitor::class)) {
+        if (OnboardingProgress::shouldRedirect($user, $progress)) {
             return to_route('onboarding.show');
         }
 
@@ -32,8 +29,6 @@ class DashboardController extends Controller
         return Inertia::render('Dashboard', [
             'onboarding' => $progress,
             'summary' => $stats->summaryForUser($user, $since),
-            // resolve() keeps these as plain arrays; the pages expect lists,
-            // not the "data" envelope a resource collection adds by default.
             'attention' => MonitorResource::collection(
                 Monitor::query()
                     ->forUser($user)

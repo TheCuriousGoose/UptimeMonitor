@@ -184,6 +184,14 @@ return [
     'header_name_reserved' => 'The :name header is set by the client and cannot be overridden.',
     'header_value' => 'Header values cannot contain line breaks.',
     'public_url' => 'A monitor that sends headers, a body or credentials must point at a public address.',
+    'monitor_cap' => 'You have reached the limit of :limit monitors for this account.',
+    'target_budget_user' => 'That would send :rate checks a minute to :domain, over your limit of :limit. Increase the interval, or pause another monitor on that domain.',
+    'target_budget_instance' => 'This instance is already at its limit of :limit checks a minute to :domain. Increase the interval and try again.',
+    'unverified_interval' => 'Checks against :domain must be at least :seconds seconds apart until the domain is verified.',
+    'unverified_monitors' => 'You can only have :limit monitor on :domain until the domain is verified.',
+    'unverified_method' => 'Only :methods requests are allowed against :domain until the domain is verified.',
+    'unverified_body' => 'A request body is not allowed against :domain until the domain is verified.',
+    'verifiable_domain' => 'Enter a domain name, not an IP address or URL.',
 
     'custom' => [
         'attribute-name' => [

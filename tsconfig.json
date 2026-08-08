@@ -121,6 +121,7 @@
         "resources/js/**/*.d.ts",
         "resources/js/**/*.tsx", 
         "resources/js/**/*.vue",
-        "vite/**/*.ts"
+        "vite/**/*.ts",
+        "vitest.config.ts"
     ]
 }

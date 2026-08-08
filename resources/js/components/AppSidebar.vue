@@ -3,6 +3,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import {
     Bell,
     Coffee,
+    Crosshair,
     FileText,
     Globe,
     LayoutGrid,
@@ -33,6 +34,7 @@ import { dashboard } from '@/routes';
 import adminContent from '@/routes/admin/content';
 import adminRoles from '@/routes/admin/roles';
 import adminSettings from '@/routes/admin/settings';
+import adminTargets from '@/routes/admin/targets';
 import adminUsers from '@/routes/admin/users';
 import incidents from '@/routes/incidents';
 import integrations from '@/routes/integrations';
@@ -99,6 +101,12 @@ const allAdminNavItems: NavItem[] = [
         href: adminRoles.index(),
         icon: ShieldCheck,
         permission: 'roles.view',
+    },
+    {
+        title: trans('admin.targets.title'),
+        href: adminTargets.index(),
+        icon: Crosshair,
+        permission: 'users.view',
     },
     {
         title: trans('content.heading'),

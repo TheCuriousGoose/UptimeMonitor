@@ -5,9 +5,12 @@ namespace App\Policies;
 use App\Enums\Permission;
 use App\Models\MaintenanceWindow;
 use App\Models\User;
+use App\Policies\Concerns\AuthorizesOwnership;
 
 class MaintenanceWindowPolicy
 {
+    use AuthorizesOwnership;
+
     public function viewAny(User $user): bool
     {
         return $user->can(Permission::MaintenanceView->value);
@@ -20,13 +23,11 @@ class MaintenanceWindowPolicy
 
     public function update(User $user, MaintenanceWindow $window): bool
     {
-        return $window->user_id === $user->id
-            && $user->can(Permission::MaintenanceEdit->value);
+        return $this->owns($user, $window->user_id, Permission::MaintenanceEdit);
     }
 
     public function delete(User $user, MaintenanceWindow $window): bool
     {
-        return $window->user_id === $user->id
-            && $user->can(Permission::MaintenanceDelete->value);
+        return $this->owns($user, $window->user_id, Permission::MaintenanceDelete);
     }
 }

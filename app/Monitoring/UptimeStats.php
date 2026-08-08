@@ -60,11 +60,6 @@ class UptimeStats
      */
     public function summaryForUser(User $user, CarbonInterface $since): array
     {
-        // Monitors inside a window are counted as maintenance and nothing
-        // else, so the buckets still sum to total.
-        //
-        // The moment is bound from PHP rather than using SQL NOW(): the
-        // column holds UTC, and NOW() is the database server's local clock.
         $moment = now();
         $awake = 'SUM(CASE WHEN is_active = TRUE AND (maintenance_until IS NULL OR maintenance_until <= ?)';
 
@@ -93,8 +88,6 @@ class UptimeStats
         return [
             'total' => (int) ($counts->total ?? 0),
             'up' => (int) ($counts->up_count ?? 0),
-            // Carved out of "up" rather than added alongside it, so the
-            // counters still sum to total.
             'degraded' => (int) ($counts->degraded_count ?? 0),
             'down' => (int) ($counts->down_count ?? 0),
             'maintenance' => (int) ($counts->maintenance ?? 0),
@@ -213,7 +206,7 @@ class UptimeStats
             ->map(fn ($row) => [
                 'date' => (string) $row->day,
                 'uptime_percentage' => (int) $row->total > 0
-                    ? round((int) $row->up_count / (int) $row->total * 100, 2)
+                    ? round((int) $row->up_count / (int) $row->total * 100, 3)
                     : null,
                 'total' => (int) $row->total,
             ])

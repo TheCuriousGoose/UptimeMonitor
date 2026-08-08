@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RoutesByUuid;
+use App\Models\Concerns\SortsByAllowlist;
 use App\Support\SqlDialect;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Incident extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, RoutesByUuid, SortsByAllowlist;
 
     protected function casts(): array
     {
@@ -28,16 +30,6 @@ class Incident extends Model
             'acknowledged_at' => 'immutable_datetime',
             'failed_checks' => 'integer',
         ];
-    }
-
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
-    }
-
-    public function uniqueIds(): array
-    {
-        return ['uuid'];
     }
 
     public function monitor(): BelongsTo
@@ -90,19 +82,12 @@ class Incident extends Model
         return (int) $this->started_at->diffInSeconds($this->resolved_at ?? now());
     }
 
-    public function scopeOngoing(Builder $query): Builder
-    {
-        return $query->whereNull('resolved_at');
-    }
-
     /**
      * The columns a client may order by, keyed by the name the table sends.
-     *
-     * An allowlist rather than a passthrough: `direction` is validated, but
-     * the column would otherwise be interpolated straight into orderBy.
+     * Null means the ordering is computed — see {@see sortDerived()}.
      */
     public const SORTS = [
-        'monitor' => null,   // Lives on the related table — see scopeSort().
+        'monitor' => null,   // Lives on the related table — see sort().
         'status' => null,    // Derived from resolved_at being null.
         'duration' => null,  // Computed, not stored.
         'cause' => 'cause',
@@ -110,28 +95,26 @@ class Incident extends Model
         'failed_checks' => 'failed_checks',
     ];
 
-    public function scopeSort(Builder $query, ?string $sort, string $direction = 'asc'): Builder
+    /** Open incidents first — they are the ones that need someone. */
+    private const RANK = 'CASE WHEN resolved_at IS NULL THEN 0 ELSE 1 END';
+
+    #[Scope]
+    protected function ongoing(Builder $query): void
     {
-        $direction = $direction === 'desc' ? 'desc' : 'asc';
+        $query->whereNull('resolved_at');
+    }
 
-        if ($sort === null || ! array_key_exists($sort, self::SORTS)) {
-            // Open incidents first — they are the ones that need someone.
-            return $query
-                ->orderByRaw('CASE WHEN resolved_at IS NULL THEN 0 ELSE 1 END')
-                ->orderByDesc('started_at');
-        }
-
-        return match ($sort) {
+    protected function sortDerived(Builder $query, ?string $sort, string $direction): void
+    {
+        match ($sort) {
             // A correlated subquery rather than a join, so the paginator's
             // count query stays a plain count over incidents.
             'monitor' => $query->orderBy(
                 Monitor::query()->select('name')->whereColumn('monitors.id', 'incidents.monitor_id'),
                 $direction,
-            )->orderByDesc('started_at'),
+            ),
 
-            'status' => $query
-                ->orderByRaw('CASE WHEN resolved_at IS NULL THEN 0 ELSE 1 END '.$direction)
-                ->orderByDesc('started_at'),
+            'status' => $query->orderByRaw(self::RANK.' '.$direction),
 
             // An open incident has no end, so it is still growing and sorts as
             // the longest. COALESCE to now() rather than leaving it null,
@@ -140,7 +123,12 @@ class Incident extends Model
                 SqlDialect::openEndedSeconds('started_at', 'resolved_at').' '.$direction,
             ),
 
-            default => $query->orderBy(self::SORTS[$sort], $direction)->orderByDesc('started_at'),
+            default => $query->orderByRaw(self::RANK),
         };
+    }
+
+    protected function sortTiebreak(Builder $query): void
+    {
+        $query->orderByDesc('started_at');
     }
 }

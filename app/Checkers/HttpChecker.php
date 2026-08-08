@@ -4,52 +4,41 @@ namespace App\Checkers;
 
 use App\Checkers\Support\OutboundGuard;
 use App\Checkers\Support\ResolvedTarget;
+use App\Checkers\Support\Stopwatch;
 use App\Models\Monitor;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
-use Throwable;
 
-class HttpChecker implements Checker
+class HttpChecker extends BaseChecker
 {
     public function __construct(protected readonly OutboundGuard $guard) {}
 
-    public function check(Monitor $monitor): CheckResult
+    protected function probe(Monitor $monitor, Stopwatch $timer): CheckResult
     {
         $config = $monitor->resolvedConfig();
-        $start = hrtime(true);
 
-        try {
-            [$response, $url] = $this->send($monitor, $config);
-            $ms = $this->elapsedMs($start);
+        [$response, $url] = $this->send($monitor, $config);
+        $ms = $timer->elapsedMs();
 
-            $meta = [
-                'status_code' => $response->status(),
-                'checker' => $monitor->type->value,
-            ];
+        $meta = [
+            'status_code' => $response->status(),
+            'checker' => $monitor->type->value,
+        ];
 
-            // Only recorded when it differs, so an ordinary check keeps the
-            // meta shape it has always had.
-            if ($url !== $monitor->url) {
-                $meta['final_url'] = $url;
-            }
-
-            if ($statusError = $this->assertStatus($response, $config)) {
-                return CheckResult::down($statusError, $ms, $meta);
-            }
-
-            if ($bodyError = $this->assertBody($response, $config)) {
-                return CheckResult::down($bodyError, $ms, $meta);
-            }
-
-            return CheckResult::up($ms, $meta);
-        } catch (Throwable $e) {
-            return CheckResult::down(
-                $this->explain($e->getMessage()),
-                $this->elapsedMs($start),
-                ['checker' => $monitor->type->value],
-            );
+        if ($url !== $monitor->url) {
+            $meta['final_url'] = $url;
         }
+
+        if ($statusError = $this->assertStatus($response, $config)) {
+            return CheckResult::down($statusError, $ms, $meta);
+        }
+
+        if ($bodyError = $this->assertBody($response, $config)) {
+            return CheckResult::down($bodyError, $ms, $meta);
+        }
+
+        return CheckResult::up($ms, $meta);
     }
 
     public function queue(): string
@@ -92,8 +81,6 @@ class HttpChecker implements Checker
 
             $url = $this->absoluteUrl($location, $url);
 
-            // A redirect to another resource is a GET, except for the two
-            // codes that exist to preserve the method.
             if (! in_array($response->status(), [307, 308], true)) {
                 $method = $method === 'HEAD' ? 'HEAD' : 'GET';
             }
@@ -107,12 +94,8 @@ class HttpChecker implements Checker
     {
         $request = Http::timeout($monitor->timeout)
             ->withUserAgent($this->userAgent())
-            // Pre-seed cURL's resolver with the address the guard vetted, so
-            // the connection cannot land somewhere the check did not approve.
             ->withOptions(['curl' => [CURLOPT_RESOLVE => [$target->curlResolveEntry()]]]);
 
-        // Tolerate "0"/"false" from monitors saved before config values
-        // were cast, so an existing opt-out is still honoured.
         if (! filter_var($config['verify_ssl'] ?? true, FILTER_VALIDATE_BOOLEAN)) {
             $request = $request->withoutVerifying();
         }
@@ -145,12 +128,6 @@ class HttpChecker implements Checker
         return $request;
     }
 
-    /**
-     * Whether this monitor sends anything that must never reach a private
-     * address, whatever the allow_private_targets setting says.
-     *
-     * @param  array<string, mixed>  $config
-     */
     private function carriesSecrets(array $config): bool
     {
         return ($config['headers'] ?? []) !== []
@@ -184,8 +161,6 @@ class HttpChecker implements Checker
             return null;
         }
 
-        // With no expectation configured the status speaks for itself, and
-        // this string is what an incident's cause reads as.
         return $matcher->isExplicit()
             ? "Expected {$matcher->describe()}, got {$response->status()}"
             : "HTTP {$response->status()}";
@@ -201,10 +176,6 @@ class HttpChecker implements Checker
         return null;
     }
 
-    /**
-     * Raw cURL strings are not actionable. Translate the ones with a known
-     * cause into something that says what to actually do about it.
-     */
     protected function explain(string $message): string
     {
         if (str_contains($message, 'unable to get local issuer certificate')) {
@@ -224,13 +195,11 @@ class HttpChecker implements Checker
         return $message;
     }
 
-    protected function elapsedMs(float|int $start): int
-    {
-        return (int) ((hrtime(true) - $start) / 1_000_000);
-    }
-
     protected function userAgent(): string
     {
-        return config('app.name', 'Laravel').' Uptime Monitor';
+        $agent = config('app.name', 'Laravel').' Uptime Monitor';
+        $contact = config('monitoring.outbound.contact_url');
+
+        return $contact ? "{$agent} (+{$contact})" : $agent;
     }
 }

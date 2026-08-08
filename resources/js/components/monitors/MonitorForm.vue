@@ -52,8 +52,8 @@
                                 <span
                                     class="flex items-center gap-2 text-sm font-medium"
                                 >
-                                    <component
-                                        :is="typeIcons[option]"
+                                    <MonitorTypeIcon
+                                        :type="option"
                                         class="size-4 shrink-0"
                                     />
                                     {{
@@ -807,40 +807,18 @@
                 :value="isActive ? '1' : '0'"
             />
 
-            <template v-if="type === 'keyword'">
-                <input
-                    type="hidden"
-                    name="config[invert]"
-                    :value="invert ? '1' : '0'"
-                />
-            </template>
             <input
-                v-if="type === 'port'"
+                v-for="(value, key) in configFields"
+                :key="key"
                 type="hidden"
-                name="config[port]"
-                :value="port"
-            />
-            <template v-if="type === 'dns'">
-                <input
-                    type="hidden"
-                    name="config[record_type]"
-                    :value="recordType"
-                />
-                <input
-                    type="hidden"
-                    name="config[expected]"
-                    :value="expected"
-                />
-            </template>
-            <input
-                v-if="type === 'ssl'"
-                type="hidden"
-                name="config[warn_days]"
-                :value="warnDays"
+                :name="`config[${key}]`"
+                :value="value"
             />
 
+            <!-- Indexed and keyed collections keep their own loops: their
+                 names carry a position or a header name, so they cannot be
+                 expressed as flat pairs. -->
             <template v-if="type === 'http' || type === 'keyword'">
-                <input type="hidden" name="config[method]" :value="method" />
                 <input
                     v-for="(code, index) in statusCodeList"
                     :key="code"
@@ -849,51 +827,11 @@
                     :value="code"
                 />
                 <input
-                    type="hidden"
-                    name="config[verify_ssl]"
-                    :value="verifySsl ? '1' : '0'"
-                />
-                <input
-                    type="hidden"
-                    name="config[follow_redirects]"
-                    :value="followRedirects ? '1' : '0'"
-                />
-                <input
-                    type="hidden"
-                    name="config[auth_type]"
-                    :value="authType"
-                />
-                <template v-if="authType === 'basic'">
-                    <input
-                        type="hidden"
-                        name="config[auth_username]"
-                        :value="authUsername"
-                    />
-                    <input
-                        type="hidden"
-                        name="config[auth_password]"
-                        :value="authPassword"
-                    />
-                </template>
-                <input
-                    v-if="authType === 'bearer'"
-                    type="hidden"
-                    name="config[auth_token]"
-                    :value="authToken"
-                />
-                <input
                     v-for="entry in headerEntries"
                     :key="entry.name"
                     type="hidden"
                     :name="`config[headers][${entry.name}]`"
                     :value="entry.value"
-                />
-                <input type="hidden" name="config[body]" :value="body" />
-                <input
-                    v-if="body.trim() !== ''"
-                    type="hidden"
-                    name="config[content_type]"
-                    :value="contentType"
                 />
             </template>
 
@@ -1005,16 +943,11 @@
 import { Form, Link } from '@inertiajs/vue3';
 import {
     CheckCircle2Icon,
-    FileSearchIcon,
     FlaskConicalIcon,
-    GlobeIcon,
-    NetworkIcon,
-    PlugIcon,
-    RadioIcon,
-    ShieldCheckIcon,
     XCircleIcon,
 } from 'lucide-vue-next';
 import { computed, ref, useId, watch } from 'vue';
+import MonitorTypeIcon from '@/components/monitors/MonitorTypeIcon.vue';
 import Section from '@/components/Section.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -1045,12 +978,14 @@ import * as monitorsRoute from '@/routes/monitors';
 import type {
     Monitor,
     MonitorType,
+    MonitorTypeOptions,
     NotificationChannel,
 } from '@/types/monitors';
 
 const props = withDefaults(
     defineProps<{
         types: MonitorType[];
+        typeOptions: MonitorTypeOptions;
         channels: NotificationChannel[];
         form?:
             | ReturnType<typeof monitorsRoute.store.form>
@@ -1065,25 +1000,12 @@ const formBinding = computed(() => props.form ?? monitorsRoute.store.form());
 const errorPill =
     'rounded-full bg-destructive px-1.5 text-xs leading-5 font-medium text-white';
 
-const typeIcons: Record<MonitorType, unknown> = {
-    http: GlobeIcon,
-    keyword: FileSearchIcon,
-    port: PlugIcon,
-    ping: RadioIcon,
-    dns: NetworkIcon,
-    ssl: ShieldCheckIcon,
-};
+// Server-supplied, so these can never offer a value the profiles reject.
+const methods = computed(() => props.typeOptions.methods);
+const authTypes = computed(() => props.typeOptions.auth_types);
+const contentTypes = computed(() => props.typeOptions.content_types);
+const recordTypes = computed(() => props.typeOptions.record_types);
 
-const urlTypes: MonitorType[] = ['http', 'keyword', 'ssl'];
-const methods = ['GET', 'POST', 'HEAD', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
-const authTypes = ['none', 'basic', 'bearer'];
-const contentTypes = [
-    'application/json',
-    'application/x-www-form-urlencoded',
-    'text/plain',
-    'application/xml',
-];
-const recordTypes = ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS'];
 const confirmationOptions = [1, 2, 3, 5];
 const recoveryOptions = [1, 2, 3, 5];
 
@@ -1228,7 +1150,9 @@ async function testCheck() {
 }
 
 const type = ref<MonitorType>(props.defaults?.type ?? props.types[0]);
-const expectsUrl = computed(() => urlTypes.includes(type.value));
+const expectsUrl = computed(() =>
+    props.typeOptions.url_types.includes(type.value),
+);
 
 const invert = ref(props.defaults?.config?.invert ?? false);
 const verifySsl = ref(props.defaults?.config?.verify_ssl ?? true);
@@ -1289,6 +1213,64 @@ const port = ref<number | string>(props.defaults?.config?.port ?? 443);
 const recordType = ref(props.defaults?.config?.record_type ?? 'A');
 const expected = ref<string>(props.defaults?.config?.expected ?? '');
 const warnDays = ref<number | string>(props.defaults?.config?.warn_days ?? 14);
+
+/**
+ * The type-specific config this form posts, as flat `key => value` pairs.
+ *
+ * Everything here is edited by a control that is not itself a form input — a
+ * switch, a select, a chip list — so each value needs a hidden input to reach
+ * the server. Declaring which keys a type contributes once, here, keeps that
+ * list from being restated as a second set of `v-if`s in the markup, and
+ * keeps it beside the panel logic it has to agree with.
+ *
+ * The save and the "Test check" button both read the rendered form with
+ * `new FormData()`, so this is the payload for both.
+ */
+const configFields = computed<Record<string, string>>(() => {
+    const fields: Record<string, string> = {};
+
+    if (type.value === 'keyword') {
+        fields.invert = invert.value ? '1' : '0';
+    }
+
+    if (type.value === 'port') {
+        fields.port = String(port.value);
+    }
+
+    if (type.value === 'dns') {
+        fields.record_type = recordType.value;
+        fields.expected = expected.value;
+    }
+
+    if (type.value === 'ssl') {
+        fields.warn_days = String(warnDays.value);
+    }
+
+    if (type.value === 'http' || type.value === 'keyword') {
+        fields.method = method.value;
+        fields.verify_ssl = verifySsl.value ? '1' : '0';
+        fields.follow_redirects = followRedirects.value ? '1' : '0';
+        fields.auth_type = authType.value;
+        fields.body = body.value;
+
+        if (authType.value === 'basic') {
+            fields.auth_username = authUsername.value;
+            fields.auth_password = authPassword.value;
+        }
+
+        if (authType.value === 'bearer') {
+            fields.auth_token = authToken.value;
+        }
+
+        // Only meaningful with a body, and posting it otherwise would set a
+        // content type on a request that carries nothing.
+        if (body.value.trim() !== '') {
+            fields.content_type = contentType.value;
+        }
+    }
+
+    return fields;
+});
 
 const initialInterval = props.defaults?.interval_seconds ?? 300;
 const intervalOption = ref<number | 'custom'>(

@@ -3,12 +3,15 @@
 namespace App\Http\Requests\Maintenance;
 
 use App\Enums\MaintenanceRecurrence;
+use App\Http\Requests\Concerns\NormalisesUuidLists;
 use App\Models\MaintenanceWindow;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 abstract class MaintenanceWindowRequest extends FormRequest
 {
+    use NormalisesUuidLists;
+
     public function rules(): array
     {
         return array_merge([
@@ -47,7 +50,7 @@ abstract class MaintenanceWindowRequest extends FormRequest
      */
     public function monitorUuids(): array
     {
-        return array_values(array_filter((array) $this->input('monitors', [])));
+        return $this->uuidList('monitors', validated: false);
     }
 
     public function window(): ?MaintenanceWindow

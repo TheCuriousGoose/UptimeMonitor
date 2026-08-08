@@ -5,11 +5,12 @@ namespace App\Models;
 use App\Casts\EncryptedJson;
 use App\Enums\AlertScope;
 use App\Enums\ChannelType;
+use App\Models\Concerns\RoutesByUuid;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,7 +23,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 ])]
 class NotificationChannel extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, RoutesByUuid;
 
     protected function casts(): array
     {
@@ -38,16 +39,6 @@ class NotificationChannel extends Model
         ];
     }
 
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
-    }
-
-    public function uniqueIds(): array
-    {
-        return ['uuid'];
-    }
-
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -58,9 +49,10 @@ class NotificationChannel extends Model
         return $this->belongsToMany(Monitor::class);
     }
 
-    public function scopeActive(Builder $query): Builder
+    #[Scope]
+    protected function active(Builder $query): void
     {
-        return $query->where('is_active', true);
+        $query->where('is_active', true);
     }
 
     /**
@@ -70,9 +62,10 @@ class NotificationChannel extends Model
      * Scoping to the monitor's owner rather than the acting user is what stops
      * an admin's own channels firing on someone else's monitor.
      */
-    public function scopeForMonitor(Builder $query, Monitor $monitor): Builder
+    #[Scope]
+    protected function forMonitor(Builder $query, Monitor $monitor): void
     {
-        return $query
+        $query
             ->where('user_id', $monitor->created_by)
             ->where(fn (Builder $scope) => $scope
                 ->where('alert_scope', AlertScope::All->value)

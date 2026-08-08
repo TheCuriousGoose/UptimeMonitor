@@ -3,22 +3,21 @@
 namespace App\Checkers;
 
 use App\Checkers\Support\DnsResolver;
+use App\Checkers\Support\Stopwatch;
 use App\Checkers\Support\Target;
 use App\Models\Monitor;
 
-class DnsChecker implements Checker
+class DnsChecker extends NetworkChecker
 {
     public function __construct(private readonly DnsResolver $resolver) {}
 
-    public function check(Monitor $monitor): CheckResult
+    protected function probeTarget(Monitor $monitor, Target $target, Stopwatch $timer): CheckResult
     {
         $config = $monitor->resolvedConfig();
-        $target = Target::parse($monitor->url);
         $recordType = strtoupper((string) ($config['record_type'] ?? 'A'));
 
-        $start = hrtime(true);
         $records = $this->resolver->resolve($target->host, $recordType);
-        $ms = (int) ((hrtime(true) - $start) / 1_000_000);
+        $ms = $timer->elapsedMs();
 
         $meta = ['checker' => 'dns', 'record_type' => $recordType, 'records' => $records];
 
@@ -37,10 +36,5 @@ class DnsChecker implements Checker
         }
 
         return CheckResult::up($ms, $meta);
-    }
-
-    public function queue(): string
-    {
-        return 'checks-network';
     }
 }

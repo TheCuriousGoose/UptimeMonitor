@@ -3,6 +3,7 @@
 namespace App\Checkers;
 
 use App\Checkers\Support\CertificateReader;
+use App\Checkers\Support\Stopwatch;
 use App\Checkers\Support\Target;
 use App\Models\Monitor;
 
@@ -10,19 +11,17 @@ use App\Models\Monitor;
  * Treats an expiring certificate as downtime, so the alert lands while
  * there is still time to renew rather than after the outage starts.
  */
-class SslChecker implements Checker
+class SslChecker extends NetworkChecker
 {
     public function __construct(private readonly CertificateReader $reader) {}
 
-    public function check(Monitor $monitor): CheckResult
+    protected function probeTarget(Monitor $monitor, Target $target, Stopwatch $timer): CheckResult
     {
-        $target = Target::parse($monitor->url);
         $port = $target->portOr(443);
         $warnDays = (int) ($monitor->resolvedConfig()['warn_days'] ?? 14);
 
-        $start = hrtime(true);
         $certificate = $this->reader->read($target->host, $port, (float) $monitor->timeout);
-        $ms = (int) ((hrtime(true) - $start) / 1_000_000);
+        $ms = $timer->elapsedMs();
 
         if ($certificate === null) {
             return CheckResult::down(
@@ -60,10 +59,5 @@ class SslChecker implements Checker
         }
 
         return CheckResult::up($ms, $meta);
-    }
-
-    public function queue(): string
-    {
-        return 'checks-network';
     }
 }

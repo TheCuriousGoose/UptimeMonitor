@@ -2,11 +2,14 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\Concerns\ResolvesRelations;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class StatusPageResource extends JsonResource
 {
+    use ResolvesRelations;
+
     /**
      * @return array<string, mixed>
      */
@@ -24,10 +27,7 @@ class StatusPageResource extends JsonResource
             'theme' => $this->resolvedTheme()->toArray(),
             'public_url' => route('status.show', $this->slug),
             'monitors_count' => $this->whenCounted('monitors'),
-            'monitors' => $this->whenLoaded(
-                'monitors',
-                fn () => MonitorResource::collection($this->monitors)->resolve(),
-            ),
+            'monitors' => $this->whenLoadedCollection('monitors', MonitorResource::class),
         ];
     }
 }

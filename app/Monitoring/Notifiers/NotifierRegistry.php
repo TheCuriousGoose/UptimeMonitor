@@ -2,19 +2,20 @@
 
 namespace App\Monitoring\Notifiers;
 
-use InvalidArgumentException;
+use App\Support\TypeRegistry;
 
-class NotifierRegistry
+/**
+ * @extends TypeRegistry<Notifier>
+ */
+class NotifierRegistry extends TypeRegistry
 {
-    /** @param array<string, class-string<Notifier>> $map */
-    public function __construct(private readonly array $map) {}
-
     public function resolve(string $type): Notifier
     {
-        if (! isset($this->map[$type])) {
-            throw new InvalidArgumentException("Unknown notification channel type: [{$type}]");
-        }
+        return $this->make($type);
+    }
 
-        return app($this->map[$type]);
+    protected function label(): string
+    {
+        return 'notification channel type';
     }
 }

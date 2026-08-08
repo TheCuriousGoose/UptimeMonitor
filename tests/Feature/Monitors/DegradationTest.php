@@ -156,12 +156,12 @@ class DegradationTest extends TestCase
 
         $this->assertSame(
             [$slow->id],
-            Monitor::query()->forUser($this->user)->status(MonitorStatus::Degraded)->pluck('id')->all(),
+            Monitor::query()->forUser($this->user)->whereStatus(MonitorStatus::Degraded)->pluck('id')->all(),
         );
 
         $this->assertSame(
             [$healthy->id],
-            Monitor::query()->forUser($this->user)->status(MonitorStatus::Up)->pluck('id')->all(),
+            Monitor::query()->forUser($this->user)->whereStatus(MonitorStatus::Up)->pluck('id')->all(),
         );
     }
 

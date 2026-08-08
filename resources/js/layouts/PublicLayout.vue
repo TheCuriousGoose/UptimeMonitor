@@ -2,68 +2,109 @@
     <SkipLink />
 
     <div class="flex min-h-screen flex-col bg-background text-foreground">
-        <header class="sticky top-0 z-30 border-b bg-background/85 backdrop-blur-sm">
-            <div class="mx-auto flex h-14 w-full max-w-6xl items-center gap-6 px-4">
+        <header
+            class="sticky top-0 z-30 border-b bg-background/85 backdrop-blur-sm"
+        >
+            <div
+                class="mx-auto flex h-14 w-full max-w-6xl items-center gap-6 px-4"
+            >
                 <Link :href="home()" class="flex shrink-0 items-center gap-2.5">
                     <span
-                        class="flex size-7 items-center justify-center rounded-sm border border-primary/40 bg-primary/10 text-primary">
+                        class="flex size-7 items-center justify-center rounded-sm border border-primary/40 bg-primary/10 text-primary"
+                    >
                         <AppLogoIcon class="size-4" />
                     </span>
                     <span class="text-sm font-semibold tracking-tight">{{
                         appName
-                        }}</span>
+                    }}</span>
                 </Link>
 
                 <nav class="hidden items-center gap-5 md:flex">
-                    <Link v-for="item in nav" :key="item.href" :href="item.href" class="text-sm transition-colors"
-                        :class="isCurrent(item.href)
+                    <Link
+                        v-for="item in nav"
+                        :key="item.href"
+                        :href="item.href"
+                        class="text-sm transition-colors"
+                        :class="
+                            isCurrent(item.href)
                                 ? 'font-medium text-foreground'
                                 : 'text-muted-foreground hover:text-foreground'
-                            ">
+                        "
+                    >
                         {{ item.label }}
                     </Link>
                 </nav>
 
                 <div class="ml-auto flex items-center gap-2">
-                    <Button :as="Link" :href="login()" variant="ghost" size="sm" class="hidden sm:inline-flex"
-                        v-if="!isAuthenticated">
+                    <Button
+                        :as="Link"
+                        :href="login()"
+                        variant="ghost"
+                        size="sm"
+                        class="hidden sm:inline-flex"
+                        v-if="!isAuthenticated"
+                    >
                         {{ $t('marketing.nav.login') }}
                     </Button>
-                    <Button :as="Link" :href="register()" size="sm" v-if="!isAuthenticated">
+                    <Button
+                        :as="Link"
+                        :href="register()"
+                        size="sm"
+                        v-if="!isAuthenticated"
+                    >
                         {{ $t('marketing.nav.register') }}
                     </Button>
-                    <Button :as="Link" :href="login()" variant="outline" size="sm" class="hidden sm:inline-flex"
-                        v-else>
+                    <Button
+                        :as="Link"
+                        :href="login()"
+                        variant="outline"
+                        size="sm"
+                        class="hidden sm:inline-flex"
+                        v-else
+                    >
                         {{ $t('marketing.nav.dashboard') }}
                     </Button>
                     <!-- Without this the nav simply vanishes below md and the
                          public site is unnavigable on a phone. -->
                     <Sheet v-model:open="mobileNavOpen">
                         <SheetTrigger as-child>
-                            <Button variant="ghost" size="icon-sm" class="md:hidden">
+                            <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                class="md:hidden"
+                            >
                                 <MenuIcon />
                                 <span class="sr-only">{{
                                     $t('marketing.nav.menu')
-                                    }}</span>
+                                }}</span>
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="right" class="w-72">
                             <SheetHeader>
                                 <SheetTitle>{{
                                     $t('marketing.nav.menu')
-                                    }}</SheetTitle>
+                                }}</SheetTitle>
                             </SheetHeader>
                             <nav class="flex flex-col gap-1 px-4 pb-4">
-                                <Link v-for="item in nav" :key="item.href" :href="item.href"
-                                    class="rounded-sm px-2 py-2 text-sm transition-colors" :class="isCurrent(item.href)
+                                <Link
+                                    v-for="item in nav"
+                                    :key="item.href"
+                                    :href="item.href"
+                                    class="rounded-sm px-2 py-2 text-sm transition-colors"
+                                    :class="
+                                        isCurrent(item.href)
                                             ? 'bg-accent font-medium text-accent-foreground'
                                             : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                                        " @click="mobileNavOpen = false">
+                                    "
+                                    @click="mobileNavOpen = false"
+                                >
                                     {{ item.label }}
                                 </Link>
-                                <Link :href="login()"
+                                <Link
+                                    :href="login()"
                                     class="rounded-sm px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground sm:hidden"
-                                    @click="mobileNavOpen = false">
+                                    @click="mobileNavOpen = false"
+                                >
                                     {{ $t('marketing.nav.login') }}
                                 </Link>
                             </nav>
@@ -78,9 +119,13 @@
         </main>
 
         <footer class="border-t">
-            <div class="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-10 md:flex-row md:justify-between">
+            <div
+                class="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-10 md:flex-row md:justify-between"
+            >
                 <div class="max-w-xs">
-                    <p class="font-mono text-[10px] tracking-[0.12em] text-muted-foreground uppercase">
+                    <p
+                        class="font-mono text-[10px] tracking-[0.12em] text-muted-foreground uppercase"
+                    >
                         {{ appName }}
                     </p>
                     <p class="mt-2 text-sm text-muted-foreground">
@@ -94,8 +139,12 @@
                         <p class="mt-1 text-sm text-muted-foreground">
                             {{ $t('marketing.support.description') }}
                         </p>
-                        <a :href="supportUrl" target="_blank" rel="noopener noreferrer"
-                            class="mt-3 inline-flex items-center gap-2 rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors hover:border-foreground/25 hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none">
+                        <a
+                            :href="supportUrl"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="mt-3 inline-flex items-center gap-2 rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors hover:border-foreground/25 hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                        >
                             <CoffeeIcon class="size-4" aria-hidden="true" />
                             {{ $t('marketing.support.action') }}
                         </a>
@@ -105,13 +154,16 @@
                 <div class="grid grid-cols-2 gap-8 sm:grid-cols-3">
                     <div v-for="group in footerGroups" :key="group.heading">
                         <p
-                            class="font-mono text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+                            class="font-mono text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase"
+                        >
                             {{ group.heading }}
                         </p>
                         <ul class="mt-3 space-y-2">
                             <li v-for="item in group.items" :key="item.href">
-                                <Link :href="item.href"
-                                    class="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                                <Link
+                                    :href="item.href"
+                                    class="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                                >
                                     {{ item.label }}
                                 </Link>
                             </li>
@@ -121,7 +173,9 @@
             </div>
 
             <div class="border-t">
-                <div class="mx-auto w-full max-w-6xl px-4 py-4 text-xs text-muted-foreground">
+                <div
+                    class="mx-auto w-full max-w-6xl px-4 py-4 text-xs text-muted-foreground"
+                >
                     &copy; {{ year }} {{ appName }}
                 </div>
             </div>
@@ -206,5 +260,7 @@ function isCurrent(href: string): boolean {
     return page.url.split('?')[0] === href;
 }
 
-const isAuthenticated = computed<boolean>(() => page.props.auth.is_authenticated);    
+const isAuthenticated = computed<boolean>(
+    () => page.props.auth.is_authenticated,
+);
 </script>

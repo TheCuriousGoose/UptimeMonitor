@@ -13,6 +13,7 @@
 
         <MonitorForm
             :types="types"
+            :type-options="typeOptions"
             :channels="channels"
             :defaults="monitor"
             :form="monitorsRoute.update.form(monitor.uuid)"
@@ -28,12 +29,14 @@ import * as monitorsRoute from '@/routes/monitors';
 import type {
     Monitor,
     MonitorType,
+    MonitorTypeOptions,
     NotificationChannel,
 } from '@/types/monitors';
 
 const props = defineProps<{
     monitor: Monitor;
     types: MonitorType[];
+    typeOptions: MonitorTypeOptions;
     channels: NotificationChannel[];
 }>();
 

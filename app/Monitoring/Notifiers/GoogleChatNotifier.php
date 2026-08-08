@@ -2,11 +2,8 @@
 
 namespace App\Monitoring\Notifiers;
 
-use App\Models\NotificationChannel;
-use App\Monitoring\AlertEvent;
 use App\Monitoring\AlertMessage;
 use App\Monitoring\RenderedAlert;
-use Illuminate\Support\Facades\Http;
 
 /**
  * Google Chat incoming webhook, posting a card.
@@ -18,19 +15,11 @@ use Illuminate\Support\Facades\Http;
  * Like Teams, Chat has no incident lifecycle — a recovery is a second message
  * rather than a resolve on the first.
  */
-class GoogleChatNotifier implements Notifier
+class GoogleChatNotifier extends HttpNotifier
 {
-    public function send(NotificationChannel $channel, AlertMessage $message, RenderedAlert $text): void
+    protected function payload(AlertMessage $message, RenderedAlert $text): array
     {
-        $url = $channel->destination();
-
-        if ($url === '') {
-            return;
-        }
-
-        $isDown = $message->event === AlertEvent::Down;
-
-        Http::timeout(10)->post($url, [
+        return [
             'text' => $text->title,
             'cardsV2' => [[
                 'cardId' => 'monitor-alert',
@@ -43,11 +32,11 @@ class GoogleChatNotifier implements Notifier
                         'imageType' => 'CIRCLE',
                     ],
                     'sections' => [[
-                        'widgets' => array_values(array_filter([
+                        'widgets' => [
                             ['textParagraph' => ['text' => $text->body]],
                             ['decoratedText' => [
                                 'topLabel' => 'Status',
-                                'text' => $isDown ? 'Down' : 'Recovered',
+                                'text' => $message->event->label(),
                             ]],
                             ['decoratedText' => [
                                 'topLabel' => 'Target',
@@ -57,10 +46,10 @@ class GoogleChatNotifier implements Notifier
                                 'topLabel' => 'When',
                                 'text' => $message->occurredAt->toDayDateTimeString(),
                             ]],
-                        ])),
+                        ],
                     ]],
                 ],
             ]],
-        ])->throw();
+        ];
     }
 }

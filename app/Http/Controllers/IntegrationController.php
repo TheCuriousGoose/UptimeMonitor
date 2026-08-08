@@ -8,12 +8,11 @@ use App\Http\Requests\Channels\StoreChannelRequest;
 use App\Http\Requests\Channels\UpdateChannelRequest;
 use App\Http\Resources\MonitorResource;
 use App\Http\Resources\NotificationChannelResource;
-use App\Models\Monitor;
 use App\Models\NotificationChannel;
 use App\Monitoring\AlertTemplate;
 use App\Policies\NotificationChannelPolicy;
+use App\Queries\OwnedMonitors;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -27,6 +26,8 @@ use Inertia\Inertia;
 #[UsePolicy(NotificationChannelPolicy::class)]
 class IntegrationController extends Controller
 {
+    public function __construct(private readonly OwnedMonitors $monitors) {}
+
     public function index()
     {
         $this->authorize('viewAny', NotificationChannel::class);
@@ -43,7 +44,7 @@ class IntegrationController extends Controller
             'providers' => ChannelType::values(),
             'scopes' => AlertScope::values(),
             'placeholders' => AlertTemplate::PLACEHOLDERS,
-            'monitors' => MonitorResource::collection($this->userMonitors())->resolve(),
+            'monitors' => MonitorResource::collection($this->monitors->listFor(Auth::user()))->resolve(),
         ]);
     }
 
@@ -98,22 +99,8 @@ class IntegrationController extends Controller
             return;
         }
 
-        $ids = Monitor::query()
-            ->where('created_by', $integration->user_id)
-            ->whereIn('uuid', $uuids)
-            ->pluck('id');
-
-        $integration->monitors()->sync($ids);
-    }
-
-    /**
-     * @return Collection<int, Monitor>
-     */
-    private function userMonitors()
-    {
-        return Monitor::query()
-            ->where('created_by', Auth::id())
-            ->orderBy('name')
-            ->get();
+        $integration->monitors()->sync(
+            $this->monitors->idsByUuid($integration->user_id, $uuids)->values()->all(),
+        );
     }
 }
