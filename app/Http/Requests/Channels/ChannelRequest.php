@@ -4,6 +4,7 @@ namespace App\Http\Requests\Channels;
 
 use App\Enums\AlertScope;
 use App\Enums\ChannelType;
+use App\Http\Requests\Concerns\NormalisesUuidLists;
 use App\Monitoring\AlertEvent;
 use App\Monitoring\AlertTemplate;
 use Closure;
@@ -12,6 +13,8 @@ use Illuminate\Validation\Rule;
 
 abstract class ChannelRequest extends FormRequest
 {
+    use NormalisesUuidLists;
+
     public function rules(): array
     {
         $type = ChannelType::tryFrom((string) $this->input('type'));
@@ -60,7 +63,10 @@ abstract class ChannelRequest extends FormRequest
      */
     public function monitorUuids(): array
     {
-        return array_values(array_filter((array) $this->input('monitors', [])));
+        // Unvalidated on purpose: the scope decides whether this list means
+        // anything, and the controller resolves every uuid against the
+        // channel's owner before it reaches the pivot.
+        return $this->uuidList('monitors', validated: false);
     }
 
     public function alertScope(): AlertScope

@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RoutesByUuid;
+use App\Models\Concerns\SortsByAllowlist;
 use App\Support\SqlDialect;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Incident extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, RoutesByUuid, SortsByAllowlist;
 
     protected function casts(): array
     {
@@ -29,16 +30,6 @@ class Incident extends Model
             'acknowledged_at' => 'immutable_datetime',
             'failed_checks' => 'integer',
         ];
-    }
-
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
-    }
-
-    public function uniqueIds(): array
-    {
-        return ['uuid'];
     }
 
     public function monitor(): BelongsTo
@@ -93,9 +84,7 @@ class Incident extends Model
 
     /**
      * The columns a client may order by, keyed by the name the table sends.
-     *
-     * An allowlist rather than a passthrough: `direction` is validated, but
-     * the column would otherwise be interpolated straight into orderBy.
+     * Null means the ordering is computed — see {@see sortDerived()}.
      */
     public const SORTS = [
         'monitor' => null,   // Lives on the related table — see sort().
@@ -115,34 +104,31 @@ class Incident extends Model
         $query->whereNull('resolved_at');
     }
 
-    #[Scope]
-    protected function sort(Builder $query, ?string $sort, string $direction = 'asc'): void
+    protected function sortDerived(Builder $query, ?string $sort, string $direction): void
     {
-        $direction = $direction === 'desc' ? 'desc' : 'asc';
-        $column = self::SORTS[$sort] ?? null;
-
-        match (true) {
-            $column !== null => $query->orderBy($column, $direction),
-
+        match ($sort) {
             // A correlated subquery rather than a join, so the paginator's
             // count query stays a plain count over incidents.
-            $sort === 'monitor' => $query->orderBy(
+            'monitor' => $query->orderBy(
                 Monitor::query()->select('name')->whereColumn('monitors.id', 'incidents.monitor_id'),
                 $direction,
             ),
 
-            $sort === 'status' => $query->orderByRaw(self::RANK.' '.$direction),
+            'status' => $query->orderByRaw(self::RANK.' '.$direction),
 
             // An open incident has no end, so it is still growing and sorts as
             // the longest. COALESCE to now() rather than leaving it null,
             // which would sort it to one end regardless of how long it has run.
-            $sort === 'duration' => $query->orderByRaw(
+            'duration' => $query->orderByRaw(
                 SqlDialect::openEndedSeconds('started_at', 'resolved_at').' '.$direction,
             ),
 
             default => $query->orderByRaw(self::RANK),
         };
+    }
 
+    protected function sortTiebreak(Builder $query): void
+    {
         $query->orderByDesc('started_at');
     }
 }

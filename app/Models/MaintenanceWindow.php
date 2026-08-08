@@ -3,13 +3,13 @@
 namespace App\Models;
 
 use App\Enums\MaintenanceRecurrence;
+use App\Models\Concerns\RoutesByUuid;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Cron\CronExpression;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,7 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 ])]
 class MaintenanceWindow extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, RoutesByUuid;
 
     protected function casts(): array
     {
@@ -32,16 +32,6 @@ class MaintenanceWindow extends Model
             'duration_minutes' => 'integer',
             'is_active' => 'boolean',
         ];
-    }
-
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
-    }
-
-    public function uniqueIds(): array
-    {
-        return ['uuid'];
     }
 
     public function user(): BelongsTo

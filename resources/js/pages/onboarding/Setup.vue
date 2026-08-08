@@ -6,17 +6,12 @@ import {
     BellIcon,
     CheckCircle2Icon,
     CheckIcon,
-    FileSearchIcon,
-    GlobeIcon,
     MailIcon,
-    NetworkIcon,
-    PlugIcon,
-    RadioIcon,
-    ShieldCheckIcon,
     XCircleIcon,
 } from 'lucide-vue-next';
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import MonitorTypeIcon from '@/components/monitors/MonitorTypeIcon.vue';
 import SetupStep from '@/components/onboarding/SetupStep.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -54,15 +49,6 @@ type Step = 'welcome' | 'target' | 'test' | 'schedule' | 'alerts' | 'done';
 
 /** The four the progress rail counts; welcome and done bookend them. */
 const rail: Step[] = ['target', 'test', 'schedule', 'alerts'];
-
-const typeIcons: Record<MonitorType, unknown> = {
-    http: GlobeIcon,
-    keyword: FileSearchIcon,
-    port: PlugIcon,
-    ping: RadioIcon,
-    dns: NetworkIcon,
-    ssl: ShieldCheckIcon,
-};
 
 // The same presets the ordinary form offers, so choosing the guided route
 // never means settling for fewer options than the manual one.
@@ -502,8 +488,8 @@ const alertsSummary = computed(() => {
                             <span
                                 class="flex items-center gap-2 text-sm font-medium"
                             >
-                                <component
-                                    :is="typeIcons[option]"
+                                <MonitorTypeIcon
+                                    :type="option"
                                     class="size-4 shrink-0"
                                 />
                                 {{ $t(`monitors.form.type.options.${option}`) }}

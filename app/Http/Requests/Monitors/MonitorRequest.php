@@ -4,6 +4,7 @@ namespace App\Http\Requests\Monitors;
 
 use App\Checkers\Support\OutboundGuard;
 use App\Enums\MonitorType;
+use App\Http\Requests\Concerns\NormalisesUuidLists;
 use App\Models\Monitor;
 use App\Monitoring\ConfigMasker;
 use App\Monitoring\Profiles\ConfigCast;
@@ -22,23 +23,11 @@ use Illuminate\Validation\Rule;
  */
 abstract class MonitorRequest extends FormRequest
 {
-    /**
-     * The form always submits the notification_channels key, using a blank
-     * entry when nothing is ticked, so that clearing the list is possible.
-     * Drop those blanks before the exists rule sees them.
-     */
+    use NormalisesUuidLists;
+
     protected function prepareForValidation(): void
     {
-        if (! $this->has('notification_channels')) {
-            return;
-        }
-
-        $this->merge([
-            'notification_channels' => array_values(array_filter(
-                (array) $this->input('notification_channels'),
-                fn ($uuid) => is_string($uuid) && $uuid !== '',
-            )),
-        ]);
+        $this->pruneUuidList('notification_channels');
     }
 
     public function rules(): array
@@ -131,7 +120,7 @@ abstract class MonitorRequest extends FormRequest
      */
     public function channelUuids(): array
     {
-        return array_values(array_filter((array) $this->safe()->input('notification_channels', [])));
+        return $this->uuidList('notification_channels');
     }
 
     /**

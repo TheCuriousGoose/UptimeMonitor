@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use App\Enums\ContentType;
+use App\Models\Concerns\RoutesByUuid;
 use App\Support\SqlDialect;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class ContentEntry extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, RoutesByUuid;
 
     protected function casts(): array
     {
@@ -27,16 +27,6 @@ class ContentEntry extends Model
             'published_at' => 'immutable_datetime',
             'sort_order' => 'integer',
         ];
-    }
-
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
-    }
-
-    public function uniqueIds(): array
-    {
-        return ['uuid'];
     }
 
     public function author(): BelongsTo

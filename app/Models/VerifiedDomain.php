@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RoutesByUuid;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
 #[Fillable(['user_id', 'domain', 'token', 'verified_at', 'last_error', 'last_attempted_at'])]
 class VerifiedDomain extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, RoutesByUuid;
 
     protected function casts(): array
     {
@@ -33,16 +33,6 @@ class VerifiedDomain extends Model
         static::creating(function (VerifiedDomain $domain): void {
             $domain->token ??= 'vigil-verify='.Str::random(40);
         });
-    }
-
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
-    }
-
-    public function uniqueIds(): array
-    {
-        return ['uuid'];
     }
 
     public function user(): BelongsTo

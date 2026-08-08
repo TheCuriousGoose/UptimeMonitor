@@ -5,13 +5,14 @@ namespace App\Models;
 use App\Casts\EncryptedJson;
 use App\Enums\MonitorStatus;
 use App\Enums\MonitorType;
+use App\Models\Concerns\RoutesByUuid;
+use App\Models\Concerns\SortsByAllowlist;
 use App\Monitoring\TargetIdentity;
 use App\Support\SqlDialect;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,7 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Monitor extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, RoutesByUuid, SortsByAllowlist;
 
     protected function casts(): array
     {
@@ -86,16 +87,6 @@ class Monitor extends Model
             'paused_at' => now(),
             'paused_reason' => mb_substr($reason, 0, 255),
         ])->save();
-    }
-
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
-    }
-
-    public function uniqueIds(): array
-    {
-        return ['uuid'];
     }
 
     public function checks(): HasMany
@@ -168,9 +159,7 @@ class Monitor extends Model
 
     /**
      * The columns a client may order by, keyed by the name the table sends.
-     *
-     * An allowlist rather than a passthrough: `direction` is validated, but
-     * the column would otherwise be interpolated straight into orderBy.
+     * Null means the ordering is computed — see {@see sortDerived()}.
      */
     public const SORTS = [
         'name' => 'name',
@@ -239,18 +228,15 @@ class Monitor extends Model
         };
     }
 
-    #[Scope]
-    protected function sort(Builder $query, ?string $sort, string $direction = 'asc'): void
+    protected function sortDerived(Builder $query, ?string $sort, string $direction): void
     {
-        $direction = $direction === 'desc' ? 'desc' : 'asc';
-        $column = self::SORTS[$sort] ?? null;
+        $sort === 'status'
+            ? $query->orderByRaw(self::RANK.' '.$direction)
+            : $query->orderByRaw(self::RANK);
+    }
 
-        match (true) {
-            $column !== null => $query->orderBy($column, $direction),
-            $sort === 'status' => $query->orderByRaw(self::RANK.' '.$direction),
-            default => $query->orderByRaw(self::RANK),
-        };
-
+    protected function sortTiebreak(Builder $query): void
+    {
         $query->orderBy('name');
     }
 
