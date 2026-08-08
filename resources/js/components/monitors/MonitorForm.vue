@@ -1045,12 +1045,14 @@ import * as monitorsRoute from '@/routes/monitors';
 import type {
     Monitor,
     MonitorType,
+    MonitorTypeOptions,
     NotificationChannel,
 } from '@/types/monitors';
 
 const props = withDefaults(
     defineProps<{
         types: MonitorType[];
+        typeOptions: MonitorTypeOptions;
         channels: NotificationChannel[];
         form?:
             | ReturnType<typeof monitorsRoute.store.form>
@@ -1074,16 +1076,12 @@ const typeIcons: Record<MonitorType, unknown> = {
     ssl: ShieldCheckIcon,
 };
 
-const urlTypes: MonitorType[] = ['http', 'keyword', 'ssl'];
-const methods = ['GET', 'POST', 'HEAD', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
-const authTypes = ['none', 'basic', 'bearer'];
-const contentTypes = [
-    'application/json',
-    'application/x-www-form-urlencoded',
-    'text/plain',
-    'application/xml',
-];
-const recordTypes = ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS'];
+// Server-supplied, so these can never offer a value the profiles reject.
+const methods = computed(() => props.typeOptions.methods);
+const authTypes = computed(() => props.typeOptions.auth_types);
+const contentTypes = computed(() => props.typeOptions.content_types);
+const recordTypes = computed(() => props.typeOptions.record_types);
+
 const confirmationOptions = [1, 2, 3, 5];
 const recoveryOptions = [1, 2, 3, 5];
 
@@ -1228,7 +1226,9 @@ async function testCheck() {
 }
 
 const type = ref<MonitorType>(props.defaults?.type ?? props.types[0]);
-const expectsUrl = computed(() => urlTypes.includes(type.value));
+const expectsUrl = computed(() =>
+    props.typeOptions.url_types.includes(type.value),
+);
 
 const invert = ref(props.defaults?.config?.invert ?? false);
 const verifySsl = ref(props.defaults?.config?.verify_ssl ?? true);

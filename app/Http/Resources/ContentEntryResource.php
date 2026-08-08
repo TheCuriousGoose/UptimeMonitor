@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\Concerns\ResolvesRelations;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -12,6 +13,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class ContentEntryResource extends JsonResource
 {
+    use ResolvesRelations;
+
     /**
      * @return array<string, mixed>
      */
@@ -28,10 +31,7 @@ class ContentEntryResource extends JsonResource
             'sort_order' => $this->sort_order,
             'published_at' => $this->published_at?->toIso8601String(),
             'is_published' => $this->isPublished(),
-            'author' => $this->whenLoaded(
-                'author',
-                fn () => (new UserResource($this->author))->resolve(),
-            ),
+            'author' => $this->whenLoadedResource('author', UserResource::class),
         ];
     }
 }

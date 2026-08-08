@@ -1,6 +1,33 @@
 <?php
 
 return [
+    'targets' => [
+        'title' => 'Targets',
+        'description' => 'Every domain this instance sends scheduled checks to, ranked by request rate.',
+        'empty' => 'No monitors have a resolved target domain yet.',
+        'domain' => 'Domain',
+        'monitors' => 'Monitors',
+        'accounts' => 'Accounts',
+        'rate' => 'Requests/min',
+        'verified' => 'Verified',
+        'unverified' => 'Unverified',
+        'over_limit' => 'Over the configured limit of :limit/min.',
+        'no_limit' => 'No per-domain limit is configured on this instance.',
+        'concentration' => 'Spread across :accounts accounts.',
+        'view' => 'View',
+        'pause_all' => 'Pause all monitors',
+        'pause_all_confirm' => 'This pauses every active monitor pointed at :domain, across all accounts. Owners are not notified.',
+        'paused_by_admin' => 'Paused by an administrator.',
+        'owner' => 'Owner',
+        'interval' => 'Interval',
+        'status' => 'Status',
+        'active' => 'Active',
+        'paused' => 'Paused',
+        'messages' => [
+            'paused' => 'Paused :count monitor(s) pointed at :domain.',
+        ],
+    ],
+
     'users' => [
         'title' => 'Users',
         'search' => 'Search users…',

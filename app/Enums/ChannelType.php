@@ -2,6 +2,16 @@
 
 namespace App\Enums;
 
+use App\Monitoring\Notifiers\DiscordNotifier;
+use App\Monitoring\Notifiers\GoogleChatNotifier;
+use App\Monitoring\Notifiers\MailNotifier;
+use App\Monitoring\Notifiers\Notifier;
+use App\Monitoring\Notifiers\OpsgenieNotifier;
+use App\Monitoring\Notifiers\PagerDutyNotifier;
+use App\Monitoring\Notifiers\SlackNotifier;
+use App\Monitoring\Notifiers\TeamsNotifier;
+use App\Monitoring\Notifiers\WebhookNotifier;
+
 enum ChannelType: string
 {
     case Email = 'email';
@@ -60,6 +70,40 @@ enum ChannelType: string
                 'config.url' => ['required', 'url', 'max:2048'],
             ],
         };
+    }
+
+    /**
+     * The notifier that delivers this channel's alerts.
+     *
+     * @return class-string<Notifier>
+     */
+    public function notifier(): string
+    {
+        return match ($this) {
+            self::Email => MailNotifier::class,
+            self::Webhook => WebhookNotifier::class,
+            self::Slack => SlackNotifier::class,
+            self::Discord => DiscordNotifier::class,
+            self::PagerDuty => PagerDutyNotifier::class,
+            self::Opsgenie => OpsgenieNotifier::class,
+            self::Teams => TeamsNotifier::class,
+            self::GoogleChat => GoogleChatNotifier::class,
+        };
+    }
+
+    /**
+     * The map the NotifierRegistry is built from. Derived from the cases so a
+     * new channel type cannot be offered on the form but left undeliverable.
+     *
+     * @return array<string, class-string<Notifier>>
+     */
+    public static function notifierMap(): array
+    {
+        return array_reduce(
+            self::cases(),
+            fn (array $map, self $type) => $map + [$type->value => $type->notifier()],
+            [],
+        );
     }
 
     /**

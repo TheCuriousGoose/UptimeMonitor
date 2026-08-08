@@ -44,10 +44,10 @@ return [
                 'uptime' => 'Uptime 90d',
             ],
             'rows' => [
-                'api' => ['name' => 'api.example.com', 'type' => 'HTTP', 'latency' => '142 ms', 'uptime' => '99.98%'],
-                'web' => ['name' => 'example.com', 'type' => 'Keyword', 'latency' => '318 ms', 'uptime' => '99.95%'],
-                'db' => ['name' => 'db.internal:5432', 'type' => 'Port', 'latency' => 'timeout', 'uptime' => '99.41%'],
-                'cert' => ['name' => 'example.com', 'type' => 'TLS', 'latency' => '41 d left', 'uptime' => '100%'],
+                'api' => ['name' => 'api.example.com', 'type' => 'HTTP', 'latency' => '142 ms', 'uptime' => '99.982%'],
+                'web' => ['name' => 'example.com', 'type' => 'Keyword', 'latency' => '318 ms', 'uptime' => '99.954%'],
+                'db' => ['name' => 'db.internal:5432', 'type' => 'Port', 'latency' => 'timeout', 'uptime' => '99.411%'],
+                'cert' => ['name' => 'example.com', 'type' => 'TLS', 'latency' => '41 d left', 'uptime' => '100.000%'],
             ],
             'status' => [
                 'up' => 'Up',

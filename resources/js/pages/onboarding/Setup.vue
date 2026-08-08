@@ -32,11 +32,16 @@ import { csrfHeaders } from '@/lib/http';
 import { tList, trans } from '@/lib/i18n';
 import * as monitorsRoute from '@/routes/monitors';
 import * as onboardingRoute from '@/routes/onboarding';
-import type { MonitorType, NotificationChannel } from '@/types/monitors';
+import type {
+    MonitorType,
+    MonitorTypeOptions,
+    NotificationChannel,
+} from '@/types/monitors';
 import type { OnboardingProgress } from '@/types/onboarding';
 
 const props = defineProps<{
     types: MonitorType[];
+    typeOptions: MonitorTypeOptions;
     channels: NotificationChannel[];
     suggestedEmail: string;
     progress: OnboardingProgress;
@@ -59,8 +64,6 @@ const typeIcons: Record<MonitorType, unknown> = {
     ssl: ShieldCheckIcon,
 };
 
-const urlTypes: MonitorType[] = ['http', 'keyword', 'ssl'];
-
 // The same presets the ordinary form offers, so choosing the guided route
 // never means settling for fewer options than the manual one.
 const intervalChoices = [
@@ -73,7 +76,7 @@ const intervalChoices = [
 ];
 
 const thresholdChoices = [1, 2, 3, 5];
-const recordTypes = ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS'];
+const recordTypes = computed(() => props.typeOptions.record_types);
 
 const welcomePoints = tList('onboarding.setup.welcome.points');
 
@@ -103,7 +106,9 @@ const selectedChannels = ref<string[]>(
 const errors = ref<Record<string, string>>({});
 const saving = ref(false);
 
-const expectsUrl = computed(() => urlTypes.includes(type.value));
+const expectsUrl = computed(() =>
+    props.typeOptions.url_types.includes(type.value),
+);
 
 const railIndex = computed(() => rail.indexOf(step.value));
 

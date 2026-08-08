@@ -5,9 +5,11 @@ namespace App\Models;
 use App\Casts\EncryptedJson;
 use App\Enums\MonitorStatus;
 use App\Enums\MonitorType;
+use App\Monitoring\TargetIdentity;
 use App\Support\SqlDialect;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'confirmation_threshold', 'recovery_threshold', 'next_check_at', 'latest_is_up',
     'is_active', 'failure_streak', 'success_streak', 'last_checked_at', 'status_changed_at',
     'degraded_response_ms', 'is_degraded', 'degraded_streak', 'maintenance_until',
+    'target_domain', 'refusal_streak', 'paused_at', 'paused_reason',
 ])]
 class Monitor extends Model
 {
@@ -35,6 +38,8 @@ class Monitor extends Model
             'last_checked_at' => 'immutable_datetime',
             'status_changed_at' => 'immutable_datetime',
             'maintenance_until' => 'immutable_datetime',
+            'paused_at' => 'immutable_datetime',
+            'refusal_streak' => 'integer',
             'is_active' => 'boolean',
             'latest_is_up' => 'boolean',
             'interval_seconds' => 'integer',
@@ -53,6 +58,34 @@ class Monitor extends Model
         static::creating(function (Monitor $monitor): void {
             $monitor->next_check_at ??= now();
         });
+
+        static::saving(function (Monitor $monitor): void {
+            if ($monitor->isDirty('url')) {
+                $monitor->target_domain = TargetIdentity::forMonitor($monitor)?->domain;
+            }
+        });
+    }
+
+    public function targetIdentity(): ?TargetIdentity
+    {
+        return TargetIdentity::forMonitor($this);
+    }
+
+    /**
+     * Requests per minute this monitor contributes to its target's budget.
+     */
+    public function requestsPerMinute(): float
+    {
+        return 60 / max(1, (int) $this->interval_seconds);
+    }
+
+    public function pauseFor(string $reason): void
+    {
+        $this->forceFill([
+            'is_active' => false,
+            'paused_at' => now(),
+            'paused_reason' => mb_substr($reason, 0, 255),
+        ])->save();
     }
 
     public function getRouteKeyName(): string
@@ -128,41 +161,9 @@ class Monitor extends Model
         return ($from ?? now())->addSeconds(max(30, $this->interval_seconds));
     }
 
-    public function scopeForUser(Builder $query, User $user): Builder
-    {
-        return $query->where('created_by', $user->id);
-    }
-
-    public function scopeDue(Builder $query): Builder
-    {
-        return $query->where('is_active', true)->where('next_check_at', '<=', now());
-    }
-
     public function maintenanceWindows(): BelongsToMany
     {
         return $this->belongsToMany(MaintenanceWindow::class);
-    }
-
-    public function scopeStatus(Builder $query, ?MonitorStatus $status): Builder
-    {
-        $awake = fn (Builder $q) => $q->where('is_active', true)
-            ->where(fn (Builder $inner) => $inner
-                ->whereNull('maintenance_until')
-                ->orWhere('maintenance_until', '<=', now()));
-
-        return match ($status) {
-            // Degraded is carved out of Up so the filters partition rather
-            // than overlap — a monitor is in exactly one of them.
-            MonitorStatus::Up => $awake($query)->where('latest_is_up', true)->where('is_degraded', false),
-            MonitorStatus::Degraded => $awake($query)->where('latest_is_up', true)->where('is_degraded', true),
-            MonitorStatus::Down => $awake($query)->where('latest_is_up', false),
-            MonitorStatus::Maintenance => $query->where('is_active', true)
-                ->whereNotNull('maintenance_until')
-                ->where('maintenance_until', '>', now()),
-            MonitorStatus::Paused => $query->where('is_active', false),
-            MonitorStatus::Pending => $awake($query)->whereNull('latest_is_up'),
-            null => $query,
-        };
     }
 
     /**
@@ -176,43 +177,94 @@ class Monitor extends Model
         'type' => 'type',
         'interval' => 'interval_seconds',
         'last_checked' => 'last_checked_at',
-        'status' => null, // Ranked, not a column — see scopeSort().
+        'status' => null, // Ranked, not a column — see RANK.
     ];
 
-    public function scopeSort(Builder $query, ?string $sort, string $direction = 'asc'): Builder
+    /**
+     * Down first, then pending and up, with paused last. Someone opening the
+     * list is looking for what is broken.
+     */
+    private const RANK = 'CASE WHEN is_active = FALSE THEN 2 WHEN latest_is_up = FALSE THEN 0 ELSE 1 END';
+
+    #[Scope]
+    protected function forUser(Builder $query, User $user): void
     {
-        $direction = $direction === 'desc' ? 'desc' : 'asc';
-
-        if ($sort === null || ! array_key_exists($sort, self::SORTS)) {
-            // Down first, then pending and up, with paused last. Someone
-            // opening this page is looking for what is broken.
-            return $query
-                ->orderByRaw('CASE WHEN is_active = FALSE THEN 2 WHEN latest_is_up = FALSE THEN 0 ELSE 1 END')
-                ->orderBy('name');
-        }
-
-        if ($sort === 'status') {
-            return $query
-                ->orderByRaw(
-                    'CASE WHEN is_active = FALSE THEN 2 WHEN latest_is_up = FALSE THEN 0 ELSE 1 END '.$direction,
-                )
-                ->orderBy('name');
-        }
-
-        return $query->orderBy(self::SORTS[$sort], $direction)->orderBy('name');
+        $query->where('created_by', $user->id);
     }
 
-    public function scopeSearch(Builder $query, ?string $search): Builder
+    #[Scope]
+    protected function forDomain(Builder $query, string $domain): void
+    {
+        $query->where('target_domain', $domain);
+    }
+
+    #[Scope]
+    protected function due(Builder $query): void
+    {
+        $query->where('is_active', true)->where('next_check_at', '<=', now());
+    }
+
+    /**
+     * Active and not inside a maintenance window — the states that partition
+     * into up, degraded, down and pending.
+     */
+    #[Scope]
+    protected function awake(Builder $query): void
+    {
+        $query->where('is_active', true)
+            ->where(fn (Builder $inner) => $inner
+                ->whereNull('maintenance_until')
+                ->orWhere('maintenance_until', '<=', now()));
+    }
+
+    /**
+     * Named whereStatus rather than status because status() is already the
+     * instance accessor, and a scope attribute takes the bare method name.
+     */
+    #[Scope]
+    protected function whereStatus(Builder $query, ?MonitorStatus $status): void
+    {
+        match ($status) {
+            // Degraded is carved out of Up so the filters partition rather
+            // than overlap — a monitor is in exactly one of them.
+            MonitorStatus::Up => $query->awake()->where('latest_is_up', true)->where('is_degraded', false),
+            MonitorStatus::Degraded => $query->awake()->where('latest_is_up', true)->where('is_degraded', true),
+            MonitorStatus::Down => $query->awake()->where('latest_is_up', false),
+            MonitorStatus::Pending => $query->awake()->whereNull('latest_is_up'),
+            MonitorStatus::Maintenance => $query->where('is_active', true)
+                ->whereNotNull('maintenance_until')
+                ->where('maintenance_until', '>', now()),
+            MonitorStatus::Paused => $query->where('is_active', false),
+            null => $query,
+        };
+    }
+
+    #[Scope]
+    protected function sort(Builder $query, ?string $sort, string $direction = 'asc'): void
+    {
+        $direction = $direction === 'desc' ? 'desc' : 'asc';
+        $column = self::SORTS[$sort] ?? null;
+
+        match (true) {
+            $column !== null => $query->orderBy($column, $direction),
+            $sort === 'status' => $query->orderByRaw(self::RANK.' '.$direction),
+            default => $query->orderByRaw(self::RANK),
+        };
+
+        $query->orderBy('name');
+    }
+
+    #[Scope]
+    protected function search(Builder $query, ?string $search): void
     {
         if (! $search) {
-            return $query;
+            return;
         }
 
         $like = SqlDialect::like();
 
-        return $query->where(function (Builder $q) use ($search, $like) {
-            $q->where('name', $like, "%{$search}%")
-                ->orWhere('url', $like, "%{$search}%");
-        });
+        $query->where(fn (Builder $inner) => $inner
+            ->where('name', $like, "%{$search}%")
+            ->orWhere('url', $like, "%{$search}%"));
     }
 }

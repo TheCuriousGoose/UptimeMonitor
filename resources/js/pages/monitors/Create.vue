@@ -31,7 +31,11 @@
             </ol>
         </div>
 
-        <MonitorForm :types="types" :channels="channels" />
+        <MonitorForm
+            :types="types"
+            :type-options="typeOptions"
+            :channels="channels"
+        />
     </div>
 </template>
 
@@ -41,11 +45,16 @@ import { SparklesIcon } from 'lucide-vue-next';
 import MonitorForm from '@/components/monitors/MonitorForm.vue';
 import { trans } from '@/lib/i18n';
 import * as monitorsRoute from '@/routes/monitors';
-import type { MonitorType, NotificationChannel } from '@/types/monitors';
+import type {
+    MonitorType,
+    MonitorTypeOptions,
+    NotificationChannel,
+} from '@/types/monitors';
 import type { OnboardingProgress } from '@/types/onboarding';
 
 defineProps<{
     types: MonitorType[];
+    typeOptions: MonitorTypeOptions;
     channels: NotificationChannel[];
     onboarding: OnboardingProgress;
 }>();

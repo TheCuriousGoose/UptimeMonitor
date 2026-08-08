@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ContentType;
 use App\Support\SqlDialect;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -52,37 +53,40 @@ class ContentEntry extends Model
         return $this->published_at !== null && $this->published_at->isPast();
     }
 
-    public function scopePublished(Builder $query): Builder
+    #[Scope]
+    protected function published(Builder $query): void
     {
-        return $query->whereNotNull('published_at')->where('published_at', '<=', now());
+        $query->whereNotNull('published_at')->where('published_at', '<=', now());
     }
 
-    public function scopeOfType(Builder $query, ContentType $type): Builder
+    #[Scope]
+    protected function ofType(Builder $query, ContentType $type): void
     {
-        return $query->where('type', $type->value);
+        $query->where('type', $type->value);
     }
 
     /**
      * Docs are a hand-ordered manual; blog and changelog are newest-first.
      */
-    public function scopeInReadingOrder(Builder $query, ContentType $type): Builder
+    #[Scope]
+    protected function inReadingOrder(Builder $query, ContentType $type): void
     {
-        return $type->isManuallyOrdered()
+        $type->isManuallyOrdered()
             ? $query->orderBy('category')->orderBy('sort_order')->orderBy('title')
             : $query->orderByDesc('published_at');
     }
 
-    public function scopeSearch(Builder $query, ?string $search): Builder
+    #[Scope]
+    protected function search(Builder $query, ?string $search): void
     {
         if (! $search) {
-            return $query;
+            return;
         }
 
         $like = SqlDialect::like();
 
-        return $query->where(function (Builder $q) use ($search, $like) {
-            $q->where('title', $like, "%{$search}%")
-                ->orWhere('slug', $like, "%{$search}%");
-        });
+        $query->where(fn (Builder $inner) => $inner
+            ->where('title', $like, "%{$search}%")
+            ->orWhere('slug', $like, "%{$search}%"));
     }
 }

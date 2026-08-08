@@ -2,6 +2,20 @@ import type { User } from './auth';
 
 type MonitorType = 'http' | 'keyword' | 'port' | 'ping' | 'dns' | 'ssl';
 
+/**
+ * The closed lists behind the form's type-specific selects, sent from
+ * MonitorType::formOptions() rather than restated here. The form and the
+ * onboarding wizard each used to keep their own copy, which drifted from the
+ * rules the server actually validates against.
+ */
+type MonitorTypeOptions = {
+    url_types: MonitorType[];
+    methods: string[];
+    content_types: string[];
+    auth_types: string[];
+    record_types: string[];
+};
+
 type MonitorStatus =
     | 'up'
     | 'down'
@@ -48,6 +62,7 @@ interface Monitor {
     degraded_response_ms: number | null;
     is_degraded: boolean;
     config: MonitorConfig;
+    paused_reason: string | null;
     last_checked_at: string | null;
     status_changed_at: string | null;
     created_by?: User;
@@ -194,6 +209,7 @@ export type {
     MonitorStats,
     MonitorStatus,
     MonitorType,
+    MonitorTypeOptions,
     NotificationChannel,
     SeriesPoint,
     StatusPage,

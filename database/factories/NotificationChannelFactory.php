@@ -62,6 +62,33 @@ class NotificationChannelFactory extends Factory
         ]);
     }
 
+    public function pagerDuty(string $routingKey = '0123456789abcdef0123456789abcdef'): static
+    {
+        return $this->state(fn () => [
+            'name' => 'PagerDuty',
+            'type' => ChannelType::PagerDuty,
+            'config' => ['routing_key' => $routingKey],
+        ]);
+    }
+
+    public function opsgenie(string $apiKey = 'genie-key'): static
+    {
+        return $this->state(fn () => [
+            'name' => 'Opsgenie',
+            'type' => ChannelType::Opsgenie,
+            'config' => ['api_key' => $apiKey],
+        ]);
+    }
+
+    public function teams(string $url = 'https://outlook.office.com/webhook/aaa'): static
+    {
+        return $this->state(fn () => [
+            'name' => 'Teams',
+            'type' => ChannelType::Teams,
+            'config' => ['url' => $url],
+        ]);
+    }
+
     public function inactive(): static
     {
         return $this->state(fn () => ['is_active' => false]);

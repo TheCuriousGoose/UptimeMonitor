@@ -8,11 +8,6 @@ use App\Http\Resources\ContentEntryResource;
 use App\Models\ContentEntry;
 use Inertia\Inertia;
 
-/**
- * Public readers for docs, blog and changelog. Everything here is
- * unauthenticated and only ever exposes published entries — a draft or a
- * future-dated post must be unreachable by guessing its slug.
- */
 class ContentController extends Controller
 {
     public function __construct(private readonly MarkdownRenderer $markdown) {}
@@ -38,11 +33,6 @@ class ContentController extends Controller
         ]);
     }
 
-    /**
-     * Privacy and terms live at their own top-level URLs rather than under a
-     * /legal index — they are linked from the footer of every page, and the
-     * operator has to be able to edit them without a deploy.
-     */
     public function legal(string $slug)
     {
         $entry = ContentEntry::query()
@@ -74,7 +64,6 @@ class ContentController extends Controller
         return Inertia::render('content/Show', [
             'entry' => (new ContentEntryResource($entry))->resolve(),
             'bodyHtml' => $this->markdown->toHtml($entry->body),
-            // Siblings power the docs sidebar and the "more posts" list.
             'siblings' => $this->publishedOfType($type),
         ]);
     }

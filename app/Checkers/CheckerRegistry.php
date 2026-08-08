@@ -2,19 +2,20 @@
 
 namespace App\Checkers;
 
-use InvalidArgumentException;
+use App\Support\TypeRegistry;
 
-class CheckerRegistry
+/**
+ * @extends TypeRegistry<Checker>
+ */
+class CheckerRegistry extends TypeRegistry
 {
-    /** @param array<string, class-string<Checker>> $map */
-    public function __construct(private readonly array $map) {}
-
     public function resolve(string $type): Checker
     {
-        if (! isset($this->map[$type])) {
-            throw new InvalidArgumentException("Unknown monitor type: [{$type}]");
-        }
+        return $this->make($type);
+    }
 
-        return app($this->map[$type]);
+    protected function label(): string
+    {
+        return 'monitor type';
     }
 }

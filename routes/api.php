@@ -33,8 +33,6 @@ Route::middleware(['auth:sanctum', 'throttle:api'])
             ->middleware('abilities:monitors:read')
             ->name('monitors.checks');
 
-        // Same outbound-request-amplifier risk as the web action, so it
-        // carries the same tight "check-now" throttle on top of "api".
         Route::post('monitors/{monitor}/check', [MonitorCheckController::class, 'store'])
             ->middleware(['abilities:checks:trigger', 'throttle:check-now'])
             ->name('monitors.check');

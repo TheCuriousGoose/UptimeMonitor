@@ -35,6 +35,7 @@ class OnboardingController extends Controller
 
         return Inertia::render('onboarding/Setup', [
             'types' => MonitorType::values(),
+            'typeOptions' => MonitorType::formOptions(),
             'channels' => NotificationChannelResource::collection(
                 NotificationChannel::query()
                     ->where('user_id', $user->id)

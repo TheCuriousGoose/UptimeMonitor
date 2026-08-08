@@ -57,12 +57,7 @@ export function formatUptime(percentage: number | null): string {
         return '-';
     }
 
-    // Keep three decimals near the top of the range where they carry meaning.
-    if (percentage >= 99.9 && percentage < 100) {
-        return `${percentage.toFixed(3)}%`;
-    }
-
-    return `${percentage.toFixed(percentage === 100 ? 0 : 2)}%`;
+    return `${percentage.toFixed(3)}%`;
 }
 
 export function formatDateTime(value: string | null): string {

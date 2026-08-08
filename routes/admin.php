@@ -4,11 +4,10 @@ use App\Http\Controllers\Admin\ContentEntryController;
 use App\Http\Controllers\Admin\ImpersonateRoleController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\TargetController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
-// Gated per-action by policy rather than by a hardcoded role, so a
-// partial-admin role can be composed from the Roles screen.
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('roles', [RoleController::class, 'index'])->name('roles.index');
     Route::post('roles', [RoleController::class, 'store'])->name('roles.store');
@@ -25,14 +24,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::put('content/{entry}', [ContentEntryController::class, 'update'])->name('content.update');
     Route::delete('content/{entry}', [ContentEntryController::class, 'destroy'])->name('content.destroy');
 
+    Route::get('targets', [TargetController::class, 'index'])->name('targets.index');
+    Route::get('targets/{domain}', [TargetController::class, 'show'])->name('targets.show');
+    Route::delete('targets/{domain}', [TargetController::class, 'destroy'])->name('targets.destroy');
+
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::put('settings/{key}', [SettingController::class, 'update'])->name('settings.update');
 
-    // A bypass of every check above, not a permission of its own.
     Route::post('impersonate/{role}', [ImpersonateRoleController::class, 'store'])
         ->middleware('role:Super Admin')
         ->name('impersonate.store');
 });
 
-// Stop impersonation — accessible while impersonating (outside role:Super Admin guard)
 Route::delete('admin/impersonate', [ImpersonateRoleController::class, 'destroy'])->name('admin.impersonate.destroy');

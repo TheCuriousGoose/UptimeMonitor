@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Monitors\SyncMonitorChannels;
 use App\Enums\MonitorType;
 use App\Http\Requests\Monitors\IndexRequest;
 use App\Http\Requests\Monitors\ShowRequest;
@@ -28,7 +29,7 @@ class MonitorController extends Controller
         $monitors = Monitor::query()
             ->forUser(Auth::user())
             ->search($request->search())
-            ->status($request->status())
+            ->whereStatus($request->status())
             ->with(['createdBy'])
             ->sort($request->sort(), $request->direction())
             ->paginate(15)
@@ -87,16 +88,17 @@ class MonitorController extends Controller
 
         return Inertia::render('monitors/Create', [
             'types' => MonitorType::values(),
+            'typeOptions' => MonitorType::formOptions(),
             'channels' => NotificationChannelResource::collection($this->userChannels())->resolve(),
             'onboarding' => OnboardingProgress::for(Auth::user()),
         ]);
     }
 
-    public function store(StoreRequest $request)
+    public function store(StoreRequest $request, SyncMonitorChannels $syncChannels)
     {
         $monitor = $request->user()->monitors()->create($request->monitorAttributes());
 
-        $this->syncChannels($monitor, $request->channelUuids());
+        $syncChannels($monitor, $request->channelUuids());
 
         return to_route('monitors.show', $monitor)
             ->with('success', __('monitors.messages.created.success'));
@@ -111,16 +113,17 @@ class MonitorController extends Controller
         return Inertia::render('monitors/Edit', [
             'monitor' => (new MonitorResource($monitor))->resolve(),
             'types' => MonitorType::values(),
+            'typeOptions' => MonitorType::formOptions(),
             'channels' => NotificationChannelResource::collection($this->userChannels())->resolve(),
         ]);
     }
 
-    public function update(UpdateRequest $request, Monitor $monitor)
+    public function update(UpdateRequest $request, Monitor $monitor, SyncMonitorChannels $syncChannels)
     {
         $monitor->update($request->monitorAttributes());
 
         if ($request->has('notification_channels')) {
-            $this->syncChannels($monitor, $request->channelUuids());
+            $syncChannels($monitor, $request->channelUuids());
         }
 
         return to_route('monitors.show', $monitor)
@@ -135,22 +138,6 @@ class MonitorController extends Controller
 
         return to_route('monitors.index')
             ->with('success', __('monitors.messages.deleted.success'));
-    }
-
-    /**
-     * Channels always belong to the acting user, never the monitor owner, so an
-     * admin editing someone else's monitor cannot attach their own endpoints.
-     *
-     * @param  array<int, string>  $uuids
-     */
-    private function syncChannels(Monitor $monitor, array $uuids): void
-    {
-        $ids = NotificationChannel::query()
-            ->where('user_id', $monitor->created_by)
-            ->whereIn('uuid', $uuids)
-            ->pluck('id');
-
-        $monitor->notificationChannels()->sync($ids);
     }
 
     private function userChannels()

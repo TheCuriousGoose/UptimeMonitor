@@ -6,9 +6,9 @@ use App\Http\Requests\StatusPages\StoreStatusPageRequest;
 use App\Http\Requests\StatusPages\UpdateStatusPageRequest;
 use App\Http\Resources\MonitorResource;
 use App\Http\Resources\StatusPageResource;
-use App\Models\Monitor;
 use App\Models\StatusPage;
 use App\Policies\StatusPagePolicy;
+use App\Queries\OwnedMonitors;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -16,6 +16,8 @@ use Inertia\Inertia;
 #[UsePolicy(StatusPagePolicy::class)]
 class StatusPageController extends Controller
 {
+    public function __construct(private readonly OwnedMonitors $monitors) {}
+
     public function index()
     {
         $this->authorize('viewAny', StatusPage::class);
@@ -29,7 +31,7 @@ class StatusPageController extends Controller
 
         return Inertia::render('status-pages/Index', [
             'pages' => StatusPageResource::collection($pages)->resolve(),
-            'monitors' => MonitorResource::collection($this->userMonitors())->resolve(),
+            'monitors' => MonitorResource::collection($this->monitors->listFor(Auth::user()))->resolve(),
         ]);
     }
 
@@ -70,10 +72,7 @@ class StatusPageController extends Controller
      */
     private function syncMonitors(StatusPage $page, array $uuids): void
     {
-        $idsByUuid = Monitor::query()
-            ->where('created_by', $page->user_id)
-            ->whereIn('uuid', $uuids)
-            ->pluck('id', 'uuid');
+        $idsByUuid = $this->monitors->idsByUuid($page->user_id, $uuids);
 
         // Walk the submitted uuids so the page keeps the order the user chose.
         $sync = [];
@@ -86,10 +85,5 @@ class StatusPageController extends Controller
         }
 
         $page->monitors()->sync($sync);
-    }
-
-    private function userMonitors()
-    {
-        return Monitor::query()->forUser(Auth::user())->orderBy('name')->get();
     }
 }

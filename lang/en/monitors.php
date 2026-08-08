@@ -32,6 +32,10 @@ return [
         'paused' => 'Paused',
         'pending' => 'Awaiting first check',
     ],
+    'paused' => [
+        'refused' => 'Paused automatically: the target answered :status to :count checks in a row.',
+        'notice' => 'This monitor was paused automatically.',
+    ],
     'empty' => [
         'title' => 'Add your first monitor',
         'description' => 'Give us a URL, host or port. We check it on a schedule and alert when it fails.',

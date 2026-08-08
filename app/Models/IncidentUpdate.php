@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\IncidentUpdateStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -43,8 +44,9 @@ class IncidentUpdate extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function scopePublic(Builder $query): Builder
+    #[Scope]
+    protected function public(Builder $query): void
     {
-        return $query->where('is_public', true);
+        $query->where('is_public', true);
     }
 }

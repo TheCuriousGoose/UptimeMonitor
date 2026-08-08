@@ -82,6 +82,36 @@ return [
         'description' => 'Update your account\'s appearance settings',
     ],
 
+    'domains' => [
+        'breadcrumb' => 'Verified domains',
+        'heading' => 'Verified domains',
+        'description' => 'Prove you control a domain before this instance sends scheduled traffic to it.',
+        'required_notice' => 'This instance requires verification. Monitors on unverified domains are limited to a slow interval, one monitor, and GET or HEAD requests with no body.',
+        'optional_notice' => 'Verification is not required on this instance, but verified domains are exempt from the stricter unverified limits.',
+        'add' => 'Add domain',
+        'add_placeholder' => 'example.com',
+        'verify' => 'Verify',
+        'recheck' => 'Check again',
+        'remove' => 'Remove',
+        'verified' => 'Verified',
+        'pending' => 'Not verified',
+        'last_checked' => 'Last checked :time',
+        'empty' => 'No domains added yet.',
+        'how_to' => 'Publish either of these, then verify:',
+        'dns_option' => 'A TXT record at :host.:domain with the value below.',
+        'file_option' => 'A file at https://:domain:path containing the value below.',
+        'token_label' => 'Verification value',
+        'errors' => [
+            'not_found' => 'The verification value was not found in DNS or at the well-known URL.',
+        ],
+        'messages' => [
+            'added' => 'Added :domain. Publish the verification value, then verify it.',
+            'verified' => ':domain is verified.',
+            'not_found' => 'Could not verify :domain. DNS changes can take a while to propagate.',
+            'removed' => 'Removed :domain.',
+        ],
+    ],
+
     'account' => [
         'heading' => 'Delete account',
         'description' => 'Delete your account and all of its resources',

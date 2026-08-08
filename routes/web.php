@@ -11,14 +11,11 @@ Route::inertia('/', 'marketing/Home', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
-// Marketing pages — static copy, no controller state of their own.
 Route::inertia('features', 'marketing/Features')->name('features');
 Route::inertia('about', 'marketing/About')->name('about');
 Route::inertia('contact', 'marketing/Contact')->name('contact');
 Route::inertia('roadmap', 'marketing/Roadmap')->name('roadmap');
 
-// Legal pages are content entries, not static components: the controller
-// details in them differ per deployment and must be editable without a deploy.
 Route::get('privacy', [ContentController::class, 'legal'])
     ->defaults('slug', 'privacy')
     ->name('privacy');
@@ -26,7 +23,6 @@ Route::get('terms', [ContentController::class, 'legal'])
     ->defaults('slug', 'terms')
     ->name('terms');
 
-// Public content readers, backed by content_entries.
 Route::get('docs', [ContentController::class, 'docs'])->name('docs.index');
 Route::get('blog', [ContentController::class, 'blog'])->name('blog.index');
 Route::get('changelog', [ContentController::class, 'changelog'])->name('changelog.index');
@@ -41,8 +37,6 @@ Route::get('sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     require __DIR__.'/authenticated.php';
-    // Was previously required outside this group — profile, security,
-    // appearance, password, and API-key management were reachable by guests.
     require __DIR__.'/settings.php';
 });
 

@@ -2,8 +2,6 @@
 
 namespace App\Monitoring\Notifiers;
 
-use App\Models\NotificationChannel;
-use App\Monitoring\AlertEvent;
 use App\Monitoring\AlertMessage;
 use App\Monitoring\RenderedAlert;
 use Illuminate\Support\Facades\Http;
@@ -11,47 +9,53 @@ use Illuminate\Support\Facades\Http;
 /**
  * Opsgenie Alert API v2.
  *
- * Alerts are keyed by alias (the monitor uuid) so a recovery closes the alert
- * the outage opened rather than piling up duplicates.
+ * Alerts are keyed by alias so a recovery closes the alert the outage opened
+ * rather than piling up duplicates. Creating against a live alias is how
+ * Opsgenie deduplicates, so a reminder re-posts rather than opening a second
+ * alert.
  */
-class OpsgenieNotifier implements Notifier
+class OpsgenieNotifier extends BaseNotifier
 {
     private const BASE = 'https://api.opsgenie.com/v2/alerts';
 
-    public function send(NotificationChannel $channel, AlertMessage $message, RenderedAlert $text): void
+    private const PRIORITIES = [
+        'error' => 'P2',
+        'warning' => 'P3',
+        'info' => 'P3',
+    ];
+
+    protected function deliver(string $destination, AlertMessage $message, RenderedAlert $text): void
     {
-        $apiKey = $channel->destination();
-
-        if ($apiKey === '') {
-            return;
-        }
-
-        $alias = 'monitor-'.$message->monitor->uuid;
-        $request = Http::timeout(10)->withHeaders([
-            'Authorization' => 'GenieKey '.$apiKey,
+        $alias = $message->dedupeKey();
+        $request = Http::timeout(static::TIMEOUT)->withHeaders([
+            'Authorization' => 'GenieKey '.$destination,
         ]);
 
-        if ($message->event === AlertEvent::Down) {
-            $request->post(self::BASE, [
-                'message' => $text->title,
-                'alias' => $alias,
-                'description' => $text->body,
-                'priority' => 'P2',
+        // Branching on isResolution() rather than comparing against Down:
+        // an identity check sent a reminder about a still-open outage — and
+        // every degradation — down the close path, resolving a live alert.
+        if ($message->event->isResolution()) {
+            $request->post(self::BASE.'/'.urlencode($alias).'/close?identifierType=alias', [
                 'source' => config('app.name'),
-                'details' => [
-                    'monitor' => $message->monitor->name,
-                    'url' => $message->monitor->url,
-                    'type' => $message->monitor->type->value,
-                    'error' => (string) $message->error,
-                ],
+                'note' => $text->body,
             ])->throw();
 
             return;
         }
 
-        $request->post(self::BASE.'/'.urlencode($alias).'/close?identifierType=alias', [
+        $request->post(self::BASE, [
+            'message' => $text->title,
+            'alias' => $alias,
+            'description' => $text->body,
+            'priority' => self::PRIORITIES[$message->event->severity()],
             'source' => config('app.name'),
-            'note' => $text->body,
+            'details' => [
+                'monitor' => $message->monitor->name,
+                'url' => $message->monitor->url,
+                'type' => $message->monitor->type->value,
+                'status' => $message->event->label(),
+                'error' => (string) $message->error,
+            ],
         ])->throw();
     }
 }

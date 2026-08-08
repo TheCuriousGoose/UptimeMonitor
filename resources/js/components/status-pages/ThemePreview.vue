@@ -187,13 +187,13 @@ const banner = computed<CSSProperties>(() => ({
 const rows = computed(() => [
     {
         name: trans('status_pages.theme.sample.api'),
-        uptime: '100%',
+        uptime: '100.000%',
         down: false,
         bars: [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     },
     {
         name: trans('status_pages.theme.sample.website'),
-        uptime: '99.4%',
+        uptime: '99.412%',
         down: true,
         bars: [1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1],
     },

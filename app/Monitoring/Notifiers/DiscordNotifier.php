@@ -2,32 +2,21 @@
 
 namespace App\Monitoring\Notifiers;
 
-use App\Models\NotificationChannel;
-use App\Monitoring\AlertEvent;
 use App\Monitoring\AlertMessage;
 use App\Monitoring\RenderedAlert;
-use Illuminate\Support\Facades\Http;
 
-class DiscordNotifier implements Notifier
+class DiscordNotifier extends HttpNotifier
 {
-    public function send(NotificationChannel $channel, AlertMessage $message, RenderedAlert $text): void
+    protected function payload(AlertMessage $message, RenderedAlert $text): array
     {
-        $url = $channel->destination();
-
-        if ($url === '') {
-            return;
-        }
-
-        $isDown = $message->event === AlertEvent::Down;
-
-        Http::timeout(10)->post($url, [
+        return [
             'embeds' => [[
                 'title' => $text->title,
                 'description' => $text->body,
                 // Discord wants a decimal colour value.
-                'color' => $isDown ? 0xDC2626 : 0x16A34A,
+                'color' => hexdec(ltrim($message->event->color(), '#')),
                 'timestamp' => $message->occurredAt->toIso8601String(),
             ]],
-        ])->throw();
+        ];
     }
 }

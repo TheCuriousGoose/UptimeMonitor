@@ -2,7 +2,6 @@
 
 namespace App\Notifications;
 
-use App\Monitoring\AlertEvent;
 use App\Monitoring\AlertMessage;
 use App\Monitoring\RenderedAlert;
 use Illuminate\Bus\Queueable;
@@ -34,7 +33,9 @@ class MonitorAlertNotification extends Notification
             ->line($this->text->body)
             ->action('View monitor', route('monitors.show', $this->message->monitor));
 
-        return $this->message->event === AlertEvent::Down
+        // Severity, not `=== Down`: a reminder about a still-open outage is
+        // every bit as urgent as the alert that opened it.
+        return $this->message->event->severity() === 'error'
             ? $mail->error()
             : $mail;
     }

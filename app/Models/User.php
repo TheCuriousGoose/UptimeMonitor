@@ -56,6 +56,11 @@ class User extends Authenticatable
         return $this->hasMany(StatusPage::class);
     }
 
+    public function verifiedDomains(): HasMany
+    {
+        return $this->hasMany(VerifiedDomain::class);
+    }
+
     public function can($ability, $arguments = []): bool
     {
         if ($this->hasRole('Super Admin')) {

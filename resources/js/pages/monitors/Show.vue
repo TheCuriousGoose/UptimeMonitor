@@ -16,6 +16,12 @@
                     {{ $t(`monitors.form.type.options.${monitor.type}`) }} ·
                     {{ monitor.url }}
                 </p>
+                <p
+                    v-if="!monitor.is_active && monitor.paused_reason"
+                    class="mt-2 rounded-sm border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-700 dark:text-amber-400"
+                >
+                    {{ monitor.paused_reason }}
+                </p>
             </div>
 
             <div class="flex flex-wrap items-center gap-2">

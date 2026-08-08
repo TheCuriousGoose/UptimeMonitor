@@ -45,24 +45,9 @@ final class StatusPageTheme
 
     public const MAX_WIDTH = 1600;
 
-    /**
-     * How many header/footer links a page may carry. Enough for "back to the
-     * website" and a support route, not enough to become a navigation bar.
-     */
-    public const MAX_LINKS = 5;
+    public const MAX_LINKS = ThemeValues::MAX_LINKS;
 
-    /**
-     * Webfont containers we will build an `@font-face` rule for, mapped to the
-     * `format()` hint. Deliberately files, not stylesheets: pointing at a
-     * remote CSS file would hand a third party full control of the page, which
-     * is a much larger door than "use our corporate typeface".
-     */
-    public const FONT_FORMATS = [
-        'woff2' => 'woff2',
-        'woff' => 'woff',
-        'ttf' => 'truetype',
-        'otf' => 'opentype',
-    ];
+    public const FONT_FORMATS = ThemeValues::FONT_FORMATS;
 
     private const LIGHT_BACKGROUND = '#ffffff';
 
@@ -104,21 +89,21 @@ final class StatusPageTheme
         $attributes ??= [];
 
         return new self(
-            mode: self::mode($attributes['mode'] ?? null),
-            fontFamily: self::fontFamily($attributes['font_family'] ?? null) ?? self::DEFAULT_FONT,
-            fontUrl: self::fontUrl($attributes['font_url'] ?? null),
-            radius: self::length($attributes['radius'] ?? null, self::MIN_RADIUS, self::MAX_RADIUS, self::DEFAULT_RADIUS),
-            width: self::length($attributes['width'] ?? null, self::MIN_WIDTH, self::MAX_WIDTH, self::DEFAULT_WIDTH),
-            brandColor: self::color($attributes['brand_color'] ?? null) ?? self::DEFAULT_BRAND,
-            background: self::color($attributes['background'] ?? null),
-            foreground: self::color($attributes['foreground'] ?? null),
-            upColor: self::color($attributes['up_color'] ?? null) ?? self::DEFAULT_UP,
-            downColor: self::color($attributes['down_color'] ?? null) ?? self::DEFAULT_DOWN,
-            warningColor: self::color($attributes['warning_color'] ?? null) ?? self::DEFAULT_WARNING,
-            logoUrl: self::url($attributes['logo_url'] ?? null),
-            faviconUrl: self::url($attributes['favicon_url'] ?? null),
-            footerText: self::text($attributes['footer_text'] ?? null),
-            links: self::links($attributes['links'] ?? null),
+            mode: ThemeValues::mode($attributes['mode'] ?? null),
+            fontFamily: ThemeValues::fontFamily($attributes['font_family'] ?? null) ?? self::DEFAULT_FONT,
+            fontUrl: ThemeValues::fontUrl($attributes['font_url'] ?? null),
+            radius: ThemeValues::length($attributes['radius'] ?? null, self::MIN_RADIUS, self::MAX_RADIUS, self::DEFAULT_RADIUS),
+            width: ThemeValues::length($attributes['width'] ?? null, self::MIN_WIDTH, self::MAX_WIDTH, self::DEFAULT_WIDTH),
+            brandColor: ThemeValues::color($attributes['brand_color'] ?? null) ?? self::DEFAULT_BRAND,
+            background: ThemeValues::color($attributes['background'] ?? null),
+            foreground: ThemeValues::color($attributes['foreground'] ?? null),
+            upColor: ThemeValues::color($attributes['up_color'] ?? null) ?? self::DEFAULT_UP,
+            downColor: ThemeValues::color($attributes['down_color'] ?? null) ?? self::DEFAULT_DOWN,
+            warningColor: ThemeValues::color($attributes['warning_color'] ?? null) ?? self::DEFAULT_WARNING,
+            logoUrl: ThemeValues::url($attributes['logo_url'] ?? null),
+            faviconUrl: ThemeValues::url($attributes['favicon_url'] ?? null),
+            footerText: ThemeValues::text($attributes['footer_text'] ?? null),
+            links: ThemeValues::links($attributes['links'] ?? null),
         );
     }
 
@@ -204,200 +189,14 @@ final class StatusPageTheme
 
     /**
      * The stylesheet the public page renders inline.
-     *
-     * `system` becomes a media query rather than a class the client toggles on
-     * hydration — the page is server-rendered, and a class toggle would show
-     * the light palette for a frame before correcting itself.
      */
     public function css(string $selector = '.sp-theme'): string
     {
-        $base = $this->mode === StatusPageMode::Dark
-            ? StatusPageMode::Dark
-            : StatusPageMode::Light;
-
-        $css = $this->fontFace().$this->block($selector, $this->palette($base));
-
-        if ($this->mode === StatusPageMode::System) {
-            $css .= '@media (prefers-color-scheme:dark){'
-                .$this->block($selector, $this->palette(StatusPageMode::Dark))
-                .'}';
-        }
-
-        return $css;
-    }
-
-    /**
-     * The `@font-face` for a self-hosted corporate typeface, named after the
-     * first family in the stack so `--sp-font` picks it up without the owner
-     * having to repeat themselves.
-     */
-    private function fontFace(): string
-    {
-        if ($this->fontUrl === null) {
-            return '';
-        }
-
-        $family = self::primaryFamily($this->fontFamily);
-        $extension = strtolower(pathinfo((string) parse_url($this->fontUrl, PHP_URL_PATH), PATHINFO_EXTENSION));
-        $format = self::FONT_FORMATS[$extension] ?? null;
-
-        if ($family === null || $format === null) {
-            return '';
-        }
-
-        return "@font-face{font-family:'".$family."';"
-            .'src:url("'.$this->fontUrl.'") format("'.$format.'");'
-            .'font-display:swap;}';
-    }
-
-    /**
-     * @param  array<string, string>  $palette
-     */
-    private function block(string $selector, array $palette): string
-    {
-        $declarations = '';
-
-        foreach ($palette as $property => $value) {
-            $declarations .= $property.':'.$value.';';
-        }
-
-        return $selector.'{'.$declarations.'}';
+        return (new ThemeStylesheet($this))->render($selector);
     }
 
     private static function statusColor(string $value, string $fallback, Color $background): string
     {
         return (Color::parse($value) ?? Color::parse($fallback))->legibleOn($background)->toHex();
-    }
-
-    private static function mode(mixed $value): StatusPageMode
-    {
-        return (is_string($value) ? StatusPageMode::tryFrom($value) : null) ?? StatusPageMode::System;
-    }
-
-    private static function color(mixed $value): ?string
-    {
-        return Color::parse(is_string($value) ? $value : null)?->toHex();
-    }
-
-    /**
-     * A CSS font stack, reduced to the characters family names are made of.
-     *
-     * Semicolons, braces, backslashes and parentheses are what would let a
-     * stack close the declaration and start writing rules of its own, so they
-     * are removed rather than escaped — a family name never needs them, and
-     * `url(...)` in particular must not survive.
-     */
-    private static function fontFamily(mixed $value): ?string
-    {
-        if (! is_string($value)) {
-            return null;
-        }
-
-        $stack = trim(preg_replace('/\s+/', ' ', (string) preg_replace('/[^-a-zA-Z0-9 ,\'"_]/', '', $value)));
-        $stack = trim($stack, ' ,');
-
-        return $stack === '' ? null : mb_substr($stack, 0, 160);
-    }
-
-    /**
-     * The first family in a stack, unquoted — the name an `@font-face` binds to.
-     */
-    private static function primaryFamily(string $stack): ?string
-    {
-        $first = trim((string) strtok($stack, ','), " \t\n\r\0\x0B\"'");
-
-        return $first === '' ? null : $first;
-    }
-
-    /**
-     * A font file we can build an `@font-face` around. Quotes, parentheses,
-     * backslashes, angle brackets and whitespace are rejected outright rather
-     * than escaped: the URL is emitted inside `url("…")`, and dropping `<`
-     * and `>` is what guarantees {@see css()} can never produce a `</style>`
-     * for the page to render unescaped.
-     */
-    private static function fontUrl(mixed $value): ?string
-    {
-        $url = self::url($value);
-
-        if ($url === null || preg_match('/["\'()<>\\\\\s]/', $url) === 1) {
-            return null;
-        }
-
-        $extension = strtolower(pathinfo((string) parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
-
-        return isset(self::FONT_FORMATS[$extension]) ? $url : null;
-    }
-
-    private static function length(mixed $value, int $min, int $max, int $fallback): int
-    {
-        if (! is_numeric($value)) {
-            return $fallback;
-        }
-
-        return max($min, min($max, (int) round((float) $value)));
-    }
-
-    /**
-     * Only absolute http(s) URLs are kept. A relative or `javascript:` value
-     * would end up in an `src`/`href` on a public page, so it is dropped here
-     * as well as being rejected by the form request.
-     */
-    private static function url(mixed $value): ?string
-    {
-        if (! is_string($value) || trim($value) === '') {
-            return null;
-        }
-
-        $value = trim($value);
-        $scheme = strtolower((string) parse_url($value, PHP_URL_SCHEME));
-
-        if (! in_array($scheme, ['http', 'https'], true) || parse_url($value, PHP_URL_HOST) === null) {
-            return null;
-        }
-
-        return mb_substr($value, 0, 255);
-    }
-
-    private static function text(mixed $value): ?string
-    {
-        if (! is_string($value) || trim($value) === '') {
-            return null;
-        }
-
-        return mb_substr(trim($value), 0, 255);
-    }
-
-    /**
-     * @return array<int, array{label: string, url: string}>
-     */
-    private static function links(mixed $value): array
-    {
-        if (! is_array($value)) {
-            return [];
-        }
-
-        $links = [];
-
-        foreach ($value as $link) {
-            if (! is_array($link)) {
-                continue;
-            }
-
-            $label = self::text($link['label'] ?? null);
-            $url = self::url($link['url'] ?? null);
-
-            if ($label === null || $url === null) {
-                continue;
-            }
-
-            $links[] = ['label' => mb_substr($label, 0, 40), 'url' => $url];
-
-            if (count($links) === self::MAX_LINKS) {
-                break;
-            }
-        }
-
-        return $links;
     }
 }

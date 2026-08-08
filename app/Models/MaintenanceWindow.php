@@ -7,6 +7,7 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Cron\CronExpression;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -53,9 +54,10 @@ class MaintenanceWindow extends Model
         return $this->belongsToMany(Monitor::class);
     }
 
-    public function scopeActive(Builder $query): Builder
+    #[Scope]
+    protected function active(Builder $query): void
     {
-        return $query->where('is_active', true);
+        $query->where('is_active', true);
     }
 
     public function coversAt(CarbonInterface $moment): bool

@@ -2,11 +2,8 @@
 
 namespace App\Settings;
 
-use App\Enums\SettingType;
 use App\Models\Setting;
-use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Crypt;
 
 class SettingRepository
 {
@@ -33,7 +30,7 @@ class SettingRepository
     {
         $setting = Setting::where('key', $key)->firstOrFail();
 
-        $setting->update(['value' => $this->serializeValue($setting->type, $value)]);
+        $setting->update(['value' => $setting->type->serialize($value)]);
 
         $this->cache = null;
     }
@@ -172,40 +169,6 @@ class SettingRepository
 
     private function castValue(Setting $setting): mixed
     {
-        return match ($setting->type) {
-            SettingType::Boolean => filter_var($setting->value, FILTER_VALIDATE_BOOLEAN),
-            SettingType::Integer => (int) $setting->value,
-            SettingType::Float => (float) $setting->value,
-            SettingType::Json => json_decode($setting->value, true),
-            SettingType::String => (string) ($setting->value ?? ''),
-            SettingType::Secret => $this->decrypt($setting->value),
-        };
-    }
-
-    private function serializeValue(SettingType $type, mixed $value): string
-    {
-        return match ($type) {
-            SettingType::Boolean => $value ? '1' : '0',
-            SettingType::Json => json_encode($value),
-            SettingType::Secret => Crypt::encryptString((string) $value),
-            default => (string) $value,
-        };
-    }
-
-    /**
-     * Tolerates a plaintext value so a secret seeded or edited outside the
-     * app does not hard-fail the whole settings screen.
-     */
-    private function decrypt(?string $value): string
-    {
-        if ($value === null || $value === '') {
-            return '';
-        }
-
-        try {
-            return Crypt::decryptString($value);
-        } catch (DecryptException) {
-            return $value;
-        }
+        return $setting->type->cast($setting->value);
     }
 }

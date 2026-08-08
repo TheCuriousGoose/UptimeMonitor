@@ -2,33 +2,22 @@
 
 namespace App\Monitoring\Notifiers;
 
-use App\Models\NotificationChannel;
-use App\Monitoring\AlertEvent;
 use App\Monitoring\AlertMessage;
 use App\Monitoring\RenderedAlert;
-use Illuminate\Support\Facades\Http;
 
 /**
  * Microsoft Teams incoming webhook, using the MessageCard format that Teams
  * connectors render. Teams has no incident lifecycle, so a recovery is just
  * a second card rather than a resolve.
  */
-class TeamsNotifier implements Notifier
+class TeamsNotifier extends HttpNotifier
 {
-    public function send(NotificationChannel $channel, AlertMessage $message, RenderedAlert $text): void
+    protected function payload(AlertMessage $message, RenderedAlert $text): array
     {
-        $url = $channel->destination();
-
-        if ($url === '') {
-            return;
-        }
-
-        $isDown = $message->event === AlertEvent::Down;
-
-        Http::timeout(10)->post($url, [
+        return [
             '@type' => 'MessageCard',
             '@context' => 'https://schema.org/extensions',
-            'themeColor' => $isDown ? 'DC2626' : '16A34A',
+            'themeColor' => strtoupper(ltrim($message->event->color(), '#')),
             'summary' => $text->title,
             'title' => $text->title,
             'text' => $text->body,
@@ -36,9 +25,10 @@ class TeamsNotifier implements Notifier
                 'facts' => [
                     ['name' => 'Monitor', 'value' => $message->monitor->name],
                     ['name' => 'Target', 'value' => $message->monitor->url],
+                    ['name' => 'Status', 'value' => $message->event->label()],
                     ['name' => 'When', 'value' => $message->occurredAt->toDayDateTimeString()],
                 ],
             ]],
-        ])->throw();
+        ];
     }
 }

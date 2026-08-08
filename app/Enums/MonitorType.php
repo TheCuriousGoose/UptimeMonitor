@@ -2,8 +2,15 @@
 
 namespace App\Enums;
 
-use App\Rules\HttpHeaderValue;
-use Illuminate\Validation\Rule;
+use App\Checkers\Checker;
+use App\Monitoring\Profiles\ConfigCast;
+use App\Monitoring\Profiles\DnsProfile;
+use App\Monitoring\Profiles\HttpProfile;
+use App\Monitoring\Profiles\KeywordProfile;
+use App\Monitoring\Profiles\MonitorProfile;
+use App\Monitoring\Profiles\PingProfile;
+use App\Monitoring\Profiles\PortProfile;
+use App\Monitoring\Profiles\SslProfile;
 
 enum MonitorType: string
 {
@@ -14,14 +21,9 @@ enum MonitorType: string
     case Dns = 'dns';
     case Ssl = 'ssl';
 
-    public const METHODS = ['GET', 'POST', 'HEAD', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
+    public const METHODS = HttpProfile::METHODS;
 
-    public const CONTENT_TYPES = [
-        'application/json',
-        'application/x-www-form-urlencoded',
-        'text/plain',
-        'application/xml',
-    ];
+    public const CONTENT_TYPES = HttpProfile::CONTENT_TYPES;
 
     /**
      * Config keys whose value is a credential. Masked on the way out and
@@ -35,14 +37,26 @@ enum MonitorType: string
     public const SECRET_HEADERS = ['authorization', 'cookie', 'x-api-key', 'proxy-authorization'];
 
     /**
+     * Everything that varies by type — rules, defaults, casts, checker.
+     */
+    public function profile(): MonitorProfile
+    {
+        return match ($this) {
+            self::Http => new HttpProfile,
+            self::Keyword => new KeywordProfile,
+            self::Port => new PortProfile,
+            self::Ping => new PingProfile,
+            self::Dns => new DnsProfile,
+            self::Ssl => new SslProfile,
+        };
+    }
+
+    /**
      * Whether the monitor target is a full URL rather than a bare hostname.
      */
     public function expectsUrl(): bool
     {
-        return match ($this) {
-            self::Http, self::Keyword, self::Ssl => true,
-            self::Port, self::Ping, self::Dns => false,
-        };
+        return $this->profile()->expectsUrl();
     }
 
     /**
@@ -52,45 +66,7 @@ enum MonitorType: string
      */
     public function configRules(): array
     {
-        $httpRules = [
-            'config.method' => ['sometimes', 'string', Rule::in(self::METHODS)],
-            // Superseded by expected_status_codes but still validated: an API
-            // client that has not been updated still posts it.
-            'config.expected_status' => ['sometimes', 'nullable', 'integer', 'min:100', 'max:599'],
-            'config.expected_status_codes' => ['sometimes', 'array', 'max:10'],
-            // An exact code, an inclusive range, or a class — see StatusMatcher.
-            'config.expected_status_codes.*' => ['string', 'regex:/^([1-5]\d{2}(-[1-5]\d{2})?|[1-5]xx)$/i'],
-            'config.verify_ssl' => ['sometimes', 'boolean'],
-            'config.headers' => ['sometimes', 'array', 'max:20'],
-            'config.headers.*' => ['string', 'max:2048', new HttpHeaderValue],
-            'config.body' => ['sometimes', 'nullable', 'string', 'max:8192'],
-            'config.content_type' => ['sometimes', 'nullable', 'string', Rule::in(self::CONTENT_TYPES)],
-            'config.auth_type' => ['sometimes', 'string', Rule::in(['none', 'basic', 'bearer'])],
-            'config.auth_username' => ['sometimes', 'nullable', 'string', 'max:255', 'required_if:config.auth_type,basic'],
-            'config.auth_password' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'config.auth_token' => ['sometimes', 'nullable', 'string', 'max:4096'],
-            'config.follow_redirects' => ['sometimes', 'boolean'],
-            'config.max_redirects' => ['sometimes', 'integer', 'min:0', 'max:10'],
-        ];
-
-        return match ($this) {
-            self::Http => $httpRules,
-            self::Keyword => $httpRules + [
-                'config.keyword' => ['required', 'string', 'max:255'],
-                'config.invert' => ['sometimes', 'boolean'],
-            ],
-            self::Port => [
-                'config.port' => ['required', 'integer', 'min:1', 'max:65535'],
-            ],
-            self::Dns => [
-                'config.record_type' => ['required', 'string', Rule::in(['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS'])],
-                'config.expected' => ['sometimes', 'nullable', 'string', 'max:255'],
-            ],
-            self::Ssl => [
-                'config.warn_days' => ['sometimes', 'integer', 'min:1', 'max:365'],
-            ],
-            self::Ping => [],
-        };
+        return $this->profile()->rules();
     }
 
     /**
@@ -100,32 +76,15 @@ enum MonitorType: string
      */
     public function defaultConfig(): array
     {
-        // MonitorRequest intersects the submitted config against these keys,
-        // so anything missing here is silently discarded on save.
-        $http = [
-            'method' => 'GET',
-            'expected_status' => null,
-            'expected_status_codes' => [],
-            'verify_ssl' => true,
-            'headers' => [],
-            'body' => null,
-            'content_type' => null,
-            'auth_type' => 'none',
-            'auth_username' => null,
-            'auth_password' => null,
-            'auth_token' => null,
-            'follow_redirects' => true,
-            'max_redirects' => 5,
-        ];
+        return $this->profile()->defaults();
+    }
 
-        return match ($this) {
-            self::Http => $http,
-            self::Keyword => $http + ['keyword' => '', 'invert' => false],
-            self::Port => ['port' => 443],
-            self::Dns => ['record_type' => 'A', 'expected' => null],
-            self::Ssl => ['warn_days' => 14],
-            self::Ping => [],
-        };
+    /**
+     * @return array<string, ConfigCast>
+     */
+    public function configCasts(): array
+    {
+        return $this->profile()->casts();
     }
 
     /**
@@ -134,5 +93,45 @@ enum MonitorType: string
     public static function values(): array
     {
         return array_column(self::cases(), 'value');
+    }
+
+    /**
+     * The vocabulary the monitor form needs to render its type-specific
+     * fields: which types take a URL, and the closed lists behind each select.
+     *
+     * Sent to the browser rather than restated there. MonitorForm.vue and the
+     * onboarding wizard each kept their own copy of these arrays, so a value
+     * added to a profile's rules was accepted by the API but never offered on
+     * the form — and one removed stayed on the form and failed validation.
+     *
+     * @return array<string, array<int, string>>
+     */
+    public static function formOptions(): array
+    {
+        return [
+            'url_types' => array_values(array_map(
+                fn (self $type) => $type->value,
+                array_filter(self::cases(), fn (self $type) => $type->expectsUrl()),
+            )),
+            'methods' => HttpProfile::METHODS,
+            'content_types' => HttpProfile::CONTENT_TYPES,
+            'auth_types' => HttpProfile::AUTH_TYPES,
+            'record_types' => DnsProfile::RECORD_TYPES,
+        ];
+    }
+
+    /**
+     * The checker class for each type, keyed by value — the map the
+     * CheckerRegistry is built from.
+     *
+     * @return array<string, class-string<Checker>>
+     */
+    public static function checkerMap(): array
+    {
+        return array_reduce(
+            self::cases(),
+            fn (array $map, self $type) => $map + [$type->value => $type->profile()->checker()],
+            [],
+        );
     }
 }

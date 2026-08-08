@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Monitors\SyncMonitorChannels;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Monitors\IndexRequest;
 use App\Http\Requests\Monitors\ShowRequest;
@@ -10,7 +11,6 @@ use App\Http\Requests\Monitors\UpdateRequest;
 use App\Http\Resources\MonitorCheckResource;
 use App\Http\Resources\MonitorResource;
 use App\Models\Monitor;
-use App\Models\NotificationChannel;
 use App\Policies\MonitorPolicy;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Http\Response;
@@ -31,18 +31,18 @@ class MonitorController extends Controller
         $monitors = Monitor::query()
             ->forUser(Auth::user())
             ->search($request->search())
-            ->status($request->status())
+            ->whereStatus($request->status())
             ->orderBy('name')
             ->paginate($this->perPage($request));
 
         return MonitorResource::collection($monitors);
     }
 
-    public function store(StoreRequest $request)
+    public function store(StoreRequest $request, SyncMonitorChannels $syncChannels)
     {
         $monitor = $request->user()->monitors()->create($request->monitorAttributes());
 
-        $this->syncChannels($monitor, $request->channelUuids());
+        $syncChannels($monitor, $request->channelUuids());
 
         return (new MonitorResource($monitor->load('notificationChannels')))
             ->response()
@@ -54,12 +54,12 @@ class MonitorController extends Controller
         return new MonitorResource($monitor->load('notificationChannels'));
     }
 
-    public function update(UpdateRequest $request, Monitor $monitor)
+    public function update(UpdateRequest $request, Monitor $monitor, SyncMonitorChannels $syncChannels)
     {
         $monitor->update($request->monitorAttributes());
 
         if ($request->has('notification_channels')) {
-            $this->syncChannels($monitor, $request->channelUuids());
+            $syncChannels($monitor, $request->channelUuids());
         }
 
         return new MonitorResource($monitor->fresh()->load('notificationChannels'));
@@ -86,23 +86,6 @@ class MonitorController extends Controller
             ->paginate($this->perPage($request));
 
         return MonitorCheckResource::collection($checks);
-    }
-
-    /**
-     * Channels always belong to the acting user, never the monitor owner, so
-     * an admin editing someone else's monitor cannot attach their own
-     * endpoints. Mirrors the web MonitorController exactly.
-     *
-     * @param  array<int, string>  $uuids
-     */
-    private function syncChannels(Monitor $monitor, array $uuids): void
-    {
-        $ids = NotificationChannel::query()
-            ->where('user_id', $monitor->created_by)
-            ->whereIn('uuid', $uuids)
-            ->pluck('id');
-
-        $monitor->notificationChannels()->sync($ids);
     }
 
     private function perPage(IndexRequest|ShowRequest $request): int

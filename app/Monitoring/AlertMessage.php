@@ -54,6 +54,19 @@ final readonly class AlertMessage
         return new self($monitor, AlertEvent::Improved, now(), responseMs: $responseMs);
     }
 
+    /**
+     * Stable key for the services that track an alert's lifecycle, so a
+     * resolution closes the very alert its trigger opened.
+     *
+     * Latency gets its own key: a degradation and an outage are separate
+     * subjects, and sharing one meant a Down deduplicated into an open "slow"
+     * alert rather than escalating.
+     */
+    public function dedupeKey(): string
+    {
+        return 'monitor-'.$this->monitor->uuid.($this->event->isLatency() ? '-latency' : '');
+    }
+
     public function title(): string
     {
         return match ($this->event) {

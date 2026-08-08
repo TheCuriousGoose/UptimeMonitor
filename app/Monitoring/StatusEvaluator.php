@@ -8,6 +8,7 @@ use App\Models\Monitor;
 use App\Models\MonitorCheck;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Turns a raw check result into persisted state: the check row, the monitor's
@@ -130,6 +131,8 @@ class StatusEvaluator
             $monitor->status_changed_at = $checkedAt;
         }
 
+        $this->applyRefusals($monitor, $result, $checkedAt);
+
         $monitor->save();
 
         $incident = match ($transition) {
@@ -187,6 +190,47 @@ class StatusEvaluator
         $monitor->is_degraded = false;
 
         return $wasDegraded ? Degradation::Ended : Degradation::None;
+    }
+
+    /**
+     * 429 and 403 are the target saying it does not want this traffic. Kept
+     * separate from failure_streak because "refused us" is a different fact
+     * from "is down", and only one of them is our problem to stop causing.
+     *
+     * A service the user genuinely owns does not rate-limit its own monitor
+     * indefinitely, so a sustained streak means the instance is hammering
+     * someone who is asking it to stop.
+     */
+    private function applyRefusals(Monitor $monitor, CheckResult $result, CarbonInterface $checkedAt): void
+    {
+        $threshold = (int) config('monitoring.abuse.refusals_before_pause', 10);
+        $status = (int) ($result->meta['status_code'] ?? 0);
+
+        if (! in_array($status, [403, 429], true)) {
+            $monitor->refusal_streak = 0;
+
+            return;
+        }
+
+        $monitor->refusal_streak++;
+
+        if ($threshold < 1 || $monitor->refusal_streak < $threshold) {
+            return;
+        }
+
+        $monitor->is_active = false;
+        $monitor->paused_at = $checkedAt;
+        $monitor->paused_reason = __('monitors.paused.refused', [
+            'status' => $status,
+            'count' => $monitor->refusal_streak,
+        ]);
+
+        Log::warning('Monitor paused: target refused repeated checks.', [
+            'monitor_uuid' => $monitor->uuid,
+            'domain' => $monitor->target_domain,
+            'status_code' => $status,
+            'streak' => $monitor->refusal_streak,
+        ]);
     }
 
     /**

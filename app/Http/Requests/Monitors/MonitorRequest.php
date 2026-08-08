@@ -6,6 +6,9 @@ use App\Checkers\Support\OutboundGuard;
 use App\Enums\MonitorType;
 use App\Models\Monitor;
 use App\Monitoring\ConfigMasker;
+use App\Monitoring\Profiles\ConfigCast;
+use App\Monitoring\TargetBudget;
+use App\Monitoring\TargetIdentity;
 use App\Rules\Hostname;
 use App\Rules\HttpHeaderName;
 use App\Rules\PublicUrl;
@@ -97,6 +100,7 @@ abstract class MonitorRequest extends FormRequest
             $allowed = array_keys($type->defaultConfig());
             $config = $this->castConfig(
                 array_intersect_key($data['config'] ?? [], array_flip($allowed)),
+                $type,
             );
 
             // Anything the form sent back as the mask is unchanged, so put
@@ -133,40 +137,18 @@ abstract class MonitorRequest extends FormRequest
     /**
      * The config cast serialises whatever it is handed, so a checkbox posting
      * "0" would be stored as the string "0" — which is truthy everywhere it
-     * gets read. Coerce values to their real types here.
+     * gets read. The coercion for each key is declared on the type's profile,
+     * alongside that key's default and rules.
      *
      * @param  array<string, mixed>  $config
      * @return array<string, mixed>
      */
-    private function castConfig(array $config): array
+    private function castConfig(array $config, MonitorType $type): array
     {
-        $casts = [
-            'verify_ssl' => 'bool',
-            'invert' => 'bool',
-            'follow_redirects' => 'bool',
-            'port' => 'int',
-            'warn_days' => 'int',
-            'max_redirects' => 'int',
-            'expected_status' => 'nullable_int',
-            'expected' => 'nullable_string',
-            'body' => 'nullable_string',
-            'content_type' => 'nullable_string',
-            'auth_username' => 'nullable_string',
-            'auth_password' => 'nullable_string',
-            'auth_token' => 'nullable_string',
-            'headers' => 'array',
-            'expected_status_codes' => 'array',
-        ];
+        $casts = $type->configCasts();
 
         foreach ($config as $key => $value) {
-            $config[$key] = match ($casts[$key] ?? 'string') {
-                'bool' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
-                'int' => (int) $value,
-                'nullable_int' => ($value === null || $value === '') ? null : (int) $value,
-                'nullable_string' => ($value === null || $value === '') ? null : (string) $value,
-                'array' => is_array($value) ? $value : [],
-                default => $value,
-            };
+            $config[$key] = ($casts[$key] ?? ConfigCast::Raw)->apply($value);
         }
 
         return $config;
@@ -183,8 +165,114 @@ abstract class MonitorRequest extends FormRequest
 
                 $this->validateHeaderNames($validator, $config);
                 $this->validateCredentialTarget($validator, $config);
+                $this->validateMonitorCap($validator);
+                $this->validateTargetBudget($validator);
+                $this->validateDomainVerification($validator, $config);
             },
         ];
+    }
+
+    /**
+     * Scheduled checks are dispatched by cron, so no HTTP rate limiter bounds
+     * them. Without a cap, one account's monitor count is the only thing
+     * deciding how much traffic the instance aims at third parties.
+     */
+    private function validateMonitorCap(Validator $validator): void
+    {
+        $cap = config('monitoring.abuse.max_monitors_per_user');
+
+        if ($cap === null || $this->existingMonitor() !== null) {
+            return;
+        }
+
+        $owned = Monitor::query()->where('created_by', $this->user()->id)->count();
+
+        if ($owned >= $cap) {
+            $validator->errors()->add('name', __('validation.monitor_cap', ['limit' => $cap]));
+        }
+    }
+
+    private function validateTargetBudget(Validator $validator): void
+    {
+        $identity = $this->targetIdentity();
+        $interval = (int) $this->input('interval_seconds');
+
+        if ($identity === null || $interval < 1) {
+            return;
+        }
+
+        $breach = app(TargetBudget::class)->exceeded(
+            $identity,
+            $interval,
+            $this->user(),
+            $this->existingMonitor()?->getKey(),
+        );
+
+        if ($breach !== null) {
+            $validator->errors()->add('interval_seconds', $breach->message());
+        }
+    }
+
+    /**
+     * A domain nobody has proven they own is held to slow, few and read-only:
+     * the configurations with the most abuse value and the least legitimate
+     * need against a stranger's host.
+     *
+     * @param  array<string, mixed>  $config
+     */
+    private function validateDomainVerification(Validator $validator, array $config): void
+    {
+        $identity = $this->targetIdentity();
+
+        if ($identity === null) {
+            return;
+        }
+
+        $limits = app(TargetBudget::class)->unverifiedLimits($identity);
+
+        if ($limits === null) {
+            return;
+        }
+
+        if ((int) $this->input('interval_seconds') < $limits->minIntervalSeconds) {
+            $validator->errors()->add('interval_seconds', __('validation.unverified_interval', [
+                'domain' => $identity->domain,
+                'seconds' => $limits->minIntervalSeconds,
+            ]));
+        }
+
+        $owned = Monitor::query()
+            ->forDomain($identity->domain)
+            ->where('created_by', $this->user()->id)
+            ->when($this->existingMonitor() !== null, fn ($q) => $q->whereKeyNot($this->existingMonitor()->getKey()))
+            ->count();
+
+        if ($owned >= $limits->maxMonitorsPerDomain) {
+            $validator->errors()->add('url', __('validation.unverified_monitors', [
+                'domain' => $identity->domain,
+                'limit' => $limits->maxMonitorsPerDomain,
+            ]));
+        }
+
+        $method = (string) ($config['method'] ?? 'GET');
+
+        if ($this->monitorType()?->expectsUrl() && ! $limits->allowsMethod($method)) {
+            $validator->errors()->add('config.method', __('validation.unverified_method', [
+                'domain' => $identity->domain,
+                'methods' => $limits->describeMethods(),
+            ]));
+        }
+
+        if (is_string($config['body'] ?? null) && $config['body'] !== '') {
+            $validator->errors()->add('config.body', __('validation.unverified_body', [
+                'domain' => $identity->domain,
+            ]));
+        }
+    }
+
+    private function targetIdentity(): ?TargetIdentity
+    {
+        return TargetIdentity::fromTarget((string) $this->input('url'));
     }
 
     /**

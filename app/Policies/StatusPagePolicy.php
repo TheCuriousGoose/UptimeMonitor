@@ -5,9 +5,12 @@ namespace App\Policies;
 use App\Enums\Permission;
 use App\Models\StatusPage;
 use App\Models\User;
+use App\Policies\Concerns\AuthorizesOwnership;
 
 class StatusPagePolicy
 {
+    use AuthorizesOwnership;
+
     public function viewAny(User $user): bool
     {
         return $user->can(Permission::StatusPagesView->value);
@@ -15,8 +18,7 @@ class StatusPagePolicy
 
     public function view(User $user, StatusPage $page): bool
     {
-        return $page->user_id === $user->id
-            && $user->can(Permission::StatusPagesView->value);
+        return $this->owns($user, $page->user_id, Permission::StatusPagesView);
     }
 
     public function create(User $user): bool
@@ -26,13 +28,11 @@ class StatusPagePolicy
 
     public function update(User $user, StatusPage $page): bool
     {
-        return $page->user_id === $user->id
-            && $user->can(Permission::StatusPagesEdit->value);
+        return $this->owns($user, $page->user_id, Permission::StatusPagesEdit);
     }
 
     public function delete(User $user, StatusPage $page): bool
     {
-        return $page->user_id === $user->id
-            && $user->can(Permission::StatusPagesDelete->value);
+        return $this->owns($user, $page->user_id, Permission::StatusPagesDelete);
     }
 }
